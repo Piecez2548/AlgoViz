@@ -2,6 +2,9 @@
   "project": "AlgoViz",
   "source": "Nexus/src/algoviz + Nexus/src/algorithms",
   "status": "extracted-standalone-build",
-  "deployment": { "url": null, "github": null },
+  "deployment": {
+    "url": "https://algoviz-brown-kappa.vercel.app",
+    "github": null
+  },
   "next": "Create a dedicated GitHub repository and Vercel project after independent QA."
 }
