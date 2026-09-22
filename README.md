@@ -1,13 +1,33 @@
 # AlgoViz
 
-Standalone algorithm visualizer extracted from the Nexus workspace. It runs at the domain root and includes search, pathfinding, sorting, and comparison lessons.
+AlgoViz is an interactive algorithm visualizer for search, pathfinding, sorting, and comparative analysis. It is deployed as an independent web application with a domain-root route structure.
 
-## Development
+| Resource | URL |
+| --- | --- |
+| Production | https://algoviz-brown-kappa.vercel.app |
+| Repository | https://github.com/Piecez2548/AlgoViz |
+| Source workspace | https://github.com/Piecez2548/Nexus |
+
+## Capabilities
+
+- Step-by-step graph search visualizations for BFS, DFS, and Greedy Best-First Search
+- Dijkstra and A* pathfinding demonstrations
+- Bubble, Selection, Insertion, Merge, and Quick Sort demonstrations
+- Side-by-side algorithm comparison with recorded execution metrics
+
+## Technology
+
+React 19, TypeScript, Vite, React Router, Zustand, Vitest, and Testing Library.
+
+## Local development
+
+Requirements: Node.js 22 or later.
 
 ```bash
-npm install
+npm ci
 npm run dev
 npm run build
+npm test
 ```
 
-The original Nexus repository remains the source of truth until this project receives its own remote deployment.
+The repository is public for professional review. Keep generated output, local environment files, and credentials out of version control.
