@@ -10,9 +10,11 @@ interface AlgoVizLabProps {
   category: "search" | "pathfinding" | "sorting";
   options: readonly LabOption[];
   defaultAlgorithm: string;
+  /** Lets the page keep the URL's ?algorithm= in step with the selection. */
+  onAlgorithmChange?: (id: string) => void;
 }
 
-export function AlgoVizLab({ category, options, defaultAlgorithm }: AlgoVizLabProps) {
+export function AlgoVizLab({ category, options, defaultAlgorithm, onAlgorithmChange }: AlgoVizLabProps) {
   const [algorithmId, setAlgorithmId] = useState(defaultAlgorithm);
   const [stepIndex, setStepIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -41,7 +43,7 @@ export function AlgoVizLab({ category, options, defaultAlgorithm }: AlgoVizLabPr
   return <section className="algoviz-lab" aria-label={`${category} algorithm visualizer`}>
     <div className="algoviz-lab-toolbar">
       <label className="algoviz-select-label">Algorithm
-        <select value={algorithmId} onChange={(event) => setAlgorithmId(event.target.value)} aria-label="Choose algorithm">
+        <select value={algorithmId} onChange={(event) => { setAlgorithmId(event.target.value); onAlgorithmChange?.(event.target.value); }} aria-label="Choose algorithm">
           {options.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
         </select>
       </label>
@@ -59,7 +61,7 @@ export function AlgoVizLab({ category, options, defaultAlgorithm }: AlgoVizLabPr
           <label className="algoviz-speed">Speed <select value={speed} onChange={(event) => setSpeed(Number(event.target.value))} aria-label="Playback speed"><option value="0.5">0.5×</option><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
         </div>
       </div>
-      <LabInspector step={step} category={category} />
+      <LabInspector step={step} category={category} algorithmId={algorithmId} />
     </div>
   </section>;
 }
@@ -77,9 +79,9 @@ function SortCanvas({ step }: { step: AlgorithmStep }) {
   return <div className="algoviz-sort-canvas" role="img" aria-label="Sorting array execution visualization">{values.map((value, index) => <div className={`algoviz-sort-bar ${highlights.has(index) ? "is-highlighted" : ""} ${sorted.has(index) ? "is-sorted" : ""}`} key={`${index}-${value}`}><span>{value}</span><i style={{ transform: `scaleY(${Math.max(0.06, value / max)})` }} /></div>)}</div>;
 }
 
-function LabInspector({ step, category }: { step: AlgorithmStep; category: string }) {
+function LabInspector({ step, category, algorithmId }: { step: AlgorithmStep; category: string; algorithmId: string }) {
   const data = step.dataStructure ?? [];
-  return <aside className="algoviz-inspector"><p className="algoviz-eyebrow">Current action</p><h2 aria-live="polite" aria-atomic="true">{step.type === "complete" ? "Complete" : step.type[0].toUpperCase() + step.type.slice(1)}</h2><p className="algoviz-explanation" aria-live="polite" aria-atomic="true">{step.explanation}</p><div className="algoviz-inspector-block"><span>{category === "sorting" ? "Array state" : "Data structure"}</span>{data.length ? data.map((entry) => <div className="algoviz-data-row" key={`${entry.label}-${entry.value}`}><span>{entry.label}</span><strong>{entry.value}</strong></div>) : <p className="algoviz-empty-data">No pending items</p>}</div><div className="algoviz-inspector-block algoviz-metrics"><span>Live metrics</span><div className="algoviz-metric-grid"><Metric label="Visited" value={step.metrics?.visitedNodes ?? step.visited?.length ?? 0} /><Metric label="Comparisons" value={step.metrics?.comparisons ?? 0} /><Metric label="Swaps" value={step.metrics?.swaps ?? 0} /><Metric label="Operations" value={step.metrics?.operations ?? 0} /></div></div></aside>;
+  return <aside className="algoviz-inspector"><p className="algoviz-eyebrow">Current action</p><h2 aria-live="polite" aria-atomic="true">{step.type === "complete" ? "Complete" : step.type[0].toUpperCase() + step.type.slice(1)}</h2><p className="algoviz-explanation" aria-live="polite" aria-atomic="true">{step.explanation}</p><div className="algoviz-inspector-block"><span>{category === "sorting" ? "Array state" : "Data structure"}</span>{data.length ? data.map((entry) => <div className="algoviz-data-row" key={`${entry.label}-${entry.value}`}><span>{entry.label}</span><strong>{entry.value}</strong></div>) : <p className="algoviz-empty-data">No pending items</p>}</div><div className="algoviz-inspector-block algoviz-metrics"><span>Live metrics</span><div className="algoviz-metric-grid">{category === "sorting" ? <><Metric label="Comparisons" value={step.metrics?.comparisons ?? 0} /><Metric label={algorithmId === "merge" ? "Writes" : "Swaps"} value={step.metrics?.swaps ?? 0} /></> : <Metric label="Visited" value={step.metrics?.visitedNodes ?? step.visited?.length ?? 0} />}<Metric label="Operations" value={step.metrics?.operations ?? 0} /></div></div></aside>;
 }
 
 function Metric({ label, value }: { label: string; value: number }) { return <div><strong>{value}</strong><span>{label}</span></div>; }

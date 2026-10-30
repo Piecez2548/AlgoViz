@@ -44,3 +44,14 @@ export function reconstructPath(parent: ReadonlyMap<string, string>, start: stri
   }
   return [];
 }
+
+/** Total weight along `path`, or Infinity when two consecutive nodes are not connected. */
+export function pathCost(graph: GraphInput, path: readonly string[]): number {
+  let total = 0;
+  for (let index = 1; index < path.length; index++) {
+    const edge = getNeighbors(graph, path[index - 1]).find((candidate) => candidate.to === path[index]);
+    if (!edge) return Infinity;
+    total += edge.weight;
+  }
+  return total;
+}

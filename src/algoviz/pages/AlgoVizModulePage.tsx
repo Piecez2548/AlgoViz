@@ -1,5 +1,6 @@
 import { ArrowLeft, GitCompareArrows, Route, Search, Sigma } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { pathCost, SAMPLE_GRAPH } from "../../algorithms/shared/graph";
 import { runAStar, runDijkstra } from "../../algorithms/pathfinding/pathfindingAlgorithms";
 import { runBfs, runDfs, runGreedyBestFirst } from "../../algorithms/search/searchAlgorithms";
 import { runBubbleSort, runInsertionSort, runMergeSort, runQuickSort, runSelectionSort } from "../../algorithms/sorting/sortingAlgorithms";
@@ -14,6 +15,7 @@ const moduleContent = {
 
 export default function AlgoVizModulePage() {
   const location = useLocation();
+  const [, setSearchParams] = useSearchParams();
   const key = location.pathname.split("/").filter(Boolean).at(-1) as keyof typeof moduleContent;
   const module = moduleContent[key] ?? moduleContent.search;
   const Icon = module.icon;
@@ -29,7 +31,7 @@ export default function AlgoVizModulePage() {
       <h1>{module.name}</h1>
       <p className="algoviz-module-lede">{module.description}</p>
     </section>
-    {module.category === "compare" ? <CompareLab /> : <AlgoVizLab category={module.category} options={module.options as readonly LabOption[]} defaultAlgorithm={selectedAlgorithm} />}
+    {module.category === "compare" ? <CompareLab /> : <AlgoVizLab category={module.category} options={module.options as readonly LabOption[]} defaultAlgorithm={selectedAlgorithm} onAlgorithmChange={(id) => setSearchParams({ algorithm: id }, { replace: true })} />}
   </div>;
 }
 
@@ -37,9 +39,13 @@ function CompareLab() {
   const dijkstra = runDijkstra(); const aStar = runAStar();
   const dijkstraPath = dijkstra.steps.find((step) => step.type === "path")?.dataStructure?.[0]?.value ?? "—";
   const aStarPath = aStar.steps.find((step) => step.type === "path")?.dataStructure?.[0]?.value ?? "—";
+  const costOf = (path: string | number) => pathCost(SAMPLE_GRAPH, String(path).split(" → "));
+  const sameCost = costOf(dijkstraPath) === costOf(aStarPath);
+  // Derived from the recorded executions rather than asserted.
+  const verdict = dijkstraPath === "—" || aStarPath === "—" ? "No path found" : sameCost ? (dijkstraPath === aStarPath ? "Both reach the same optimum" : "Different paths, same cost") : "Paths differ in cost";
   const lastMetric = (execution: typeof dijkstra) => Math.max(...execution.steps.map((step) => step.metrics?.visitedNodes ?? step.visited?.length ?? 0));
   return <section className="algoviz-compare-lab" aria-label="Algorithm comparison">
-    <div className="algoviz-compare-summary"><div><span>Shared input</span><strong>Weighted graph · A → F</strong></div><div><span>Shortest path</span><strong>{dijkstraPath}</strong></div><div><span>Result</span><strong>Both reach the same optimum</strong></div></div>
+    <div className="algoviz-compare-summary"><div><span>Shared input</span><strong>Weighted graph · A → F</strong></div><div><span>Shortest path</span><strong>{dijkstraPath}</strong></div><div><span>Result</span><strong>{verdict}</strong></div></div>
     <div className="algoviz-compare-cards"><CompareCard name="Dijkstra's Algorithm" execution={dijkstra} metric={lastMetric(dijkstra)} path={dijkstraPath} /><CompareCard name="A* Search" execution={aStar} metric={lastMetric(aStar)} path={aStarPath} /></div>
     <p className="algoviz-compare-note">The counts above are generated from the recorded steps, so the comparison stays honest as the execution changes.</p>
   </section>;

@@ -5,12 +5,16 @@ const INPUT = [42, 18, 64, 9, 31, 56, 23];
 
 function sortExecution(algorithmId: string, name: string): AlgorithmExecution {
   const values = [...INPUT]; const steps: AlgorithmStep[] = []; let comparisons = 0; let swaps = 0;
-  const add = (type: "compare" | "swap" | "complete", explanation: string, indices: number[] = [], sortedIndices: number[] = []) => steps.push(createAlgorithmStep(steps.length, type, explanation, { values: [...values], highlightIndices: indices, sortedIndices, metrics: { comparisons, swaps, operations: comparisons + swaps } }));
+  const add = (type: "compare" | "swap" | "complete", explanation: string, indices: number[] = [], sortedIndices: number[] = []) => steps.push(createAlgorithmStep(steps.length, type, explanation, { values: [...values], highlightIndices: indices, sortedIndices, dataStructure: [{ label: "Array", value: values.join(", ") }], metrics: { comparisons, swaps, operations: comparisons + swaps } }));
   if (algorithmId === "bubble") {
     const sorted: number[] = [];
-    for (let end = values.length - 1; end > 0; end--) for (let i = 0; i < end; i++) {
-      comparisons++; add("compare", `Compare ${values[i]} and ${values[i + 1]}.`, [i, i + 1], sorted);
-      if (values[i] > values[i + 1]) { [values[i], values[i + 1]] = [values[i + 1], values[i]]; swaps++; add("swap", `Swap them so the larger value moves right.`, [i, i + 1], sorted); }
+    for (let end = values.length - 1; end > 0; end--) {
+      for (let i = 0; i < end; i++) {
+        comparisons++; add("compare", `Compare ${values[i]} and ${values[i + 1]}.`, [i, i + 1], sorted);
+        if (values[i] > values[i + 1]) { [values[i], values[i + 1]] = [values[i + 1], values[i]]; swaps++; add("swap", `Swap them so the larger value moves right.`, [i, i + 1], sorted); }
+      }
+      // Each pass settles the largest remaining value at the end of the unsorted part.
+      sorted.push(end);
     }
   } else if (algorithmId === "selection") {
     const sorted: number[] = [];

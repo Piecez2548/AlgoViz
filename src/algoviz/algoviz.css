@@ -1351,3 +1351,21 @@
     color: HighlightText;
   }
 }
+
+/* Touch targets: every tappable control is at least 44px tall on phones and tablets. */
+@media (max-width: 900px) {
+  .algoviz-mobile-nav .algoviz-nav-link,
+  .algoviz-back-link,
+  .algoviz-brand {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .algoviz-mobile-nav .algoviz-nav-link {
+    padding: 0;
+  }
+  .algoviz-select-label select,
+  .algoviz-speed select {
+    min-height: 44px;
+  }
+}
