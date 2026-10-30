@@ -14,6 +14,9 @@ AlgoViz is an interactive algorithm visualizer for search, pathfinding, sorting,
 - Dijkstra and A* pathfinding demonstrations
 - Bubble, Selection, Insertion, Merge, and Quick Sort demonstrations
 - Side-by-side algorithm comparison with recorded execution metrics
+- Playback you can scrub: step bar, speed, and keyboard shortcuts (Space, arrow keys, Home, End)
+- Pseudocode panel that highlights the line matching the current step
+- Your own data: type or preset numbers for sorting (shareable in the URL), and draw a map with walls, heavy ground and a movable start and goal for search and pathfinding
 
 ## Technology
 

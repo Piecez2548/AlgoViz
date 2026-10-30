@@ -1,10 +1,10 @@
 import { createAlgorithmStep } from "../shared/utils";
 import type { AlgorithmExecution, AlgorithmStep } from "../shared/types";
 
-const INPUT = [42, 18, 64, 9, 31, 56, 23];
+export const SORT_SAMPLE: readonly number[] = [42, 18, 64, 9, 31, 56, 23];
 
-function sortExecution(algorithmId: string, name: string): AlgorithmExecution {
-  const values = [...INPUT]; const steps: AlgorithmStep[] = []; let comparisons = 0; let swaps = 0;
+function sortExecution(algorithmId: string, name: string, input: readonly number[]): AlgorithmExecution {
+  const values = [...input]; const steps: AlgorithmStep[] = []; let comparisons = 0; let swaps = 0;
   const add = (type: "compare" | "swap" | "complete", explanation: string, indices: number[] = [], sortedIndices: number[] = []) => steps.push(createAlgorithmStep(steps.length, type, explanation, { values: [...values], highlightIndices: indices, sortedIndices, dataStructure: [{ label: "Array", value: values.join(", ") }], metrics: { comparisons, swaps, operations: comparisons + swaps } }));
   if (algorithmId === "bubble") {
     const sorted: number[] = [];
@@ -75,11 +75,11 @@ function sortExecution(algorithmId: string, name: string): AlgorithmExecution {
     for (let i = 1; i < values.length; i++) { let j = i; while (j > 0) { comparisons++; add("compare", `Compare ${values[j - 1]} with ${values[j]}.`, [j - 1, j], sorted); if (values[j - 1] <= values[j]) break; [values[j - 1], values[j]] = [values[j], values[j - 1]]; swaps++; add("swap", `Shift ${values[j]} right to insert the value.`, [j - 1, j], sorted); j--; } sorted.push(i); }
   }
   add("complete", `${name} completed.`, [], Array.from({ length: values.length }, (_, index) => index));
-  return { algorithmId, inputLabel: "Array · [42, 18, 64, 9, 31, 56, 23]", steps, completed: true };
+  return { algorithmId, inputLabel: `Array · [${input.join(", ")}]`, steps, completed: true };
 }
 
-export const runBubbleSort = () => sortExecution("bubble", "Bubble Sort");
-export const runSelectionSort = () => sortExecution("selection", "Selection Sort");
-export const runInsertionSort = () => sortExecution("insertion", "Insertion Sort");
-export const runMergeSort = () => sortExecution("merge", "Merge Sort");
-export const runQuickSort = () => sortExecution("quick", "Quick Sort");
+export const runBubbleSort = (input: readonly number[] = SORT_SAMPLE) => sortExecution("bubble", "Bubble Sort", input);
+export const runSelectionSort = (input: readonly number[] = SORT_SAMPLE) => sortExecution("selection", "Selection Sort", input);
+export const runInsertionSort = (input: readonly number[] = SORT_SAMPLE) => sortExecution("insertion", "Insertion Sort", input);
+export const runMergeSort = (input: readonly number[] = SORT_SAMPLE) => sortExecution("merge", "Merge Sort", input);
+export const runQuickSort = (input: readonly number[] = SORT_SAMPLE) => sortExecution("quick", "Quick Sort", input);

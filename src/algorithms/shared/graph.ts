@@ -1,4 +1,4 @@
-import type { GraphEdge, GraphInput, GraphNode } from "./graphTypes";
+import type { GraphEdge, GraphInput, GraphNode, GridCell, GridPoint, GridState } from "./graphTypes";
 
 export const SAMPLE_GRAPH: GraphInput = {
   nodes: [
@@ -54,4 +54,81 @@ export function pathCost(graph: GraphInput, path: readonly string[]): number {
     total += edge.weight;
   }
   return total;
+}
+
+/**
+ * Straight-line distance to the goal, scaled by the cheapest cost per unit of distance on any
+ * edge. No path can be cheaper than that, so A* stays optimal on graphs the user rearranges.
+ * Rounded down so the estimate never overshoots.
+ */
+export function withHeuristics(graph: GraphInput): GraphInput {
+  const goal = getGraphNode(graph, graph.goal);
+  const ratios = graph.edges.flatMap((edge) => {
+    const from = getGraphNode(graph, edge.from); const to = getGraphNode(graph, edge.to);
+    const length = Math.hypot(from.x - to.x, from.y - to.y);
+    return length > 0 ? [edge.weight / length] : [];
+  });
+  const ratio = ratios.length ? Math.min(...ratios) : 0;
+  return { ...graph, nodes: graph.nodes.map((node) => ({ ...node, heuristic: Math.floor(Math.hypot(node.x - goal.x, node.y - goal.y) * ratio * 10) / 10 })) };
+}
+
+/** The sample graph with a different start and goal (the curated heuristics only fit goal F). */
+export function sampleGraphBetween(start: string, goal: string): GraphInput {
+  if (start === SAMPLE_GRAPH.start && goal === SAMPLE_GRAPH.goal) return SAMPLE_GRAPH;
+  return withHeuristics({ ...SAMPLE_GRAPH, start, goal });
+}
+
+export const GRID_COLS = 12;
+export const GRID_ROWS = 8;
+export const HEAVY_COST = 5;
+
+/** Chess-style cell name: column letter then row number, e.g. C4. */
+export function cellId(col: number, row: number): string {
+  return `${String.fromCharCode(65 + col)}${row + 1}`;
+}
+
+export function cellIndex(grid: Pick<GridState, "cols">, col: number, row: number): number {
+  return row * grid.cols + col;
+}
+
+export function defaultGrid(): GridState {
+  const cells: GridCell[] = Array.from({ length: GRID_COLS * GRID_ROWS }, () => "empty");
+  // A short wall with a gap gives the algorithms something to route around.
+  for (let row = 1; row < 7; row++) cells[cellIndex({ cols: GRID_COLS }, 5, row)] = "wall";
+  cells[cellIndex({ cols: GRID_COLS }, 5, 4)] = "empty";
+  return { cols: GRID_COLS, rows: GRID_ROWS, cells, start: { col: 1, row: 4 }, goal: { col: 10, row: 4 } };
+}
+
+export function samePoint(a: GridPoint, b: GridPoint): boolean { return a.col === b.col && a.row === b.row; }
+
+/**
+ * Turns a map into the graph the algorithms already understand: every open cell is a node, each
+ * pair of side-by-side open cells an edge. An edge costs the average of its two cells (rounded up),
+ * so crossing heavy terrain is dearer than open ground. The heuristic is Manhattan distance
+ * times the cheapest edge, which never overestimates.
+ */
+export function gridToGraph(grid: GridState): GraphInput {
+  const cost = (cell: GridCell) => (cell === "heavy" ? HEAVY_COST : 1);
+  const open = (col: number, row: number) => col >= 0 && row >= 0 && col < grid.cols && row < grid.rows && grid.cells[cellIndex(grid, col, row)] !== "wall";
+  const edges: GraphEdge[] = [];
+  for (let row = 0; row < grid.rows; row++) {
+    for (let col = 0; col < grid.cols; col++) {
+      if (!open(col, row)) continue;
+      for (const [nextCol, nextRow] of [[col + 1, row], [col, row + 1]]) {
+        if (!open(nextCol, nextRow)) continue;
+        const weight = Math.ceil((cost(grid.cells[cellIndex(grid, col, row)]) + cost(grid.cells[cellIndex(grid, nextCol, nextRow)])) / 2);
+        edges.push({ from: cellId(col, row), to: cellId(nextCol, nextRow), weight });
+      }
+    }
+  }
+  const minWeight = edges.length ? Math.min(...edges.map((edge) => edge.weight)) : 1;
+  const nodes: GraphNode[] = [];
+  for (let row = 0; row < grid.rows; row++) {
+    for (let col = 0; col < grid.cols; col++) {
+      if (!open(col, row)) continue;
+      const distance = Math.abs(col - grid.goal.col) + Math.abs(row - grid.goal.row);
+      nodes.push({ id: cellId(col, row), x: ((col + 0.5) / grid.cols) * 100, y: ((row + 0.5) / grid.rows) * 100, heuristic: distance * minWeight });
+    }
+  }
+  return { label: "Grid map", nodes, edges, start: cellId(grid.start.col, grid.start.row), goal: cellId(grid.goal.col, grid.goal.row) };
 }

@@ -4,7 +4,7 @@
   --algo-surface-raised: #1b2239;
   --algo-ink: #eef1ff;
   --algo-muted: #a4acc7;
-  --algo-faint: #737c9f;
+  --algo-faint: #9aa3c6;
   --algo-line: #2b3555;
   --algo-accent: #a8ffcb;
   --algo-accent-ink: #092017;
@@ -1371,3 +1371,56 @@
     min-height: 44px;
   }
 }
+/* Playback seek bar, key hint, input panels, map editor and pseudocode */
+.algoviz-playback-wrap { display: grid; gap: 0.6rem; }
+.algoviz-seek { width: 100%; min-height: 28px; accent-color: var(--algo-accent); cursor: pointer; }
+.algoviz-key-hint { margin: 0; color: var(--algo-muted); font-size: 0.75rem; }
+.algoviz-key-hint kbd { padding: 0.05rem 0.35rem; border: 1px solid var(--algo-line); border-radius: 4px; background: var(--algo-surface-raised); color: var(--algo-ink); font: inherit; font-size: 0.7rem; }
+.algoviz-control:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.algoviz-input-panel { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.75rem 1rem; margin: 0 0 1rem; padding: 0.9rem 1rem; border: 1px solid var(--algo-line); border-radius: 10px; background: var(--algo-surface); }
+.algoviz-field { display: flex; flex-direction: column; gap: 0.35rem; color: var(--algo-muted); font-size: 0.75rem; font-weight: 700; }
+.algoviz-field input[type="text"], .algoviz-field select { min-width: 150px; min-height: 44px; padding: 0.55rem 0.65rem; border: 1px solid var(--algo-line); border-radius: 6px; background: var(--algo-surface-raised); color: var(--algo-ink); font: inherit; }
+.algoviz-field input[type="text"] { min-width: min(100%, 320px); }
+.algoviz-button { min-height: 44px; padding: 0.55rem 1rem; border: 0; border-radius: 6px; background: var(--algo-accent); color: var(--algo-accent-ink); font: inherit; font-weight: 800; cursor: pointer; }
+.algoviz-button-quiet { border: 1px solid var(--algo-line); background: transparent; color: var(--algo-ink); }
+.algoviz-field-help { flex-basis: 100%; margin: 0; color: var(--algo-muted); font-size: 0.75rem; }
+.algoviz-field-error { flex-basis: 100%; margin: 0 0 1rem; padding: 0.6rem 0.8rem; border: 1px solid #ff9a9a; border-radius: 8px; background: #2a1620; color: #ffd0d0; font-size: 0.85rem; }
+.algoviz-input-panel .algoviz-field-error { margin: 0; }
+
+.algoviz-tools { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0; padding: 0; border: 0; }
+.algoviz-tools legend { width: 100%; margin-bottom: 0.35rem; color: var(--algo-muted); font-size: 0.75rem; font-weight: 700; }
+.algoviz-tools label { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 44px; padding: 0 0.8rem; border: 1px solid var(--algo-line); border-radius: 6px; background: var(--algo-surface-raised); color: var(--algo-ink); font-size: 0.85rem; cursor: pointer; }
+.algoviz-tools label.is-active { border-color: var(--algo-accent); background: #16382c; }
+.algoviz-tools input { accent-color: var(--algo-accent); }
+
+.algoviz-grid { display: grid; gap: 2px; width: 100%; max-width: 720px; margin: 0 auto 1rem; touch-action: none; user-select: none; }
+.algoviz-cell { aspect-ratio: 1; min-width: 0; padding: 0; border: 1px solid var(--algo-line); border-radius: 3px; background: var(--algo-surface-raised); cursor: pointer; }
+.algoviz-cell.is-wall { background: #070a14; border-color: #3a4468; }
+.algoviz-cell.is-heavy { background: repeating-linear-gradient(45deg, #4a3b14, #4a3b14 4px, #2c2308 4px, #2c2308 8px); }
+.algoviz-cell.is-frontier { background: #2a3566; }
+.algoviz-cell.is-visited { background: #26506a; }
+.algoviz-cell.is-current { background: var(--algo-yellow); }
+.algoviz-cell.is-path { background: var(--algo-accent); }
+.algoviz-cell.is-start { background: #4f7cff; border-color: #fff; }
+.algoviz-cell.is-goal { background: #ff7aa8; border-color: #fff; }
+.algoviz-cell:hover { border-color: var(--algo-accent); }
+
+.algoviz-graph-canvas .algoviz-node.is-start { stroke: #4f7cff; stroke-width: 1.6; }
+.algoviz-graph-canvas .algoviz-node.is-goal { stroke: #ff7aa8; stroke-width: 1.6; }
+
+.algoviz-pseudocode { margin: 0.4rem 0 0; padding: 0; list-style: none; counter-reset: line; }
+.algoviz-pseudocode li { counter-increment: line; padding: 0.2rem 0.5rem; border-left: 3px solid transparent; color: var(--algo-muted); white-space: pre; overflow-x: auto; }
+.algoviz-pseudocode li::before { content: counter(line); display: inline-block; width: 1.4rem; color: var(--algo-faint); font-size: 0.7rem; }
+.algoviz-pseudocode li.is-active { border-left-color: var(--algo-accent); background: #16382c; color: var(--algo-ink); }
+.algoviz-pseudocode code { font: 0.78rem/1.5 ui-monospace, Menlo, Consolas, monospace; }
+
+@media (max-width: 640px) {
+  .algoviz-grid { gap: 1px; }
+  .algoviz-input-panel { padding: 0.75rem; }
+}
+
+.algoviz-grid-row { display: contents; }
+
+.algoviz-pseudocode, .algoviz-pseudocode li { text-transform: none; letter-spacing: 0; }
+.algoviz-pseudocode li { white-space: pre-wrap; }
