@@ -117,7 +117,11 @@ describe("drawing your own map", () => {
     useGrid();
     fireEvent.keyDown(window, { key: "End" });
     expect(screen.getByText("Complete")).toBeInTheDocument();
-    expect(document.querySelectorAll(".algoviz-cell.is-path").length).toBeGreaterThan(5);
+    // Only the route itself is marked, not every cell the algorithm settled on the way.
+    const marked = document.querySelectorAll(".algoviz-cell.is-path").length;
+    expect(marked).toBeGreaterThan(5);
+    expect(marked).toBeLessThan(20);
+    expect(document.querySelectorAll(".algoviz-cell.is-visited").length).toBeGreaterThan(marked);
   });
 
   it("moves the start with the Move start tool and never lets start sit on the goal", () => {

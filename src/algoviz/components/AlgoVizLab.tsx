@@ -39,9 +39,13 @@ export function AlgoVizLab(props: AlgoVizLabProps) {
   const execution = useMemo(() => (category === "sorting" ? (option as ArrayLabOption).run(values) : (option as GraphLabOption).run(graph)), [category, graph, option, values]);
   const playback = usePlayback(execution.steps.length, execution);
   const step = execution.steps[playback.stepIndex];
-  // Keep the found route on screen for the final "complete" step too.
+  // Keep the found route on screen for the final "complete" step too. The route comes from the
+  // step's recorded "Path" entry, because Dijkstra and A* report every settled node as "visited".
   const foundPath = useMemo(() => {
-    for (let index = playback.stepIndex; index >= 0; index--) if (execution.steps[index].type === "path") return execution.steps[index].visited ?? [];
+    for (let index = playback.stepIndex; index >= 0; index--) {
+      const candidate = execution.steps[index];
+      if (candidate.type === "path") return String(candidate.dataStructure?.find((entry) => entry.label === "Path")?.value ?? "").split(" → ").filter(Boolean);
+    }
     return [] as readonly string[];
   }, [execution, playback.stepIndex]);
   const noRoute = category !== "sorting" && !execution.steps.some((candidate) => candidate.type === "path");
