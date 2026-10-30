@@ -1362,6 +1362,8 @@
     min-height: 44px;
   }
   .algoviz-mobile-nav .algoviz-nav-link {
+    justify-content: center;
+    min-width: 44px;
     padding: 0;
   }
   .algoviz-select-label select,
