@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, BarChart3, BookOpen, GitCompareArrows, Pause, Play, Route } from "lucide-react";
+import { ArrowRight, BarChart3, BookOpen, GitCompareArrows, Network, Pause, Play, Route } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import type { AlgorithmDefinition } from "@/algorithms/shared/types";
@@ -20,6 +20,13 @@ const categories: AlgorithmDefinition[] = [
     status: "available",
   },
   {
+    id: "spanning",
+    name: "Spanning trees",
+    category: "spanning",
+    summary: "Connect every node with the least total weight.",
+    status: "available",
+  },
+  {
     id: "sorting",
     name: "Sorting",
     category: "sorting",
@@ -34,11 +41,14 @@ const algorithmCatalog = [
   { id: "greedy-best-first", name: "Greedy Best-First Search", shortName: "GBFS", category: "search", complexity: "Heuristic", summary: "Choose the frontier node that looks closest." },
   { id: "dijkstra", name: "Dijkstra's Algorithm", shortName: "Dijkstra", category: "pathfinding", complexity: "O((V + E) log V)", summary: "Relax edges to find shortest weighted paths." },
   { id: "a-star", name: "A* Search", shortName: "A*", category: "pathfinding", complexity: "O((V + E) log V)", summary: "Combine cost-so-far with a heuristic." },
+  { id: "bellman-ford", name: "Bellman-Ford", shortName: "Bellman-Ford", category: "pathfinding", complexity: "O(V · E)", summary: "Sweep every edge until no distance improves." },
+  { id: "kruskal", name: "Kruskal's Algorithm", shortName: "Kruskal", category: "spanning", complexity: "O(E log E)", summary: "Keep the lightest edges that never close a loop." },
   { id: "bubble", name: "Bubble Sort", shortName: "Bubble", category: "sorting", complexity: "O(n²)", summary: "Bubble the largest values to the end." },
   { id: "selection", name: "Selection Sort", shortName: "Selection", category: "sorting", complexity: "O(n²)", summary: "Select the next smallest value." },
   { id: "insertion", name: "Insertion Sort", shortName: "Insertion", category: "sorting", complexity: "O(n²)", summary: "Insert each value into a sorted prefix." },
   { id: "merge", name: "Merge Sort", shortName: "Merge", category: "sorting", complexity: "O(n log n)", summary: "Divide, sort, and merge ordered runs." },
   { id: "quick", name: "Quick Sort", shortName: "Quick", category: "sorting", complexity: "O(n log n)", summary: "Partition around a pivot and recurse." },
+  { id: "heap", name: "Heap Sort", shortName: "Heap", category: "sorting", complexity: "O(n log n)", summary: "Build a heap, then pull out the largest value each time." },
 ] as const;
 
 function ExecutionPreview() {
@@ -132,7 +142,8 @@ export default function AlgoVizHomePage() {
               <span className={`algoviz-category-icon icon-${category.category}`} aria-hidden="true">
                 {index === 0 && <BookOpen size={20} />}
                 {index === 1 && <Route size={20} />}
-                {index === 2 && <BarChart3 size={20} />}
+                {index === 2 && <Network size={20} />}
+                {index === 3 && <BarChart3 size={20} />}
               </span>
               <span className="algoviz-category-index">0{index + 1}</span>
               <span className="algoviz-category-copy"><strong>{category.name}</strong><span>{category.summary}</span></span>
@@ -146,9 +157,9 @@ export default function AlgoVizHomePage() {
         <div className="algoviz-section-heading">
           <div>
             <p className="algoviz-eyebrow">Algorithm catalog</p>
-            <h2 id="catalog-heading">The complete starter set.</h2>
+            <h2 id="catalog-heading">The growing algorithm set.</h2>
           </div>
-          <p>Ten core algorithms for teaching graph search, shortest paths, and sorting with the same step-by-step contract.</p>
+          <p>Thirteen algorithms for teaching graph search, shortest paths, spanning trees, and sorting with the same step-by-step contract.</p>
         </div>
         <div className="algoviz-catalog-grid">
           {algorithmCatalog.map((algorithm, index) => (

@@ -1,4 +1,4 @@
-import type { AlgorithmStepType } from "./types";
+import type { AlgorithmStep, AlgorithmStepType } from "./types";
 
 export interface Pseudocode {
   lines: readonly string[];
@@ -49,12 +49,24 @@ export const PSEUDOCODE: Readonly<Record<string, Pseudocode>> = {
     lines: ["split the array into two halves", "sort each half the same way", "while both halves have values:", "  compare the front of each half", "  write the smaller one to the result"],
     lineFor: { compare: 3, swap: 4, complete: 1 },
   },
+  heap: {
+    lines: ["build a max-heap from the array", "repeat until one value is left:", "  swap the largest value (the root) with the last unsorted one", "  shrink the heap by one", "  sift the new root down: compare it with its children", "    swap with the larger child if it is bigger"],
+    lineFor: { compare: 4, swap: 5, complete: 1 },
+  },
+  "bellman-ford": {
+    lines: ["set the start distance to 0, all others to infinity", "repeat at most V − 1 times:", "  for every edge, in both directions:", "    if going through it is shorter, update the distance", "  if a whole pass changed nothing: stop"],
+    lineFor: { enqueue: 0, update: 3, compare: 4, path: 4, complete: 4 },
+  },
+  kruskal: {
+    lines: ["sort all edges from lightest to heaviest", "for each edge in that order:", "  look at its two ends", "  if they are already connected: skip it (it would close a loop)", "  otherwise: keep the edge and join the two groups", "the kept edges form the spanning tree"],
+    lineFor: { enqueue: 0, compare: 2, reject: 3, accept: 4, complete: 5 },
+  },
   quick: {
     lines: ["pick the last value as the pivot", "for each value before the pivot:", "  compare it with the pivot", "  if smaller, move it to the left side", "put the pivot between the two sides, then sort each side"],
     lineFor: { compare: 2, swap: 3, complete: 4 },
   },
 };
 
-export function activeLine(algorithmId: string, type: AlgorithmStepType): number | undefined {
-  return PSEUDOCODE[algorithmId]?.lineFor[type];
+export function activeLine(algorithmId: string, step: Pick<AlgorithmStep, "type" | "line">): number | undefined {
+  return step.line ?? PSEUDOCODE[algorithmId]?.lineFor[step.type];
 }

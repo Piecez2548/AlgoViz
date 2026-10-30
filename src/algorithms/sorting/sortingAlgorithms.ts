@@ -5,7 +5,7 @@ export const SORT_SAMPLE: readonly number[] = [42, 18, 64, 9, 31, 56, 23];
 
 function sortExecution(algorithmId: string, name: string, input: readonly number[]): AlgorithmExecution {
   const values = [...input]; const steps: AlgorithmStep[] = []; let comparisons = 0; let swaps = 0;
-  const add = (type: "compare" | "swap" | "complete", explanation: string, indices: number[] = [], sortedIndices: number[] = []) => steps.push(createAlgorithmStep(steps.length, type, explanation, { values: [...values], highlightIndices: indices, sortedIndices, dataStructure: [{ label: "Array", value: values.join(", ") }], metrics: { comparisons, swaps, operations: comparisons + swaps } }));
+  const add = (type: "compare" | "swap" | "complete", explanation: string, indices: number[] = [], sortedIndices: number[] = [], line?: number) => steps.push(createAlgorithmStep(steps.length, type, explanation, { ...(line === undefined ? {} : { line }), values: [...values], highlightIndices: indices, sortedIndices, dataStructure: [{ label: "Array", value: values.join(", ") }], metrics: { comparisons, swaps, operations: comparisons + swaps } }));
   if (algorithmId === "bubble") {
     const sorted: number[] = [];
     for (let end = values.length - 1; end > 0; end--) {
@@ -44,6 +44,41 @@ function sortExecution(algorithmId: string, name: string, input: readonly number
       });
     };
     mergeSort(0, values.length);
+  } else if (algorithmId === "heap") {
+    const sorted: number[] = [];
+    const siftDown = (start: number, size: number) => {
+      let root = start;
+      for (;;) {
+        let largest = root;
+        const left = 2 * root + 1;
+        const right = left + 1;
+        if (left < size) {
+          comparisons++;
+          add("compare", `Compare parent ${values[largest]} with left child ${values[left]}.`, [largest, left], sorted);
+          if (values[left] > values[largest]) largest = left;
+        }
+        if (right < size) {
+          comparisons++;
+          add("compare", `Compare ${values[largest]} with right child ${values[right]}.`, [largest, right], sorted);
+          if (values[right] > values[largest]) largest = right;
+        }
+        if (largest === root) return;
+        [values[root], values[largest]] = [values[largest], values[root]];
+        swaps++;
+        add("swap", `Swap so the larger value ${values[root]} sits above ${values[largest]}.`, [root, largest], sorted);
+        root = largest;
+      }
+    };
+    // Phase 1: turn the array into a max-heap, working from the last parent up to the root.
+    for (let start = Math.floor(values.length / 2) - 1; start >= 0; start--) siftDown(start, values.length);
+    // Phase 2: repeatedly move the largest value (the root) to the end and repair the smaller heap.
+    for (let end = values.length - 1; end > 0; end--) {
+      [values[0], values[end]] = [values[end], values[0]];
+      swaps++;
+      sorted.push(end);
+      add("swap", `Move the largest value ${values[end]} to its final place.`, [0, end], sorted, 2);
+      siftDown(0, end);
+    }
   } else if (algorithmId === "quick") {
     const partition = (low: number, high: number): number => {
       const pivot = values[high];
@@ -82,4 +117,5 @@ export const runBubbleSort = (input: readonly number[] = SORT_SAMPLE) => sortExe
 export const runSelectionSort = (input: readonly number[] = SORT_SAMPLE) => sortExecution("selection", "Selection Sort", input);
 export const runInsertionSort = (input: readonly number[] = SORT_SAMPLE) => sortExecution("insertion", "Insertion Sort", input);
 export const runMergeSort = (input: readonly number[] = SORT_SAMPLE) => sortExecution("merge", "Merge Sort", input);
+export const runHeapSort = (input: readonly number[] = SORT_SAMPLE) => sortExecution("heap", "Heap Sort", input);
 export const runQuickSort = (input: readonly number[] = SORT_SAMPLE) => sortExecution("quick", "Quick Sort", input);

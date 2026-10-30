@@ -132,3 +132,8 @@ export function gridToGraph(grid: GridState): GraphInput {
   }
   return { label: "Grid map", nodes, edges, start: cellId(grid.start.col, grid.start.row), goal: cellId(grid.goal.col, grid.goal.row) };
 }
+
+/** Order-independent name for an undirected edge, e.g. edgeKey("B", "A") === "A-B". */
+export function edgeKey(a: string, b: string): string {
+  return a < b ? `${a}-${b}` : `${b}-${a}`;
+}

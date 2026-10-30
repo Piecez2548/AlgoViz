@@ -11,8 +11,9 @@ AlgoViz is an interactive algorithm visualizer for search, pathfinding, sorting,
 ## Capabilities
 
 - Step-by-step graph search visualizations for BFS, DFS, and Greedy Best-First Search
-- Dijkstra and A* pathfinding demonstrations
-- Bubble, Selection, Insertion, Merge, and Quick Sort demonstrations
+- Dijkstra, A* and Bellman-Ford pathfinding demonstrations
+- Kruskal minimum spanning tree with kept and skipped edges shown on the graph
+- Bubble, Selection, Insertion, Merge, Quick, and Heap Sort demonstrations
 - Side-by-side algorithm comparison with recorded execution metrics
 - Playback you can scrub: step bar, speed, and keyboard shortcuts (Space, arrow keys, Home, End)
 - Pseudocode panel that highlights the line matching the current step

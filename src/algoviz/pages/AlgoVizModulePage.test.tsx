@@ -14,11 +14,14 @@ describe("AlgoViz module selection", () => {
     ["search", "greedy-best-first"],
     ["pathfinding", "dijkstra"],
     ["pathfinding", "a-star"],
+    ["pathfinding", "bellman-ford"],
+    ["spanning", "kruskal"],
     ["sorting", "bubble"],
     ["sorting", "selection"],
     ["sorting", "insertion"],
     ["sorting", "merge"],
     ["sorting", "quick"],
+    ["sorting", "heap"],
   ])("opens %s with the requested algorithm %s", (module, algorithm) => {
     render(
       <MemoryRouter initialEntries={[`/${module}?algorithm=${algorithm}`]}>

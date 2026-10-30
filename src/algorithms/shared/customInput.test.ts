@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { runAStar, runDijkstra } from "../pathfinding/pathfindingAlgorithms";
+import { runAStar, runBellmanFord, runDijkstra } from "../pathfinding/pathfindingAlgorithms";
+import { runKruskal } from "../spanning/spanningAlgorithms";
 import { runBfs, runDfs, runGreedyBestFirst } from "../search/searchAlgorithms";
-import { runBubbleSort, runInsertionSort, runMergeSort, runQuickSort, runSelectionSort } from "../sorting/sortingAlgorithms";
+import { runBubbleSort, runHeapSort, runInsertionSort, runMergeSort, runQuickSort, runSelectionSort } from "../sorting/sortingAlgorithms";
 import { cellId, defaultGrid, gridToGraph, pathCost, sampleGraphBetween, SAMPLE_GRAPH, withHeuristics } from "./graph";
 import type { GridState } from "./graphTypes";
 import { makePreset, parseNumberList } from "./arrayInput";
@@ -11,7 +12,7 @@ import type { AlgorithmExecution } from "./types";
 // Small deterministic generator so failures can be reproduced.
 function seeded(seed: number) { let s = seed; return () => { s = (s * 1664525 + 1013904223) % 4294967296; return s / 4294967296; }; }
 
-const sorters = { bubble: runBubbleSort, selection: runSelectionSort, insertion: runInsertionSort, merge: runMergeSort, quick: runQuickSort };
+const sorters = { bubble: runBubbleSort, selection: runSelectionSort, insertion: runInsertionSort, merge: runMergeSort, quick: runQuickSort, heap: runHeapSort };
 
 function pathOf(execution: AlgorithmExecution): string[] | null {
   const value = execution.steps.find((step) => step.type === "path")?.dataStructure?.[0]?.value;
@@ -64,7 +65,7 @@ describe("map to graph conversion", () => {
   it("reports no route when the goal is walled off, and still finishes", () => {
     const grid: GridState = { cols: 3, rows: 1, cells: ["empty", "wall", "empty"], start: { col: 0, row: 0 }, goal: { col: 2, row: 0 } };
     const graph = gridToGraph(grid);
-    for (const run of [runBfs, runDfs, runGreedyBestFirst, runDijkstra, runAStar]) {
+    for (const run of [runBfs, runDfs, runGreedyBestFirst, runDijkstra, runAStar, runBellmanFord]) {
       const execution = run(graph);
       expect(pathOf(execution)).toBeNull();
       expect(execution.steps.at(-1)?.type).toBe("complete");
@@ -119,14 +120,14 @@ describe("choosing another start and goal on the sample graph", () => {
 
 describe("pseudocode", () => {
   const everyRun: [string, () => AlgorithmExecution][] = [
-    ["bfs", () => runBfs()], ["dfs", () => runDfs()], ["greedy-best-first", () => runGreedyBestFirst()], ["dijkstra", () => runDijkstra()], ["a-star", () => runAStar()],
+    ["bfs", () => runBfs()], ["dfs", () => runDfs()], ["greedy-best-first", () => runGreedyBestFirst()], ["dijkstra", () => runDijkstra()], ["a-star", () => runAStar()], ["bellman-ford", () => runBellmanFord()], ["kruskal", () => runKruskal()],
     ...Object.entries(sorters).map(([id, run]) => [id, () => run()] as [string, () => AlgorithmExecution]),
   ];
 
   it.each(everyRun)("%s highlights a real line for every step it records", (id, run) => {
     const lines = PSEUDOCODE[id].lines;
     for (const step of run().steps) {
-      const line = activeLine(id, step.type);
+      const line = activeLine(id, step);
       expect(line, `${id} step type ${step.type}`).toBeDefined();
       expect(line!).toBeGreaterThanOrEqual(0);
       expect(line!).toBeLessThan(lines.length);

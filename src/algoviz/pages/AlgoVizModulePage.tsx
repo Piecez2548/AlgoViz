@@ -1,17 +1,19 @@
-import { ArrowLeft, GitCompareArrows, Route, Search, Sigma } from "lucide-react";
+import { ArrowLeft, GitCompareArrows, Network, Route, Search, Sigma } from "lucide-react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { pathCost, SAMPLE_GRAPH } from "../../algorithms/shared/graph";
-import { runAStar, runDijkstra } from "../../algorithms/pathfinding/pathfindingAlgorithms";
+import { runAStar, runBellmanFord, runDijkstra } from "../../algorithms/pathfinding/pathfindingAlgorithms";
 import { runBfs, runDfs, runGreedyBestFirst } from "../../algorithms/search/searchAlgorithms";
-import { runBubbleSort, runInsertionSort, runMergeSort, runQuickSort, runSelectionSort } from "../../algorithms/sorting/sortingAlgorithms";
+import { runKruskal } from "../../algorithms/spanning/spanningAlgorithms";
+import { runBubbleSort, runHeapSort, runInsertionSort, runMergeSort, runQuickSort, runSelectionSort } from "../../algorithms/sorting/sortingAlgorithms";
 import type { GraphInput } from "../../algorithms/shared/graphTypes";
 import { parseNumberList } from "../../algorithms/shared/arrayInput";
 import { AlgoVizLab, type ArrayLabOption, type GraphLabOption } from "../components/AlgoVizLab";
 
 const moduleContent = {
   search: { icon: Search, name: "Search algorithms", description: "Explore BFS, DFS, and Greedy Best-First Search step by step.", category: "search" as const, eyebrow: "Graph search lab", defaultAlgorithm: "bfs", options: [{ id: "bfs", name: "Breadth-First Search", run: (graph: GraphInput) => runBfs(graph) }, { id: "dfs", name: "Depth-First Search", run: (graph: GraphInput) => runDfs(graph) }, { id: "greedy-best-first", name: "Greedy Best-First Search", run: (graph: GraphInput) => runGreedyBestFirst(graph) }] },
-  pathfinding: { icon: Route, name: "Pathfinding", description: "Compare distance, heuristics, and shortest paths on the same weighted graph.", category: "pathfinding" as const, eyebrow: "Weighted graph lab", defaultAlgorithm: "dijkstra", options: [{ id: "dijkstra", name: "Dijkstra's Algorithm", run: (graph: GraphInput) => runDijkstra(graph) }, { id: "a-star", name: "A* Search", run: (graph: GraphInput) => runAStar(graph) }] },
-  sorting: { icon: Sigma, name: "Sorting algorithms", description: "Watch comparisons and swaps turn an unsorted array into order.", category: "sorting" as const, eyebrow: "Array sorting lab", defaultAlgorithm: "bubble", options: [{ id: "bubble", name: "Bubble Sort", run: (values: readonly number[]) => runBubbleSort(values) }, { id: "selection", name: "Selection Sort", run: (values: readonly number[]) => runSelectionSort(values) }, { id: "insertion", name: "Insertion Sort", run: (values: readonly number[]) => runInsertionSort(values) }, { id: "merge", name: "Merge Sort", run: (values: readonly number[]) => runMergeSort(values) }, { id: "quick", name: "Quick Sort", run: (values: readonly number[]) => runQuickSort(values) }] },
+  pathfinding: { icon: Route, name: "Pathfinding", description: "Compare distance, heuristics, and shortest paths on the same weighted graph, or on a map you draw.", category: "pathfinding" as const, eyebrow: "Weighted graph lab", defaultAlgorithm: "dijkstra", options: [{ id: "dijkstra", name: "Dijkstra's Algorithm", run: (graph: GraphInput) => runDijkstra(graph) }, { id: "a-star", name: "A* Search", run: (graph: GraphInput) => runAStar(graph) }, { id: "bellman-ford", name: "Bellman-Ford", run: (graph: GraphInput) => runBellmanFord(graph) }] },
+  spanning: { icon: Network, name: "Spanning trees", description: "Connect every node with the least total weight, one edge at a time.", category: "spanning" as const, eyebrow: "Minimum spanning tree lab", defaultAlgorithm: "kruskal", options: [{ id: "kruskal", name: "Kruskal's Algorithm", run: (graph: GraphInput) => runKruskal(graph) }] },
+  sorting: { icon: Sigma, name: "Sorting algorithms", description: "Watch comparisons and swaps turn an unsorted array into order.", category: "sorting" as const, eyebrow: "Array sorting lab", defaultAlgorithm: "bubble", options: [{ id: "bubble", name: "Bubble Sort", run: (values: readonly number[]) => runBubbleSort(values) }, { id: "selection", name: "Selection Sort", run: (values: readonly number[]) => runSelectionSort(values) }, { id: "insertion", name: "Insertion Sort", run: (values: readonly number[]) => runInsertionSort(values) }, { id: "merge", name: "Merge Sort", run: (values: readonly number[]) => runMergeSort(values) }, { id: "quick", name: "Quick Sort", run: (values: readonly number[]) => runQuickSort(values) }, { id: "heap", name: "Heap Sort", run: (values: readonly number[]) => runHeapSort(values) }] },
   compare: { icon: GitCompareArrows, name: "Compare algorithms", description: "Run real executions against shared inputs and inspect the difference.", category: "compare" as const, eyebrow: "Comparison lab" },
 } as const;
 

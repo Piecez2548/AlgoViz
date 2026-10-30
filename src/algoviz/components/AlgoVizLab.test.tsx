@@ -143,3 +143,44 @@ describe("drawing your own map", () => {
     expect(goal.value).toBe("A");
   });
 });
+
+describe("spanning trees", () => {
+  it("has no map or endpoint pickers, keeps the tree edges on screen and names the steps", () => {
+    open("/spanning");
+    expect(screen.queryByLabelText("Choose map")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Spanning trees" })).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: "ArrowRight" });
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("Compare");
+    fireEvent.keyDown(window, { key: "End" });
+    expect(document.querySelectorAll(".algoviz-edge-accepted")).toHaveLength(5);
+    expect(document.querySelectorAll(".algoviz-edge-rejected")).toHaveLength(2);
+    expect(screen.getByText(/Minimum spanning tree found/)).toBeInTheDocument();
+    expect(screen.getByText("Edges kept").previousSibling).toHaveTextContent("5");
+  });
+
+  it("calls an accepted edge 'Keep edge' on its own step", () => {
+    open("/spanning");
+    fireEvent.keyDown(window, { key: "ArrowRight" });
+    fireEvent.keyDown(window, { key: "ArrowRight" });
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("Keep edge");
+    expect(document.querySelectorAll(".algoviz-pseudocode li.is-active")).toHaveLength(1);
+  });
+});
+
+describe("Bellman-Ford and heap sort in the labs", () => {
+  it("runs Bellman-Ford on a drawn map and keeps the route", () => {
+    open("/pathfinding?algorithm=bellman-ford");
+    fireEvent.change(screen.getByLabelText("Choose map"), { target: { value: "grid" } });
+    fireEvent.keyDown(window, { key: "End" });
+    const marked = document.querySelectorAll(".algoviz-cell.is-path").length;
+    expect(marked).toBeGreaterThan(5);
+    expect(marked).toBeLessThan(20);
+  });
+
+  it("sorts your numbers with heap sort", () => {
+    open("/sorting?algorithm=heap&values=5,3,9,1");
+    expect(screen.getByText("Array · [5, 3, 9, 1]")).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: "End" });
+    expect(screen.getAllByText("Complete").length).toBeGreaterThan(0);
+  });
+});

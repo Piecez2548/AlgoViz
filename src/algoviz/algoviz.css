@@ -1424,3 +1424,8 @@
 
 .algoviz-pseudocode, .algoviz-pseudocode li { text-transform: none; letter-spacing: 0; }
 .algoviz-pseudocode li { white-space: pre-wrap; }
+
+.icon-spanning { background: #2a2548; color: var(--algo-blue); }
+.algoviz-graph-canvas .algoviz-edge-accepted { stroke: var(--algo-accent); stroke-width: 1.6; }
+.algoviz-graph-canvas .algoviz-edge-rejected { stroke: #ff8a8a; stroke-dasharray: 2 2; opacity: 0.7; }
+.algoviz-graph-canvas .algoviz-edge-active { stroke: var(--algo-yellow); stroke-width: 2; opacity: 1; }

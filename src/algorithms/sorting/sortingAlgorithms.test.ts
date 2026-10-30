@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { runBubbleSort, runInsertionSort, runMergeSort, runQuickSort, runSelectionSort } from "./sortingAlgorithms";
+import { runBubbleSort, runHeapSort, runInsertionSort, runMergeSort, runQuickSort, runSelectionSort } from "./sortingAlgorithms";
 
 describe("sorting algorithm executions", () => {
-  it.each([runBubbleSort, runSelectionSort, runInsertionSort, runMergeSort, runQuickSort])("ends with a sorted snapshot", (run) => {
+  it.each([runBubbleSort, runSelectionSort, runInsertionSort, runMergeSort, runQuickSort, runHeapSort])("ends with a sorted snapshot", (run) => {
     const execution = run();
     const finalValues = execution.steps.at(-2)?.values ?? [];
     expect(finalValues).toEqual([9, 18, 23, 31, 42, 56, 64]);
@@ -17,7 +17,7 @@ describe("sorting algorithm executions", () => {
     expect(lengths.at(-1)).toBeGreaterThan(lengths[0]);
   });
 
-  it.each([runBubbleSort, runSelectionSort, runInsertionSort, runMergeSort, runQuickSort])("shows the array state on every step", (run) => {
+  it.each([runBubbleSort, runSelectionSort, runInsertionSort, runMergeSort, runQuickSort, runHeapSort])("shows the array state on every step", (run) => {
     for (const step of run().steps) {
       expect(step.dataStructure?.[0]?.label).toBe("Array");
       expect(step.dataStructure?.[0]?.value).toBe((step.values ?? []).join(", "));

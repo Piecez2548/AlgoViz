@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type AlgoVizCategory = "search" | "pathfinding" | "sorting";
+export type AlgoVizCategory = "search" | "pathfinding" | "spanning" | "sorting";
 export type PlaybackSpeed = 0.5 | 1 | 2 | 4;
 
 interface AlgoVizState {

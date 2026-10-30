@@ -13,9 +13,11 @@ export type AlgorithmStepType =
   | "update"
   | "swap"
   | "path"
+  | "accept"
+  | "reject"
   | "complete";
 
-export type AlgorithmCategory = "search" | "pathfinding" | "sorting";
+export type AlgorithmCategory = "search" | "pathfinding" | "spanning" | "sorting";
 
 export interface AlgorithmMetrics {
   comparisons?: number;
@@ -40,6 +42,12 @@ export interface AlgorithmStep {
   values?: readonly number[];
   highlightIndices?: readonly number[];
   sortedIndices?: readonly number[];
+  /** Edge being examined, written as edgeKey(a, b), e.g. "A-B". */
+  activeEdge?: string;
+  acceptedEdges?: readonly string[];
+  rejectedEdges?: readonly string[];
+  /** Pseudocode line to highlight, when the step type alone is ambiguous. */
+  line?: number;
   explanation: string;
   metrics?: AlgorithmMetrics;
 }

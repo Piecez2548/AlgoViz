@@ -16,6 +16,8 @@ export function createAlgorithmStep(
   if (details.values) step.values = [...details.values];
   if (details.highlightIndices) step.highlightIndices = [...details.highlightIndices];
   if (details.sortedIndices) step.sortedIndices = [...details.sortedIndices];
+  if (details.acceptedEdges) step.acceptedEdges = [...details.acceptedEdges];
+  if (details.rejectedEdges) step.rejectedEdges = [...details.rejectedEdges];
   return step;
 }
 
