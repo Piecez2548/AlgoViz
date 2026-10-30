@@ -75,7 +75,7 @@ describe("AlgoViz module selection", () => {
     expect(screen.queryByText("Swaps")).not.toBeInTheDocument();
   });
 
-  it("derives the comparison verdict from the recorded executions", () => {
+  it("derives the comparison verdict from the measured runs", () => {
     render(
       <MemoryRouter initialEntries={["/compare"]}>
         <Routes>
@@ -83,5 +83,5 @@ describe("AlgoViz module selection", () => {
         </Routes>
       </MemoryRouter>,
     );
-    expect(screen.getByText("Both reach the same optimum")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(/made the (fewest|most) comparisons/);
   });});

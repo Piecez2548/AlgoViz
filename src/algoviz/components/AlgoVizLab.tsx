@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { defaultGrid, edgeKey, gridToGraph, SAMPLE_GRAPH, sampleGraphBetween } from "../../algorithms/shared/graph";
-import type { GraphInput, GridState } from "../../algorithms/shared/graphTypes";
+import { edgeKey } from "../../algorithms/shared/graph";
+import type { GraphInput } from "../../algorithms/shared/graphTypes";
 import { SORT_SAMPLE } from "../../algorithms/sorting/sortingAlgorithms";
 import { PSEUDOCODE, activeLine } from "../../algorithms/shared/pseudocode";
 import type { AlgorithmExecution, AlgorithmStep } from "../../algorithms/shared/types";
 import { getStepLabel } from "../../algorithms/shared/utils";
-import { ArrayInput, GridBoard, GridToolbar, type GridTool } from "./InputEditors";
+import { ArrayInput, GridBoard } from "./InputEditors";
+import { MapControls, MapSelect, useMapInput } from "./MapInput";
 import { PlaybackControls } from "./PlaybackControls";
 import { usePlayback } from "./usePlayback";
 
@@ -23,20 +24,15 @@ type AlgoVizLabProps = CommonProps & (
   | { category: "search" | "pathfinding" | "spanning"; options: readonly GraphLabOption[] }
 );
 
-const SAMPLE_NODE_IDS = SAMPLE_GRAPH.nodes.map((node) => node.id);
-
 export function AlgoVizLab(props: AlgoVizLabProps) {
   const { category, options, defaultAlgorithm, onAlgorithmChange } = props;
   const [algorithmId, setAlgorithmId] = useState(defaultAlgorithm);
   const [values, setValues] = useState<readonly number[]>(props.category === "sorting" ? props.initialValues ?? SORT_SAMPLE : SORT_SAMPLE);
-  const [mapKind, setMapKind] = useState<"sample" | "grid">("sample");
-  const [endpoints, setEndpoints] = useState({ start: SAMPLE_GRAPH.start, goal: SAMPLE_GRAPH.goal });
-  const [grid, setGrid] = useState<GridState>(defaultGrid);
-  const [tool, setTool] = useState<GridTool>("wall");
 
   // Spanning trees always use the sample graph; the drawn map and start/goal picks do not apply to them.
   const usesMap = category === "search" || category === "pathfinding";
-  const graph = useMemo<GraphInput>(() => (!usesMap ? SAMPLE_GRAPH : mapKind === "grid" ? gridToGraph(grid) : sampleGraphBetween(endpoints.start, endpoints.goal)), [endpoints, grid, mapKind, usesMap]);
+  const map = useMapInput(usesMap);
+  const { graph, mapKind, grid, tool } = map;
   const option = options.find((candidate) => candidate.id === algorithmId) ?? options[0];
   const execution = useMemo(() => (category === "sorting" ? (option as ArrayLabOption).run(values) : (option as GraphLabOption).run(graph)), [category, graph, option, values]);
   const playback = usePlayback(execution.steps.length, execution);
@@ -60,11 +56,6 @@ export function AlgoVizLab(props: AlgoVizLabProps) {
     setValues(next);
     if (props.category === "sorting") props.onValuesChange?.(next);
   };
-  const setEndpoint = (key: "start" | "goal", id: string) => {
-    const other = key === "start" ? "goal" : "start";
-    // Never allow start and goal to be the same node: swap them instead.
-    setEndpoints((current) => (current[other] === id ? { ...current, [key]: id, [other]: current[key] } : { ...current, [key]: id }));
-  };
 
   return <section className="algoviz-lab" aria-label={`${category} algorithm visualizer`}>
     <div className="algoviz-lab-toolbar">
@@ -73,26 +64,18 @@ export function AlgoVizLab(props: AlgoVizLabProps) {
           {options.map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name}</option>)}
         </select>
       </label>
-      {usesMap && <label className="algoviz-select-label">Map
-        <select value={mapKind} onChange={(event) => setMapKind(event.target.value as "sample" | "grid")} aria-label="Choose map">
-          <option value="sample">Sample graph</option><option value="grid">Draw your own map</option>
-        </select>
-      </label>}
+      {usesMap && <MapSelect map={map} />}
       <span className="algoviz-input-label">Input <strong>{execution.inputLabel}</strong></span>
     </div>
 
     {category === "sorting" && <ArrayInput values={values} onApply={changeValues} />}
-    {usesMap && mapKind === "sample" && <div className="algoviz-input-panel">
-      <label className="algoviz-field">Start<select value={endpoints.start} onChange={(event) => setEndpoint("start", event.target.value)}>{SAMPLE_NODE_IDS.map((id) => <option key={id} value={id}>{id}</option>)}</select></label>
-      <label className="algoviz-field">Goal<select value={endpoints.goal} onChange={(event) => setEndpoint("goal", event.target.value)}>{SAMPLE_NODE_IDS.map((id) => <option key={id} value={id}>{id}</option>)}</select></label>
-    </div>}
-    {usesMap && mapKind === "grid" && <GridToolbar tool={tool} onTool={setTool} onClearWalls={() => setGrid((current) => ({ ...current, cells: current.cells.map((cell) => (cell === "wall" ? "empty" : cell)) }))} onReset={() => setGrid(defaultGrid())} />}
+    {usesMap && <MapControls map={map} />}
     {noRoute && <p className="algoviz-field-error" role="status">No route exists from {graph.start} to {graph.goal} on this map. Open a gap in the walls to connect them.</p>}
 
     <div className="algoviz-lab-grid">
       <div className="algoviz-stage">
         <div className="algoviz-stage-header" aria-live="polite" aria-atomic="true"><span><i className="algoviz-status-dot" /> Execution surface</span><span>{getStepLabel(step, execution.steps.length)}</span></div>
-        {category === "sorting" ? <SortCanvas step={step} /> : usesMap && mapKind === "grid" ? <GridBoard grid={grid} tool={tool} step={step} route={foundPath} onChange={setGrid} /> : <GraphCanvas graph={graph} step={step} route={foundPath} />}
+        {category === "sorting" ? <SortCanvas step={step} /> : usesMap && mapKind === "grid" ? <GridBoard grid={grid} tool={tool} step={step} route={foundPath} onChange={map.setGrid} /> : <GraphCanvas graph={graph} step={step} route={foundPath} />}
         <PlaybackControls stepIndex={playback.stepIndex} last={playback.last} isPlaying={playback.isPlaying} speed={playback.speed} onToggle={playback.toggle} onAdvance={playback.advance} onSeek={playback.seek} onSpeed={playback.setSpeed} />
       </div>
       <LabInspector step={step} category={category} algorithmId={algorithmId} />

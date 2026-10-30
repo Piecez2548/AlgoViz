@@ -1,20 +1,16 @@
 import { ArrowLeft, GitCompareArrows, Network, Route, Search, Sigma } from "lucide-react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
-import { pathCost, SAMPLE_GRAPH } from "../../algorithms/shared/graph";
-import { runAStar, runBellmanFord, runDijkstra } from "../../algorithms/pathfinding/pathfindingAlgorithms";
-import { runBfs, runDfs, runGreedyBestFirst } from "../../algorithms/search/searchAlgorithms";
-import { runKruskal } from "../../algorithms/spanning/spanningAlgorithms";
-import { runBubbleSort, runHeapSort, runInsertionSort, runMergeSort, runQuickSort, runSelectionSort } from "../../algorithms/sorting/sortingAlgorithms";
-import type { GraphInput } from "../../algorithms/shared/graphTypes";
+import { PATHFINDING_ALGORITHMS, SEARCH_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../../algorithms/registry";
 import { parseNumberList } from "../../algorithms/shared/arrayInput";
-import { AlgoVizLab, type ArrayLabOption, type GraphLabOption } from "../components/AlgoVizLab";
+import { AlgoVizLab } from "../components/AlgoVizLab";
+import { CompareLab } from "../components/CompareLab";
 
 const moduleContent = {
-  search: { icon: Search, name: "Search algorithms", description: "Explore BFS, DFS, and Greedy Best-First Search step by step.", category: "search" as const, eyebrow: "Graph search lab", defaultAlgorithm: "bfs", options: [{ id: "bfs", name: "Breadth-First Search", run: (graph: GraphInput) => runBfs(graph) }, { id: "dfs", name: "Depth-First Search", run: (graph: GraphInput) => runDfs(graph) }, { id: "greedy-best-first", name: "Greedy Best-First Search", run: (graph: GraphInput) => runGreedyBestFirst(graph) }] },
-  pathfinding: { icon: Route, name: "Pathfinding", description: "Compare distance, heuristics, and shortest paths on the same weighted graph, or on a map you draw.", category: "pathfinding" as const, eyebrow: "Weighted graph lab", defaultAlgorithm: "dijkstra", options: [{ id: "dijkstra", name: "Dijkstra's Algorithm", run: (graph: GraphInput) => runDijkstra(graph) }, { id: "a-star", name: "A* Search", run: (graph: GraphInput) => runAStar(graph) }, { id: "bellman-ford", name: "Bellman-Ford", run: (graph: GraphInput) => runBellmanFord(graph) }] },
-  spanning: { icon: Network, name: "Spanning trees", description: "Connect every node with the least total weight, one edge at a time.", category: "spanning" as const, eyebrow: "Minimum spanning tree lab", defaultAlgorithm: "kruskal", options: [{ id: "kruskal", name: "Kruskal's Algorithm", run: (graph: GraphInput) => runKruskal(graph) }] },
-  sorting: { icon: Sigma, name: "Sorting algorithms", description: "Watch comparisons and swaps turn an unsorted array into order.", category: "sorting" as const, eyebrow: "Array sorting lab", defaultAlgorithm: "bubble", options: [{ id: "bubble", name: "Bubble Sort", run: (values: readonly number[]) => runBubbleSort(values) }, { id: "selection", name: "Selection Sort", run: (values: readonly number[]) => runSelectionSort(values) }, { id: "insertion", name: "Insertion Sort", run: (values: readonly number[]) => runInsertionSort(values) }, { id: "merge", name: "Merge Sort", run: (values: readonly number[]) => runMergeSort(values) }, { id: "quick", name: "Quick Sort", run: (values: readonly number[]) => runQuickSort(values) }, { id: "heap", name: "Heap Sort", run: (values: readonly number[]) => runHeapSort(values) }] },
-  compare: { icon: GitCompareArrows, name: "Compare algorithms", description: "Run real executions against shared inputs and inspect the difference.", category: "compare" as const, eyebrow: "Comparison lab" },
+  search: { icon: Search, name: "Search algorithms", description: "Explore BFS, DFS, and Greedy Best-First Search step by step.", category: "search" as const, eyebrow: "Graph search lab", defaultAlgorithm: "bfs", options: SEARCH_ALGORITHMS },
+  pathfinding: { icon: Route, name: "Pathfinding", description: "Compare distance, heuristics, and shortest paths on the same weighted graph, or on a map you draw.", category: "pathfinding" as const, eyebrow: "Weighted graph lab", defaultAlgorithm: "dijkstra", options: PATHFINDING_ALGORITHMS },
+  spanning: { icon: Network, name: "Spanning trees", description: "Connect every node with the least total weight, one edge at a time.", category: "spanning" as const, eyebrow: "Minimum spanning tree lab", defaultAlgorithm: "kruskal", options: SPANNING_ALGORITHMS },
+  sorting: { icon: Sigma, name: "Sorting algorithms", description: "Watch comparisons and swaps turn an unsorted array into order.", category: "sorting" as const, eyebrow: "Array sorting lab", defaultAlgorithm: "bubble", options: SORTING_ALGORITHMS },
+  compare: { icon: GitCompareArrows, name: "Compare algorithms", description: "Run several algorithms on the same input, then see how each one's cost grows as the input gets bigger.", category: "compare" as const, eyebrow: "Comparison lab" },
 } as const;
 
 export default function AlgoVizModulePage() {
@@ -38,28 +34,8 @@ export default function AlgoVizModulePage() {
       <h1>{module.name}</h1>
       <p className="algoviz-module-lede">{module.description}</p>
     </section>
-    {module.category === "compare" ? <CompareLab /> : module.category === "sorting"
-      ? <AlgoVizLab category="sorting" options={module.options as readonly ArrayLabOption[]} defaultAlgorithm={selectedAlgorithm} initialValues={initialValues} onValuesChange={(values) => updateParams("values", values.join(","))} onAlgorithmChange={(id) => updateParams("algorithm", id)} />
-      : <AlgoVizLab category={module.category} options={module.options as readonly GraphLabOption[]} defaultAlgorithm={selectedAlgorithm} onAlgorithmChange={(id) => updateParams("algorithm", id)} />}
+    {module.category === "compare" ? <CompareLab initialValues={initialValues} onValuesChange={(values) => updateParams("values", values.join(","))} /> : module.category === "sorting"
+      ? <AlgoVizLab category="sorting" options={module.options} defaultAlgorithm={selectedAlgorithm} initialValues={initialValues} onValuesChange={(values) => updateParams("values", values.join(","))} onAlgorithmChange={(id) => updateParams("algorithm", id)} />
+      : <AlgoVizLab category={module.category} options={module.options} defaultAlgorithm={selectedAlgorithm} onAlgorithmChange={(id) => updateParams("algorithm", id)} />}
   </div>;
-}
-
-function CompareLab() {
-  const dijkstra = runDijkstra(); const aStar = runAStar();
-  const dijkstraPath = dijkstra.steps.find((step) => step.type === "path")?.dataStructure?.[0]?.value ?? "—";
-  const aStarPath = aStar.steps.find((step) => step.type === "path")?.dataStructure?.[0]?.value ?? "—";
-  const costOf = (path: string | number) => pathCost(SAMPLE_GRAPH, String(path).split(" → "));
-  const sameCost = costOf(dijkstraPath) === costOf(aStarPath);
-  // Derived from the recorded executions rather than asserted.
-  const verdict = dijkstraPath === "—" || aStarPath === "—" ? "No path found" : sameCost ? (dijkstraPath === aStarPath ? "Both reach the same optimum" : "Different paths, same cost") : "Paths differ in cost";
-  const lastMetric = (execution: typeof dijkstra) => Math.max(...execution.steps.map((step) => step.metrics?.visitedNodes ?? step.visited?.length ?? 0));
-  return <section className="algoviz-compare-lab" aria-label="Algorithm comparison">
-    <div className="algoviz-compare-summary"><div><span>Shared input</span><strong>Weighted graph · A → F</strong></div><div><span>Shortest path</span><strong>{dijkstraPath}</strong></div><div><span>Result</span><strong>{verdict}</strong></div></div>
-    <div className="algoviz-compare-cards"><CompareCard name="Dijkstra's Algorithm" execution={dijkstra} metric={lastMetric(dijkstra)} path={dijkstraPath} /><CompareCard name="A* Search" execution={aStar} metric={lastMetric(aStar)} path={aStarPath} /></div>
-    <p className="algoviz-compare-note">The counts above are generated from the recorded steps, so the comparison stays honest as the execution changes.</p>
-  </section>;
-}
-
-function CompareCard({ name, execution, metric, path }: { name: string; execution: ReturnType<typeof runDijkstra>; metric: number; path: string | number }) {
-  return <article className="algoviz-compare-card"><div><p className="algoviz-eyebrow">Recorded execution</p><h2>{name}</h2></div><div className="algoviz-compare-card-stats"><div><strong>{execution.steps.length}</strong><span>steps</span></div><div><strong>{metric}</strong><span>visited</span></div></div><p>Path <strong>{path}</strong></p><div className="algoviz-mini-progress"><span style={{ width: `${Math.min(100, (metric / 6) * 100)}%` }} /></div></article>;
 }

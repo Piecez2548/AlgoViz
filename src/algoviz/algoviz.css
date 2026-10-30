@@ -1429,3 +1429,34 @@
 .algoviz-graph-canvas .algoviz-edge-accepted { stroke: var(--algo-accent); stroke-width: 1.6; }
 .algoviz-graph-canvas .algoviz-edge-rejected { stroke: #ff8a8a; stroke-dasharray: 2 2; opacity: 0.7; }
 .algoviz-graph-canvas .algoviz-edge-active { stroke: var(--algo-yellow); stroke-width: 2; opacity: 1; }
+
+/* Compare lab: results table, bars and growth chart */
+.algoviz-compare-lab { display: grid; gap: 1rem; }
+.algoviz-compare-heading { margin: 1.6rem 0 0; font-size: 1.25rem; }
+.algoviz-compare-controls { align-items: flex-start; }
+.algoviz-compare-verdict { margin: 0; padding: 0.85rem 1rem; border: 1px solid var(--algo-line); border-left: 4px solid var(--algo-accent); border-radius: 8px; background: var(--algo-surface); font-weight: 700; }
+.algoviz-table-wrap { overflow-x: auto; border: 1px solid var(--algo-line); border-radius: 10px; }
+.algoviz-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.algoviz-table caption { padding: 0.7rem 1rem; color: var(--algo-muted); text-align: left; font-size: 0.78rem; }
+.algoviz-table th, .algoviz-table td { padding: 0.6rem 1rem; border-top: 1px solid var(--algo-line); text-align: left; white-space: nowrap; }
+.algoviz-table thead th { color: var(--algo-faint); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.algoviz-table tbody th { font-weight: 700; }
+.algoviz-bar { display: inline-block; width: 90px; height: 8px; margin-right: 0.6rem; border-radius: 4px; background: var(--algo-surface-raised); vertical-align: middle; overflow: hidden; }
+.algoviz-bar i { display: block; height: 100%; background: var(--algo-accent); }
+.algoviz-lowest { color: var(--algo-accent); font-weight: 700; }
+.algoviz-chart { margin: 0; padding: 1rem; border: 1px solid var(--algo-line); border-radius: 10px; background: var(--algo-surface); }
+.algoviz-chart-legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.2rem; margin: 0 0 0.6rem; padding: 0; list-style: none; font-size: 0.8rem; }
+.algoviz-chart-legend li { display: inline-flex; align-items: center; gap: 0.4rem; }
+.algoviz-chart-svg { display: block; width: 100%; height: auto; }
+.algoviz-chart-grid { stroke: var(--algo-line); stroke-width: 1; }
+.algoviz-chart-axis { stroke: var(--algo-faint); stroke-width: 1.2; }
+.algoviz-chart-tick { fill: var(--algo-muted); font-size: 11px; }
+.algoviz-chart-axis-label { fill: var(--algo-muted); font-size: 12px; font-weight: 700; }
+.algoviz-chart-end { font-size: 11.5px; font-weight: 700; }
+.algoviz-chart-note { margin: 0.6rem 0 0; color: var(--algo-muted); font-size: 0.75rem; }
+.algoviz-chart-wrap.is-stale { opacity: 0.55; transition: opacity 0.15s; }
+.algoviz-chart-data summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--algo-blue); font-weight: 700; }
+@media (max-width: 640px) { .algoviz-bar { width: 56px; } .algoviz-chart { padding: 0.6rem; } }
+/* Let wide tables scroll inside their own box instead of stretching the page. */
+.algoviz-compare-lab, .algoviz-compare-lab > * { min-width: 0; }
+.algoviz-table-wrap { max-width: 100%; }
