@@ -17,7 +17,7 @@ export type AlgorithmStepType =
   | "reject"
   | "complete";
 
-export type AlgorithmCategory = "search" | "pathfinding" | "spanning" | "sorting";
+export type AlgorithmCategory = "search" | "pathfinding" | "spanning" | "sorting" | "array-search";
 
 export interface AlgorithmMetrics {
   comparisons?: number;
@@ -42,6 +42,8 @@ export interface AlgorithmStep {
   values?: readonly number[];
   highlightIndices?: readonly number[];
   sortedIndices?: readonly number[];
+  /** First and last position still being searched; positions outside it are ruled out. */
+  activeRange?: readonly [number, number];
   /** Edge being examined, written as edgeKey(a, b), e.g. "A-B". */
   activeEdge?: string;
   acceptedEdges?: readonly string[];

@@ -1,6 +1,6 @@
-import { ArrowLeft, GitCompareArrows, Network, Route, Search, Sigma } from "lucide-react";
+import { ArrowLeft, GitCompareArrows, ListFilter, Network, Route, Search, Sigma } from "lucide-react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
-import { PATHFINDING_ALGORITHMS, SEARCH_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../../algorithms/registry";
+import { ARRAY_SEARCH_ALGORITHMS, PATHFINDING_ALGORITHMS, SEARCH_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../../algorithms/registry";
 import { parseNumberList } from "../../algorithms/shared/arrayInput";
 import { AlgoVizLab } from "../components/AlgoVizLab";
 import { CompareLab } from "../components/CompareLab";
@@ -10,6 +10,7 @@ const moduleContent = {
   pathfinding: { icon: Route, name: "Pathfinding", description: "Compare distance, heuristics, and shortest paths on the same weighted graph, or on a map you draw.", category: "pathfinding" as const, eyebrow: "Weighted graph lab", defaultAlgorithm: "dijkstra", options: PATHFINDING_ALGORITHMS },
   spanning: { icon: Network, name: "Spanning trees", description: "Connect every node with the least total weight, one edge at a time.", category: "spanning" as const, eyebrow: "Minimum spanning tree lab", defaultAlgorithm: "kruskal", options: SPANNING_ALGORITHMS },
   sorting: { icon: Sigma, name: "Sorting algorithms", description: "Watch comparisons and swaps turn an unsorted array into order.", category: "sorting" as const, eyebrow: "Array sorting lab", defaultAlgorithm: "bubble", options: SORTING_ALGORITHMS },
+  "array-search": { icon: ListFilter, name: "Array search", description: "Find a value in a sorted list: check every item, or halve the range with each look.", category: "array-search" as const, eyebrow: "List search lab", defaultAlgorithm: "binary-search", options: ARRAY_SEARCH_ALGORITHMS },
   compare: { icon: GitCompareArrows, name: "Compare algorithms", description: "Run several algorithms on the same input, then see how each one's cost grows as the input gets bigger.", category: "compare" as const, eyebrow: "Comparison lab" },
 } as const;
 
@@ -23,6 +24,8 @@ export default function AlgoVizModulePage() {
   const requestedAlgorithm = new URLSearchParams(location.search).get("algorithm");
   const sharedValues = new URLSearchParams(location.search).get("values");
   const initialValues = sharedValues ? parseNumberList(sharedValues).values : undefined;
+  const requestedTarget = Number(new URLSearchParams(location.search).get("target"));
+  const initialTarget = Number.isInteger(requestedTarget) && requestedTarget >= 1 && requestedTarget <= 999 ? requestedTarget : undefined;
   const selectedAlgorithm = "options" in module
     ? module.options.find((option) => option.id === requestedAlgorithm)?.id ?? module.defaultAlgorithm
     : "";
@@ -36,6 +39,8 @@ export default function AlgoVizModulePage() {
     </section>
     {module.category === "compare" ? <CompareLab initialValues={initialValues} onValuesChange={(values) => updateParams("values", values.join(","))} /> : module.category === "sorting"
       ? <AlgoVizLab category="sorting" options={module.options} defaultAlgorithm={selectedAlgorithm} initialValues={initialValues} onValuesChange={(values) => updateParams("values", values.join(","))} onAlgorithmChange={(id) => updateParams("algorithm", id)} />
+      : module.category === "array-search"
+        ? <AlgoVizLab category="array-search" options={module.options} defaultAlgorithm={selectedAlgorithm} initialValues={initialValues} initialTarget={initialTarget} onValuesChange={(values) => updateParams("values", values.join(","))} onTargetChange={(target) => updateParams("target", String(target))} onAlgorithmChange={(id) => updateParams("algorithm", id)} />
       : <AlgoVizLab category={module.category} options={module.options} defaultAlgorithm={selectedAlgorithm} onAlgorithmChange={(id) => updateParams("algorithm", id)} />}
   </div>;
 }

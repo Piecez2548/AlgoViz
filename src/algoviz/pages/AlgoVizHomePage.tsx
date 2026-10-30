@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, BarChart3, BookOpen, GitCompareArrows, Network, Pause, Play, Route } from "lucide-react";
+import { ArrowRight, BarChart3, BookOpen, GitCompareArrows, Network, Pause, Play, Route, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import type { AlgorithmDefinition } from "@/algorithms/shared/types";
@@ -33,6 +33,13 @@ const categories: AlgorithmDefinition[] = [
     summary: "Watch comparisons and swaps turn an array into order.",
     status: "available",
   },
+  {
+    id: "array-search",
+    name: "Array search",
+    category: "array-search",
+    summary: "Find a value in a list: look at every item, or halve the range each time.",
+    status: "available",
+  },
 ];
 
 const algorithmCatalog = [
@@ -42,13 +49,18 @@ const algorithmCatalog = [
   { id: "dijkstra", name: "Dijkstra's Algorithm", shortName: "Dijkstra", category: "pathfinding", complexity: "O((V + E) log V)", summary: "Relax edges to find shortest weighted paths." },
   { id: "a-star", name: "A* Search", shortName: "A*", category: "pathfinding", complexity: "O((V + E) log V)", summary: "Combine cost-so-far with a heuristic." },
   { id: "bellman-ford", name: "Bellman-Ford", shortName: "Bellman-Ford", category: "pathfinding", complexity: "O(V · E)", summary: "Sweep every edge until no distance improves." },
+  { id: "floyd-warshall", name: "Floyd-Warshall", shortName: "Floyd-Warshall", category: "pathfinding", complexity: "O(V³)", summary: "Try every node as a stop-over to get all-pairs shortest paths." },
   { id: "kruskal", name: "Kruskal's Algorithm", shortName: "Kruskal", category: "spanning", complexity: "O(E log E)", summary: "Keep the lightest edges that never close a loop." },
+  { id: "prim", name: "Prim's Algorithm", shortName: "Prim", category: "spanning", complexity: "O(V · E)", summary: "Grow one tree outward by always taking the lightest edge that leaves it." },
   { id: "bubble", name: "Bubble Sort", shortName: "Bubble", category: "sorting", complexity: "O(n²)", summary: "Bubble the largest values to the end." },
   { id: "selection", name: "Selection Sort", shortName: "Selection", category: "sorting", complexity: "O(n²)", summary: "Select the next smallest value." },
   { id: "insertion", name: "Insertion Sort", shortName: "Insertion", category: "sorting", complexity: "O(n²)", summary: "Insert each value into a sorted prefix." },
+  { id: "shell", name: "Shell Sort", shortName: "Shell", category: "sorting", complexity: "O(n²) worst", summary: "Insertion sort on values a shrinking gap apart." },
   { id: "merge", name: "Merge Sort", shortName: "Merge", category: "sorting", complexity: "O(n log n)", summary: "Divide, sort, and merge ordered runs." },
   { id: "quick", name: "Quick Sort", shortName: "Quick", category: "sorting", complexity: "O(n log n)", summary: "Partition around a pivot and recurse." },
   { id: "heap", name: "Heap Sort", shortName: "Heap", category: "sorting", complexity: "O(n log n)", summary: "Build a heap, then pull out the largest value each time." },
+  { id: "binary-search", name: "Binary search", shortName: "Binary", category: "array-search", complexity: "O(log n)", summary: "Halve the range of a sorted list with every look." },
+  { id: "linear-search", name: "Linear search", shortName: "Linear", category: "array-search", complexity: "O(n)", summary: "Check every value from the left until it turns up." },
 ] as const;
 
 function ExecutionPreview() {
@@ -144,6 +156,7 @@ export default function AlgoVizHomePage() {
                 {index === 1 && <Route size={20} />}
                 {index === 2 && <Network size={20} />}
                 {index === 3 && <BarChart3 size={20} />}
+                {index === 4 && <Search size={20} />}
               </span>
               <span className="algoviz-category-index">0{index + 1}</span>
               <span className="algoviz-category-copy"><strong>{category.name}</strong><span>{category.summary}</span></span>
@@ -159,7 +172,7 @@ export default function AlgoVizHomePage() {
             <p className="algoviz-eyebrow">Algorithm catalog</p>
             <h2 id="catalog-heading">The growing algorithm set.</h2>
           </div>
-          <p>Thirteen algorithms for teaching graph search, shortest paths, spanning trees, and sorting with the same step-by-step contract.</p>
+          <p>Eighteen algorithms for teaching graph search, shortest paths, spanning trees, sorting, and searching lists with the same step-by-step contract.</p>
         </div>
         <div className="algoviz-catalog-grid">
           {algorithmCatalog.map((algorithm, index) => (

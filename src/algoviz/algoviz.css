@@ -553,6 +553,10 @@
   background: #aab9ff18;
   color: var(--algo-blue);
 }
+.icon-array-search {
+  background: #aab9ff18;
+  color: var(--algo-accent);
+}
 .icon-sorting {
   background: #f5d36b18;
   color: var(--algo-yellow);
@@ -896,6 +900,9 @@
 .algoviz-sort-bar.is-highlighted i {
   border-color: var(--algo-yellow);
   background: #665521;
+}
+.algoviz-sort-bar.is-eliminated i {
+  opacity: 0.3;
 }
 .algoviz-sort-bar.is-sorted i {
   border-color: var(--algo-accent);

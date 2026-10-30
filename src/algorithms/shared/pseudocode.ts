@@ -61,6 +61,26 @@ export const PSEUDOCODE: Readonly<Record<string, Pseudocode>> = {
     lines: ["sort all edges from lightest to heaviest", "for each edge in that order:", "  look at its two ends", "  if they are already connected: skip it (it would close a loop)", "  otherwise: keep the edge and join the two groups", "the kept edges form the spanning tree"],
     lineFor: { enqueue: 0, compare: 2, reject: 3, accept: 4, complete: 5 },
   },
+  shell: {
+    lines: ["start with a gap of half the array length", "repeat until the gap has been 1:", "  for each value, compare it with the one a gap behind", "    compare the pair", "    if out of order: swap, then keep going back by the gap", "  halve the gap"],
+    lineFor: { compare: 3, swap: 4, complete: 1 },
+  },
+  prim: {
+    lines: ["start the tree at the start node", "while some node is outside the tree:", "  look at every edge from the tree to the outside", "  pick the lightest one", "  add it and the node it reaches to the tree", "no edge leaves the tree: done"],
+    lineFor: { enqueue: 0, compare: 3, accept: 4, complete: 5 },
+  },
+  "floyd-warshall": {
+    lines: ["set every pair distance to the direct edge, or infinity", "for each node k, in turn:", "  for every pair (i, j):", "    if i → k → j is shorter than i → j, use it", "after the last k, every pair has its shortest distance"],
+    lineFor: { enqueue: 0, visit: 1, update: 3, path: 4, complete: 4 },
+  },
+  "linear-search": {
+    lines: ["for each position from the left:", "  compare the value with the target", "  if equal: stop, found", "reached the end: not found"],
+    lineFor: { compare: 1, complete: 2 },
+  },
+  "binary-search": {
+    lines: ["keep a range of positions, at first all of them", "while the range is not empty:", "  look at the middle value", "  if equal to the target: stop, found", "  if smaller: keep the right half, otherwise the left half", "range empty: not found"],
+    lineFor: { compare: 2, complete: 3 },
+  },
   quick: {
     lines: ["pick the last value as the pivot", "for each value before the pivot:", "  compare it with the pivot", "  if smaller, move it to the left side", "put the pivot between the two sides, then sort each side"],
     lineFor: { compare: 2, swap: 3, complete: 4 },

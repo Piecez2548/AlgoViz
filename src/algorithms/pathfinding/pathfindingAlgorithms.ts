@@ -76,3 +76,48 @@ export function runBellmanFord(graph: GraphInput = SAMPLE_GRAPH): AlgorithmExecu
   steps.push(createAlgorithmStep(steps.length, "complete", path.length ? "Bellman-Ford completed." : `Bellman-Ford completed: ${graph.goal} cannot be reached from ${graph.start}.`, { visited: reached(), metrics: { visitedNodes: reached().length, operations: checks } }));
   return { algorithmId: "bellman-ford", inputLabel: `${graph.label ?? "Weighted graph"} · ${graph.start} → ${graph.goal}`, steps, completed: true };
 }
+
+/**
+ * Floyd-Warshall: shortest distances between every pair of nodes. For each node k in turn, ask for
+ * every pair (i, j) whether going i → k → j beats the best known route. After the last k all pairs are
+ * final. The display follows the distances from the start node (the row the route comes from); the
+ * other pairs are updated too, and every pair check is counted in the metrics.
+ */
+export function runFloydWarshall(graph: GraphInput = SAMPLE_GRAPH): AlgorithmExecution {
+  const steps: AlgorithmStep[] = [];
+  const n = graph.nodes.length;
+  const index = new Map(graph.nodes.map((node, position) => [node.id, position]));
+  const start = index.get(graph.start)!; const goal = index.get(graph.goal)!;
+  const dist = new Float64Array(n * n).fill(Infinity);
+  const next = new Int32Array(n * n).fill(-1);
+  for (let i = 0; i < n; i++) { dist[i * n + i] = 0; next[i * n + i] = i; }
+  for (const edge of graph.edges) {
+    const a = index.get(edge.from)!; const b = index.get(edge.to)!;
+    if (edge.weight < dist[a * n + b]) { dist[a * n + b] = edge.weight; dist[b * n + a] = edge.weight; next[a * n + b] = b; next[b * n + a] = a; }
+  }
+  let checks = 0; let improvedPairs = 0;
+  const reached = () => graph.nodes.filter((_, position) => Number.isFinite(dist[start * n + position])).map((node) => node.id);
+  const table = () => [...graph.nodes.map((node, position) => ({ label: node.id, value: String(dist[start * n + position]) })).filter((entry) => entry.value !== "Infinity"), { label: "Pairs improved", value: improvedPairs }];
+  steps.push(createAlgorithmStep(0, "enqueue", `Floyd-Warshall starts from the direct edge weights between every pair of nodes. Distances shown are from ${graph.start}.`, { currentNode: graph.start, visited: reached(), dataStructure: table(), metrics: { visitedNodes: reached().length, operations: 0 } }));
+  for (let k = 0; k < n; k++) {
+    let improved = 0; let fromStart = 0;
+    for (let i = 0; i < n; i++) {
+      const viaFirst = dist[i * n + k];
+      if (viaFirst === Infinity) continue;
+      for (let j = 0; j < n; j++) {
+        checks++;
+        const through = viaFirst + dist[k * n + j];
+        if (through >= dist[i * n + j]) continue;
+        dist[i * n + j] = through; next[i * n + j] = next[i * n + k]; improved++; improvedPairs++;
+        if (i === start) fromStart++;
+      }
+    }
+    const node = graph.nodes[k].id;
+    steps.push(createAlgorithmStep(steps.length, fromStart ? "update" : "visit", `Allow routes through ${node}: ${improved} pair${improved === 1 ? "" : "s"} got shorter${improved ? `, ${fromStart} of them from ${graph.start}` : ""}.`, { currentNode: node, visited: reached(), dataStructure: table(), metrics: { visitedNodes: reached().length, operations: checks } }));
+  }
+  const route: string[] = [];
+  if (Number.isFinite(dist[start * n + goal])) { let at = start; route.push(graph.nodes[at].id); while (at !== goal) { at = next[at * n + goal]; route.push(graph.nodes[at].id); } }
+  if (route.length) steps.push(createAlgorithmStep(steps.length, "path", `Shortest path to ${graph.goal}: ${route.join(" → ")} (cost ${dist[start * n + goal]}).`, { currentNode: graph.goal, visited: reached(), dataStructure: [{ label: "Path", value: route.join(" → ") }], metrics: { visitedNodes: reached().length, operations: checks } }));
+  steps.push(createAlgorithmStep(steps.length, "complete", route.length ? "Floyd-Warshall completed: every pair now has its shortest distance." : `Floyd-Warshall completed: ${graph.goal} cannot be reached from ${graph.start}.`, { visited: reached(), metrics: { visitedNodes: reached().length, operations: checks } }));
+  return { algorithmId: "floyd-warshall", inputLabel: `${graph.label ?? "Weighted graph"} · ${graph.start} → ${graph.goal}`, steps, completed: true };
+}

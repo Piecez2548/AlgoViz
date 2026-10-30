@@ -79,6 +79,20 @@ function sortExecution(algorithmId: string, name: string, input: readonly number
       add("swap", `Move the largest value ${values[end]} to its final place.`, [0, end], sorted, 2);
       siftDown(0, end);
     }
+  } else if (algorithmId === "shell") {
+    // Insertion sort on values a "gap" apart; the gap halves until it is 1, so far-away values move early.
+    for (let gap = Math.floor(values.length / 2); gap >= 1; gap = Math.floor(gap / 2)) {
+      for (let i = gap; i < values.length; i++) {
+        for (let j = i; j >= gap; j -= gap) {
+          comparisons++;
+          add("compare", `Gap ${gap}: compare ${values[j - gap]} with ${values[j]}.`, [j - gap, j]);
+          if (values[j - gap] <= values[j]) break;
+          [values[j - gap], values[j]] = [values[j], values[j - gap]];
+          swaps++;
+          add("swap", `Swap them so the smaller value moves ${gap === 1 ? "left" : `${gap} places left`}.`, [j - gap, j]);
+        }
+      }
+    }
   } else if (algorithmId === "quick") {
     const partition = (low: number, high: number): number => {
       const pivot = values[high];
@@ -118,4 +132,5 @@ export const runSelectionSort = (input: readonly number[] = SORT_SAMPLE) => sort
 export const runInsertionSort = (input: readonly number[] = SORT_SAMPLE) => sortExecution("insertion", "Insertion Sort", input);
 export const runMergeSort = (input: readonly number[] = SORT_SAMPLE) => sortExecution("merge", "Merge Sort", input);
 export const runHeapSort = (input: readonly number[] = SORT_SAMPLE) => sortExecution("heap", "Heap Sort", input);
+export const runShellSort = (input: readonly number[] = SORT_SAMPLE) => sortExecution("shell", "Shell Sort", input);
 export const runQuickSort = (input: readonly number[] = SORT_SAMPLE) => sortExecution("quick", "Quick Sort", input);

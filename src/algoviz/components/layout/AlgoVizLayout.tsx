@@ -10,6 +10,7 @@ const navItems = [
   { to: "/pathfinding", label: "Pathfinding" },
   { to: "/spanning", label: "Spanning trees" },
   { to: "/sorting", label: "Sorting" },
+  { to: "/array-search", label: "Array search" },
   { to: "/compare", label: "Compare" },
 ];
 

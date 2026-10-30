@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { edgeKey } from "../../algorithms/shared/graph";
 import type { GraphInput } from "../../algorithms/shared/graphTypes";
+import { SEARCH_TARGET_SAMPLE } from "../../algorithms/searching/arraySearchAlgorithms";
 import { SORT_SAMPLE } from "../../algorithms/sorting/sortingAlgorithms";
 import { PSEUDOCODE, activeLine } from "../../algorithms/shared/pseudocode";
 import type { AlgorithmExecution, AlgorithmStep } from "../../algorithms/shared/types";
 import { getStepLabel } from "../../algorithms/shared/utils";
+import { MAX_VALUE } from "../../algorithms/shared/arrayInput";
 import { ArrayInput, GridBoard } from "./InputEditors";
 import { MapControls, MapSelect, useMapInput } from "./MapInput";
 import { PlaybackControls } from "./PlaybackControls";
@@ -12,7 +14,8 @@ import { usePlayback } from "./usePlayback";
 
 export interface GraphLabOption { id: string; name: string; run: (graph: GraphInput) => AlgorithmExecution }
 export interface ArrayLabOption { id: string; name: string; run: (values: readonly number[]) => AlgorithmExecution }
-export type LabOption = GraphLabOption | ArrayLabOption;
+export interface TargetLabOption { id: string; name: string; run: (values: readonly number[], target: number) => AlgorithmExecution }
+export type LabOption = GraphLabOption | ArrayLabOption | TargetLabOption;
 
 interface CommonProps {
   defaultAlgorithm: string;
@@ -21,20 +24,23 @@ interface CommonProps {
 }
 type AlgoVizLabProps = CommonProps & (
   | { category: "sorting"; options: readonly ArrayLabOption[]; initialValues?: readonly number[]; onValuesChange?: (values: readonly number[]) => void }
+  | { category: "array-search"; options: readonly TargetLabOption[]; initialValues?: readonly number[]; initialTarget?: number; onValuesChange?: (values: readonly number[]) => void; onTargetChange?: (target: number) => void }
   | { category: "search" | "pathfinding" | "spanning"; options: readonly GraphLabOption[] }
 );
 
 export function AlgoVizLab(props: AlgoVizLabProps) {
   const { category, options, defaultAlgorithm, onAlgorithmChange } = props;
   const [algorithmId, setAlgorithmId] = useState(defaultAlgorithm);
-  const [values, setValues] = useState<readonly number[]>(props.category === "sorting" ? props.initialValues ?? SORT_SAMPLE : SORT_SAMPLE);
+  const isArray = category === "sorting" || category === "array-search";
+  const [values, setValues] = useState<readonly number[]>(props.category === "sorting" || props.category === "array-search" ? props.initialValues ?? SORT_SAMPLE : SORT_SAMPLE);
+  const [target, setTarget] = useState<number>(props.category === "array-search" ? props.initialTarget ?? SEARCH_TARGET_SAMPLE : SEARCH_TARGET_SAMPLE);
 
   // Spanning trees always use the sample graph; the drawn map and start/goal picks do not apply to them.
   const usesMap = category === "search" || category === "pathfinding";
   const map = useMapInput(usesMap);
   const { graph, mapKind, grid, tool } = map;
   const option = options.find((candidate) => candidate.id === algorithmId) ?? options[0];
-  const execution = useMemo(() => (category === "sorting" ? (option as ArrayLabOption).run(values) : (option as GraphLabOption).run(graph)), [category, graph, option, values]);
+  const execution = useMemo(() => (category === "array-search" ? (option as TargetLabOption).run(values, target) : category === "sorting" ? (option as ArrayLabOption).run(values) : (option as GraphLabOption).run(graph)), [category, graph, option, target, values]);
   const playback = usePlayback(execution.steps.length, execution);
   const step = execution.steps[playback.stepIndex];
   // Keep the found route on screen for the final "complete" step too. The route comes from the
@@ -54,7 +60,7 @@ export function AlgoVizLab(props: AlgoVizLabProps) {
 
   const changeValues = (next: readonly number[]) => {
     setValues(next);
-    if (props.category === "sorting") props.onValuesChange?.(next);
+    if (props.category === "sorting" || props.category === "array-search") props.onValuesChange?.(next);
   };
 
   return <section className="algoviz-lab" aria-label={`${category} algorithm visualizer`}>
@@ -68,14 +74,15 @@ export function AlgoVizLab(props: AlgoVizLabProps) {
       <span className="algoviz-input-label">Input <strong>{execution.inputLabel}</strong></span>
     </div>
 
-    {category === "sorting" && <ArrayInput values={values} onApply={changeValues} />}
+    {isArray && <ArrayInput values={values} onApply={changeValues} />}
+    {category === "array-search" && <TargetInput target={target} onApply={(next) => { setTarget(next); if (props.category === "array-search") props.onTargetChange?.(next); }} />}
     {usesMap && <MapControls map={map} />}
     {noRoute && <p className="algoviz-field-error" role="status">No route exists from {graph.start} to {graph.goal} on this map. Open a gap in the walls to connect them.</p>}
 
     <div className="algoviz-lab-grid">
       <div className="algoviz-stage">
         <div className="algoviz-stage-header" aria-live="polite" aria-atomic="true"><span><i className="algoviz-status-dot" /> Execution surface</span><span>{getStepLabel(step, execution.steps.length)}</span></div>
-        {category === "sorting" ? <SortCanvas step={step} /> : usesMap && mapKind === "grid" ? <GridBoard grid={grid} tool={tool} step={step} route={foundPath} onChange={map.setGrid} /> : <GraphCanvas graph={graph} step={step} route={foundPath} />}
+        {isArray ? <SortCanvas step={step} /> : usesMap && mapKind === "grid" ? <GridBoard grid={grid} tool={tool} step={step} route={foundPath} onChange={map.setGrid} /> : <GraphCanvas graph={graph} step={step} route={foundPath} />}
         <PlaybackControls stepIndex={playback.stepIndex} last={playback.last} isPlaying={playback.isPlaying} speed={playback.speed} onToggle={playback.toggle} onAdvance={playback.advance} onSeek={playback.seek} onSpeed={playback.setSpeed} />
       </div>
       <LabInspector step={step} category={category} algorithmId={algorithmId} />
@@ -99,8 +106,8 @@ function GraphCanvas({ graph, step, route }: { graph: GraphInput; step: Algorith
 }
 
 function SortCanvas({ step }: { step: AlgorithmStep }) {
-  const values = step.values ?? []; const highlights = new Set(step.highlightIndices ?? []); const sorted = new Set(step.sortedIndices ?? []); const max = Math.max(...values, 1);
-  return <div className="algoviz-sort-canvas" role="img" aria-label="Sorting array execution visualization">{values.map((value, index) => <div className={`algoviz-sort-bar ${highlights.has(index) ? "is-highlighted" : ""} ${sorted.has(index) ? "is-sorted" : ""}`} key={`${index}-${value}`}><span>{value}</span><i style={{ transform: `scaleY(${Math.max(0.06, value / max)})` }} /></div>)}</div>;
+  const values = step.values ?? []; const highlights = new Set(step.highlightIndices ?? []); const sorted = new Set(step.sortedIndices ?? []); const max = Math.max(...values, 1); const range = step.activeRange;
+  return <div className="algoviz-sort-canvas" role="img" aria-label="Sorting array execution visualization">{values.map((value, index) => <div className={`algoviz-sort-bar ${highlights.has(index) ? "is-highlighted" : ""} ${sorted.has(index) ? "is-sorted" : ""} ${range && (index < range[0] || index > range[1]) ? "is-eliminated" : ""}`} key={`${index}-${value}`}><span>{value}</span><i style={{ transform: `scaleY(${Math.max(0.06, value / max)})` }} /></div>)}</div>;
 }
 
 function Pseudocode({ algorithmId, step }: { algorithmId: string; step: AlgorithmStep }) {
@@ -112,10 +119,29 @@ function Pseudocode({ algorithmId, step }: { algorithmId: string; step: Algorith
 
 function LabInspector({ step, category, algorithmId }: { step: AlgorithmStep; category: string; algorithmId: string }) {
   const data = step.dataStructure ?? [];
-  return <aside className="algoviz-inspector"><p className="algoviz-eyebrow">Current action</p><h2 aria-live="polite" aria-atomic="true">{stepTitle(step.type)}</h2><p className="algoviz-explanation" aria-live="polite" aria-atomic="true">{step.explanation}</p><Pseudocode algorithmId={algorithmId} step={step} /><div className="algoviz-inspector-block"><span>{category === "sorting" ? "Array state" : "Data structure"}</span>{data.length ? data.map((entry) => <div className="algoviz-data-row" key={`${entry.label}-${entry.value}`}><span>{entry.label}</span><strong>{entry.value}</strong></div>) : <p className="algoviz-empty-data">No pending items</p>}</div><div className="algoviz-inspector-block algoviz-metrics"><span>Live metrics</span><div className="algoviz-metric-grid">{category === "sorting" ? <><Metric label="Comparisons" value={step.metrics?.comparisons ?? 0} /><Metric label={algorithmId === "merge" ? "Writes" : "Swaps"} value={step.metrics?.swaps ?? 0} /></> : category === "spanning" ? <Metric label="Edges kept" value={step.acceptedEdges?.length ?? 0} /> : <Metric label="Visited" value={step.metrics?.visitedNodes ?? step.visited?.length ?? 0} />}<Metric label="Operations" value={step.metrics?.operations ?? 0} /></div></div></aside>;
+  return <aside className="algoviz-inspector"><p className="algoviz-eyebrow">Current action</p><h2 aria-live="polite" aria-atomic="true">{stepTitle(step.type)}</h2><p className="algoviz-explanation" aria-live="polite" aria-atomic="true">{step.explanation}</p><Pseudocode algorithmId={algorithmId} step={step} /><div className="algoviz-inspector-block"><span>{category === "sorting" || category === "array-search" ? "Array state" : "Data structure"}</span>{data.length ? data.map((entry) => <div className="algoviz-data-row" key={`${entry.label}-${entry.value}`}><span>{entry.label}</span><strong>{entry.value}</strong></div>) : <p className="algoviz-empty-data">No pending items</p>}</div><div className="algoviz-inspector-block algoviz-metrics"><span>Live metrics</span><div className="algoviz-metric-grid">{category === "array-search" ? <Metric label="Comparisons" value={step.metrics?.comparisons ?? 0} /> : category === "sorting" ? <><Metric label="Comparisons" value={step.metrics?.comparisons ?? 0} /><Metric label={algorithmId === "merge" ? "Writes" : "Swaps"} value={step.metrics?.swaps ?? 0} /></> : category === "spanning" ? <Metric label="Edges kept" value={step.acceptedEdges?.length ?? 0} /> : <Metric label="Visited" value={step.metrics?.visitedNodes ?? step.visited?.length ?? 0} />}<Metric label="Operations" value={step.metrics?.operations ?? 0} /></div></div></aside>;
 }
 
 const STEP_TITLES: Partial<Record<AlgorithmStep["type"], string>> = { accept: "Keep edge", reject: "Skip edge", complete: "Complete" };
 function stepTitle(type: AlgorithmStep["type"]) { return STEP_TITLES[type] ?? type[0].toUpperCase() + type.slice(1); }
 
 function Metric({ label, value }: { label: string; value: number }) { return <div><strong>{value}</strong><span>{label}</span></div>; }
+
+function TargetInput({ target, onApply }: { target: number; onApply: (target: number) => void }) {
+  const [text, setText] = useState(String(target));
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => { setText(String(target)); setError(null); }, [target]);
+  const apply = () => {
+    const value = Number(text);
+    if (!text.trim() || !Number.isInteger(value) || value < 1 || value > MAX_VALUE) { setError(`The value to find must be a whole number from 1 to ${MAX_VALUE}.`); return; }
+    setError(null); onApply(value);
+  };
+  return <form className="algoviz-input-panel" onSubmit={(event) => { event.preventDefault(); apply(); }}>
+    <label className="algoviz-field">Value to find
+      <input type="text" inputMode="numeric" value={text} onChange={(event) => setText(event.target.value)} aria-invalid={Boolean(error)} />
+    </label>
+    <button type="submit" className="algoviz-button">Search for it</button>
+    <p className="algoviz-field-help">Both searches look through your numbers in ascending order, so they search the same list. Pick a value that is not in the list to see the worst case.</p>
+    {error && <p className="algoviz-field-error" role="alert">{error}</p>}
+  </form>;
+}
