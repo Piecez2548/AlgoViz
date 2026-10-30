@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { edgeKey } from "../../algorithms/shared/graph";
 import type { GraphInput } from "../../algorithms/shared/graphTypes";
 import { SEARCH_TARGET_SAMPLE } from "../../algorithms/searching/arraySearchAlgorithms";
 import { SORT_SAMPLE } from "../../algorithms/sorting/sortingAlgorithms";
@@ -8,6 +7,7 @@ import type { AlgorithmExecution, AlgorithmStep } from "../../algorithms/shared/
 import { getStepLabel } from "../../algorithms/shared/utils";
 import { MAX_VALUE } from "../../algorithms/shared/arrayInput";
 import { ArrayInput, GridBoard } from "./InputEditors";
+import { GraphCanvas } from "./GraphCanvas";
 import { MapControls, MapSelect, useMapInput } from "./MapInput";
 import { PlaybackControls } from "./PlaybackControls";
 import { usePlayback } from "./usePlayback";
@@ -35,9 +35,10 @@ export function AlgoVizLab(props: AlgoVizLabProps) {
   const [values, setValues] = useState<readonly number[]>(props.category === "sorting" || props.category === "array-search" ? props.initialValues ?? SORT_SAMPLE : SORT_SAMPLE);
   const [target, setTarget] = useState<number>(props.category === "array-search" ? props.initialTarget ?? SEARCH_TARGET_SAMPLE : SEARCH_TARGET_SAMPLE);
 
-  // Spanning trees always use the sample graph; the drawn map and start/goal picks do not apply to them.
+  // Search and pathfinding take a start and goal; spanning trees use the whole graph, so they get the sample or your own graph only.
   const usesMap = category === "search" || category === "pathfinding";
-  const map = useMapInput(usesMap);
+  const usesGraph = usesMap || category === "spanning";
+  const map = useMapInput(usesMap ? "route" : category === "spanning" ? "tree" : "off");
   const { graph, mapKind, grid, tool } = map;
   const option = options.find((candidate) => candidate.id === algorithmId) ?? options[0];
   const execution = useMemo(() => (category === "array-search" ? (option as TargetLabOption).run(values, target) : category === "sorting" ? (option as ArrayLabOption).run(values) : (option as GraphLabOption).run(graph)), [category, graph, option, target, values]);
@@ -70,39 +71,24 @@ export function AlgoVizLab(props: AlgoVizLabProps) {
           {options.map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name}</option>)}
         </select>
       </label>
-      {usesMap && <MapSelect map={map} />}
+      {usesGraph && <MapSelect map={map} />}
       <span className="algoviz-input-label">Input <strong>{execution.inputLabel}</strong></span>
     </div>
 
     {isArray && <ArrayInput values={values} onApply={changeValues} />}
     {category === "array-search" && <TargetInput target={target} onApply={(next) => { setTarget(next); if (props.category === "array-search") props.onTargetChange?.(next); }} />}
-    {usesMap && <MapControls map={map} />}
+    {usesGraph && <MapControls map={map} />}
     {noRoute && <p className="algoviz-field-error" role="status">No route exists from {graph.start} to {graph.goal} on this map. Open a gap in the walls to connect them.</p>}
 
     <div className="algoviz-lab-grid">
       <div className="algoviz-stage">
         <div className="algoviz-stage-header" aria-live="polite" aria-atomic="true"><span><i className="algoviz-status-dot" /> Execution surface</span><span>{getStepLabel(step, execution.steps.length)}</span></div>
-        {isArray ? <SortCanvas step={step} /> : usesMap && mapKind === "grid" ? <GridBoard grid={grid} tool={tool} step={step} route={foundPath} onChange={map.setGrid} /> : <GraphCanvas graph={graph} step={step} route={foundPath} />}
+        {isArray ? <SortCanvas step={step} /> : usesMap && mapKind === "grid" ? <GridBoard grid={grid} tool={tool} step={step} route={foundPath} onChange={map.setGrid} /> : <GraphCanvas graph={graph} step={step} route={foundPath} editing={usesGraph && mapKind === "custom" ? map.editing : undefined} />}
         <PlaybackControls stepIndex={playback.stepIndex} last={playback.last} isPlaying={playback.isPlaying} speed={playback.speed} onToggle={playback.toggle} onAdvance={playback.advance} onSeek={playback.seek} onSpeed={playback.setSpeed} />
       </div>
       <LabInspector step={step} category={category} algorithmId={algorithmId} />
     </div>
   </section>;
-}
-
-function GraphCanvas({ graph, step, route }: { graph: GraphInput; step: AlgorithmStep; route: readonly string[] }) {
-  const visited = new Set(step.visited ?? []); const frontier = new Set(step.frontier ?? []); const path = new Set(route);
-  const find = (id: string) => graph.nodes.find((item) => item.id === id) ?? graph.nodes[0];
-  const accepted = new Set(step.acceptedEdges ?? []); const rejected = new Set(step.rejectedEdges ?? []);
-  const edgeClass = (from: string, to: string) => {
-    const key = edgeKey(from, to);
-    if (path.has(from) && path.has(to)) return "algoviz-edge algoviz-edge-path";
-    return `algoviz-edge${accepted.has(key) ? " algoviz-edge-accepted" : ""}${rejected.has(key) ? " algoviz-edge-rejected" : ""}${step.activeEdge === key ? " algoviz-edge-active" : ""}`;
-  };
-  return <div className="algoviz-graph-canvas"><svg viewBox="0 0 100 100" role="img" aria-label="Graph execution visualization">
-    {graph.edges.map((edge) => <g key={`${edge.from}-${edge.to}`}><line className={edgeClass(edge.from, edge.to)} x1={find(edge.from).x} y1={find(edge.from).y} x2={find(edge.to).x} y2={find(edge.to).y} /><text className="algoviz-edge-label" x={(find(edge.from).x + find(edge.to).x) / 2} y={(find(edge.from).y + find(edge.to).y) / 2 - 2}>{edge.weight}</text></g>)}
-    {graph.nodes.map((item) => <g key={item.id}><circle className={`algoviz-node ${path.has(item.id) ? "is-path" : ""} ${visited.has(item.id) ? "is-visited" : ""} ${frontier.has(item.id) ? "is-frontier" : ""} ${step.currentNode === item.id ? "is-current" : ""} ${item.id === graph.start ? "is-start" : ""} ${item.id === graph.goal ? "is-goal" : ""}`} cx={item.x} cy={item.y} r="7" /><text className="algoviz-node-label" x={item.x} y={item.y + 1}>{item.id}</text></g>)}
-  </svg></div>;
 }
 
 function SortCanvas({ step }: { step: AlgorithmStep }) {

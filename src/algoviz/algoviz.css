@@ -901,6 +901,15 @@
   border-color: var(--algo-yellow);
   background: #665521;
 }
+.algoviz-custom-graph { display: grid; gap: 1rem; }
+.algoviz-graph-canvas.is-editable svg { touch-action: none; }
+.algoviz-graph-canvas.is-editable .algoviz-node { cursor: grab; }
+.algoviz-graph-canvas.is-editable g[role="button"]:focus-visible { outline: none; }
+.algoviz-graph-canvas.is-editable g[role="button"]:focus-visible .algoviz-node { stroke: var(--algo-yellow); stroke-width: 1.6; }
+.algoviz-node.is-pending { stroke: var(--algo-yellow); stroke-width: 1.6; stroke-dasharray: 2 1.2; }
+.algoviz-chip-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.6rem 0; padding: 0; list-style: none; }
+.algoviz-chip-list li { display: flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.5rem; border: 1px solid #3a4468; border-radius: 8px; }
+.algoviz-chip-list input { width: 4.5rem; }
 .algoviz-sort-bar.is-eliminated i {
   opacity: 0.3;
 }

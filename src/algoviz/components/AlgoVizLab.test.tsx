@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import AlgoVizModulePage from "../pages/AlgoVizModulePage";
@@ -145,9 +145,10 @@ describe("drawing your own map", () => {
 });
 
 describe("spanning trees", () => {
-  it("has no map or endpoint pickers, keeps the tree edges on screen and names the steps", () => {
+  it("has no start/goal or drawn-map options, keeps the tree edges on screen and names the steps", () => {
     open("/spanning");
-    expect(screen.queryByLabelText("Choose map")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Goal")).not.toBeInTheDocument();
+    expect(within(screen.getByLabelText("Choose map")).queryByRole("option", { name: "Draw your own map" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 1, name: "Spanning trees" })).toBeInTheDocument();
     fireEvent.keyDown(window, { key: "ArrowRight" });
     expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("Compare");

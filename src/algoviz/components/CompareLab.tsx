@@ -6,6 +6,7 @@ import type { AlgorithmStep } from "../../algorithms/shared/types";
 import { SORT_SAMPLE } from "../../algorithms/sorting/sortingAlgorithms";
 import { ArrayInput, GridBoard } from "./InputEditors";
 import { LineChart, formatNumber, type ChartScale } from "./LineChart";
+import { GraphCanvas } from "./GraphCanvas";
 import { MapControls, MapSelect, useMapInput } from "./MapInput";
 
 type Family = "sorting" | "routes";
@@ -26,7 +27,7 @@ export function CompareLab({ initialValues, onValuesChange }: CompareLabProps) {
   const [family, setFamily] = useState<Family>("sorting");
   const [selected, setSelected] = useState<Record<Family, string[]>>({ sorting: ["bubble", "merge", "quick"], routes: ["bfs", "dijkstra", "a-star"] });
   const [values, setValues] = useState<readonly number[]>(initialValues ?? SORT_SAMPLE);
-  const map = useMapInput(family === "routes");
+  const map = useMapInput(family === "routes" ? "route" : "off");
   const [shape, setShape] = useState<SortShape>("random");
   const [obstacles, setObstacles] = useState<GridObstacles>("none");
   const [sortMetric, setSortMetric] = useState<SortMetric>("comparisons");
@@ -60,6 +61,7 @@ export function CompareLab({ initialValues, onValuesChange }: CompareLabProps) {
       <div className="algoviz-input-panel"><MapSelect map={map} /></div>
       <MapControls map={map} />
       {map.mapKind === "grid" && <GridBoard grid={map.grid} tool={map.tool} step={NO_STEP} route={[]} onChange={map.setGrid} />}
+      {map.mapKind === "custom" && <GraphCanvas graph={map.graph} step={NO_STEP} route={[]} editing={map.editing} />}
     </>}
     <SameInputResults family={family} ids={ids} values={values} graph={map.graph} />
 
