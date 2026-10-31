@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { ROUTE_ALGORITHMS, SPANNING_ALGORITHMS, SORTING_ALGORITHMS } from "../registry";
+import { COMPONENT_ALGORITHMS, FLOW_ALGORITHMS, ROUTE_ALGORITHMS, SPANNING_ALGORITHMS, SORTING_ALGORITHMS } from "../registry";
 import { runBinarySearch, runLinearSearch } from "../searching/arraySearchAlgorithms";
-import { gridToGraph, SAMPLE_GRAPH } from "./graph";
+import { FLOW_SAMPLE, gridToGraph, SAMPLE_GRAPH, SCC_SAMPLE } from "./graph";
 import { defaultGrid } from "./graph";
+import type { GraphInput } from "./graphTypes";
+import type { AlgorithmExecution } from "./types";
 import { canPredict, questionAt } from "./predict";
 
 const all = (id: string, execution: Parameters<typeof questionAt>[1], graph?: Parameters<typeof questionAt>[3]) =>
@@ -161,5 +163,38 @@ describe("predict questions for the other sorts and searches", () => {
     const questions = all("bellman-ford", execution, SAMPLE_GRAPH);
     expect(questions.length).toBeGreaterThan(3);
     for (const { index, question } of questions) expect(question.options[question.answer]).toBe(execution.steps[index + 1].targetNode);
+  });
+});
+
+describe("predict questions for components and flow", () => {
+  const run = (algorithms: readonly { id: string; run: (graph: GraphInput) => AlgorithmExecution }[], id: string, graph: GraphInput) => algorithms.find((algorithm) => algorithm.id === id)!.run(graph);
+
+  it.each(["tarjan", "kosaraju"])("%s: the correct option is the node reached next, and it is never a node already placed", (id) => {
+    const execution = run(COMPONENT_ALGORITHMS, id, SCC_SAMPLE);
+    const questions = all(id, execution, SCC_SAMPLE);
+    expect(questions.length).toBeGreaterThan(5);
+    for (const { index, question } of questions) {
+      const next = execution.steps[index + 1];
+      expect(question.options[question.answer]).toBe(next.currentNode);
+      expect(question.options.length).toBeGreaterThanOrEqual(2);
+      expect(new Set(question.options).size).toBe(question.options.length);
+      expect(question.prompt).not.toContain(next.currentNode!);
+    }
+    if (id === "kosaraju") expect(questions.some(({ question }) => question.prompt === "Which node joins a component next?")).toBe(true);
+  });
+
+  it.each(["edmonds-karp", "ford-fulkerson"])("%s: the answer is the room on the path that the next round announces", (id) => {
+    const execution = run(FLOW_ALGORITHMS, id, FLOW_SAMPLE);
+    const questions = all(id, execution, FLOW_SAMPLE);
+    expect(questions.length).toBeGreaterThanOrEqual(3);
+    for (const { index, question } of questions) {
+      const room = execution.steps[index + 1].dataStructure!.find((entry) => entry.label === "Room on it")!.value;
+      expect(question.options[question.answer]).toBe(String(room));
+      expect(new Set(question.options).size).toBe(question.options.length);
+      expect(question.options.length).toBeLessThanOrEqual(4);
+      // The question is asked before the round, so the explanation that names the path is not on the question.
+      expect(question.prompt).not.toMatch(/→/);
+    }
+    expect(questions[0].question.prompt).toContain(id === "edmonds-karp" ? "fewest edges" : "depth-first");
   });
 });

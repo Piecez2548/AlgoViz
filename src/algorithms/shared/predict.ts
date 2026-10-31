@@ -15,7 +15,7 @@ const MAX_OPTIONS = 4;
 const NODE_PICKERS = new Set(["kahn", "bfs", "dfs", "bidirectional-bfs", "greedy-best-first", "dijkstra", "a-star"]);
 const PAIR_SWAPPERS = new Set(["bubble", "insertion", "shell"]);
 
-const OTHERS = ["kruskal", "prim", "binary-search", "linear-search", "selection", "quick", "merge", "heap", "counting", "radix", "bellman-ford", "floyd-warshall"];
+const OTHERS = ["kruskal", "prim", "binary-search", "linear-search", "selection", "quick", "merge", "heap", "counting", "radix", "bellman-ford", "floyd-warshall", "tarjan", "kosaraju", "edmonds-karp", "ford-fulkerson"];
 
 export function canPredict(algorithmId: string): boolean {
   return NODE_PICKERS.has(algorithmId) || PAIR_SWAPPERS.has(algorithmId) || OTHERS.includes(algorithmId);
@@ -45,6 +45,27 @@ export function questionAt(algorithmId: string, execution: AlgorithmExecution, i
     const others = [...waiting, ...(graph?.nodes.map((node) => node.id) ?? [])].filter((id) => !seen.has(id));
     const options = sortedOptions(next.currentNode, others);
     return options.length < 2 ? null : { prompt: "Which node does the algorithm take next?", options, answer: options.indexOf(next.currentNode), explanation: next.explanation };
+  }
+
+  if (algorithmId === "tarjan" || algorithmId === "kosaraju") {
+    if (next.type !== "visit" || !next.currentNode || !graph) return null;
+    // Kosaraju's second pass hands out components, so "taken" means already in a component rather than already reached.
+    const pass2 = algorithmId === "kosaraju" && next.explanation.startsWith("Pass 2");
+    const taken = new Set(pass2 ? (step.groups ?? []).flat() : step.visited ?? []);
+    const options = sortedOptions(next.currentNode, graph.nodes.map((node) => node.id).filter((id) => !taken.has(id)));
+    return options.length < 2 ? null : { prompt: pass2 ? "Which node joins a component next?" : "Which node does the search reach next?", options, answer: options.indexOf(next.currentNode), explanation: next.explanation };
+  }
+
+  if (algorithmId === "edmonds-karp" || algorithmId === "ford-fulkerson") {
+    if (next.type !== "compare" || !graph) return null;
+    const room = Number(next.dataStructure?.find((entry) => entry.label === "Room on it")?.value);
+    if (!Number.isFinite(room)) return null;
+    // The other choices are capacities from the network that are closest to the right answer.
+    const nearest = unique(graph.edges.map((edge) => String(edge.weight))).filter((value) => Number(value) !== room).sort((a, b) => Math.abs(Number(a) - room) - Math.abs(Number(b) - room)).slice(0, MAX_OPTIONS - 1);
+    const options = [String(room), ...nearest].sort((a, b) => Number(a) - Number(b));
+    if (options.length < 2) return null;
+    const how = algorithmId === "edmonds-karp" ? "the path with the fewest edges" : "the first path it finds, searching depth-first";
+    return { prompt: `Next it takes ${how} from ${graph.start} to ${graph.goal} that still has room. How much flow can that path carry?`, options, answer: options.indexOf(String(room)), explanation: next.explanation };
   }
 
   if (PAIR_SWAPPERS.has(algorithmId)) {
