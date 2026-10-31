@@ -18,6 +18,8 @@ export interface Measure {
   operations: number;
   /** Edges kept in a spanning tree. */
   edges: number;
+  /** The run stopped because it found a negative cycle between the start and the goal. */
+  negativeCycle: boolean;
   /** Total weight of that tree. */
   weight: number;
 }
@@ -30,7 +32,7 @@ export function measure(execution: AlgorithmExecution, graph?: GraphInput): Meas
   const cost = route !== undefined && graph ? pathCost(graph, String(route).split(" → ")) : null;
   const tail = steps.at(-1);
   const weight = Number(tail?.dataStructure?.find((entry) => entry.label === "Total weight")?.value ?? 0);
-  return { steps: steps.length, comparisons: last?.comparisons ?? 0, swaps: last?.swaps ?? 0, visited, cost: cost !== null && Number.isFinite(cost) ? cost : null, operations: last?.operations ?? 0, edges: tail?.acceptedEdges?.length ?? 0, weight };
+  return { steps: steps.length, comparisons: last?.comparisons ?? 0, swaps: last?.swaps ?? 0, visited, cost: cost !== null && Number.isFinite(cost) ? cost : null, operations: Math.max(0, ...steps.map((step) => step.metrics?.operations ?? 0)), edges: tail?.acceptedEdges?.length ?? 0, weight, negativeCycle: Boolean(tail?.dataStructure?.some((entry) => entry.label === "Negative cycle")) };
 }
 
 export type SortMetric = "comparisons" | "swaps" | "steps";

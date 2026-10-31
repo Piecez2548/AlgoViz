@@ -181,3 +181,47 @@ describe("compare: searching a list", () => {
     await waitFor(() => expect(screen.getByText(/linear search finds it in one look/)).toBeInTheDocument());
   });
 });
+
+describe("compare: negative edges", () => {
+  const pickNegative = () => fireEvent.click(screen.getByLabelText("Negative edges"));
+
+  it("shows Dijkstra paying more than Bellman-Ford and Floyd-Warshall on a graph with a negative edge", () => {
+    open();
+    pickNegative();
+    expect(verdictText()).toBe("Bellman-Ford and Floyd-Warshall found the cheapest route (cost 7); Dijkstra's Algorithm paid 9. Dijkstra assumes no edge is negative.");
+    expect(cell("Bellman-Ford", "Route cost")).toContain("7");
+    expect(cell("Dijkstra's Algorithm", "Route cost")).toContain("9");
+    expect(cell("Bellman-Ford", "Route cost")).toContain("lowest");
+    expect(document.querySelectorAll("line[marker-end]").length).toBe(7);
+  });
+
+  it("shows which algorithms notice a negative cycle and which keep going", () => {
+    open();
+    pickNegative();
+    fireEvent.change(screen.getByLabelText("Choose map"), { target: { value: "cycle" } });
+    expect(cell("Bellman-Ford", "Route cost")).toBe("Negative cycle");
+    expect(cell("Floyd-Warshall", "Route cost")).toBe("Negative cycle");
+    expect(cell("Dijkstra's Algorithm", "Route cost")).not.toBe("Negative cycle");
+    expect(verdictText()).toMatch(/^Bellman-Ford and Floyd-Warshall found a negative cycle on the way to the goal, so no route is the cheapest\. Dijkstra's Algorithm still reports a route costing -?\d+\.$/);
+  });
+
+  it("lets you drop an algorithm but keeps two, and explains why there is no growth chart", () => {
+    open();
+    pickNegative();
+    fireEvent.click(screen.getByLabelText("Floyd-Warshall"));
+    expect(within(resultsTable()).queryByText("Floyd-Warshall")).not.toBeInTheDocument();
+    const boxes = screen.getAllByRole("checkbox") as HTMLInputElement[];
+    for (const box of boxes.filter((item) => item.checked)) expect(box).toBeDisabled();
+    expect(screen.getByText("Why there is no growth chart here")).toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: /against/ })).not.toBeInTheDocument();
+  });
+});
+
+describe("compare: negative cycle costs", () => {
+  it("does not call a cost 'lowest' when a negative cycle means there is no cheapest route", () => {
+    open();
+    fireEvent.click(screen.getByLabelText("Negative edges"));
+    fireEvent.change(screen.getByLabelText("Choose map"), { target: { value: "cycle" } });
+    expect(cell("Dijkstra's Algorithm", "Route cost")).not.toContain("lowest");
+  });
+});

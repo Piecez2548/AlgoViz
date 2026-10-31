@@ -1,5 +1,5 @@
 import { useDeferredValue, useMemo, useState } from "react";
-import { ARRAY_SEARCH_ALGORITHMS, ROUTE_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../../algorithms/registry";
+import { ARRAY_SEARCH_ALGORITHMS, NEGATIVE_ALGORITHMS, ROUTE_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../../algorithms/registry";
 import { PRESET_LABELS } from "../../algorithms/shared/arrayInput";
 import { graphGrowth, LIST_SIZES, MAP_SIDES, measure, searchGrowth, SORT_SIZES, sortGrowth, TREE_SIZES, treeGrowth, type GraphMetric, type GridObstacles, type Measure, type SearchMetric, type SortMetric, type SortShape, type TargetPlace, type TreeMetric } from "../../algorithms/shared/benchmark";
 import type { GraphInput } from "../../algorithms/shared/graphTypes";
@@ -11,14 +11,14 @@ import { ArrayInput, GridBoard, TargetInput } from "./InputEditors";
 import { LineChart, formatNumber, type ChartScale } from "./LineChart";
 import { MapControls, MapSelect, useMapInput } from "./MapInput";
 
-type Family = "sorting" | "routes" | "trees" | "lists";
+type Family = "sorting" | "routes" | "trees" | "lists" | "negative";
 const NO_STEP: AlgorithmStep = { id: 0, type: "complete", explanation: "" };
 const MIN_SELECTED = 2;
 
 const FAMILIES: { id: Family; label: string }[] = [
-  { id: "sorting", label: "Sorting algorithms" }, { id: "routes", label: "Search and shortest paths" }, { id: "trees", label: "Spanning trees" }, { id: "lists", label: "Searching a list" },
+  { id: "sorting", label: "Sorting algorithms" }, { id: "routes", label: "Search and shortest paths" }, { id: "trees", label: "Spanning trees" }, { id: "lists", label: "Searching a list" }, { id: "negative", label: "Negative edges" },
 ];
-const ALGORITHMS: Record<Family, readonly { id: string; name: string; short: string }[]> = { sorting: SORTING_ALGORITHMS, routes: ROUTE_ALGORITHMS, trees: SPANNING_ALGORITHMS, lists: ARRAY_SEARCH_ALGORITHMS };
+const ALGORITHMS: Record<Family, readonly { id: string; name: string; short: string }[]> = { sorting: SORTING_ALGORITHMS, routes: ROUTE_ALGORITHMS, trees: SPANNING_ALGORITHMS, lists: ARRAY_SEARCH_ALGORITHMS, negative: NEGATIVE_ALGORITHMS };
 
 const SORT_METRICS: Record<SortMetric, string> = { comparisons: "Comparisons", swaps: "Swaps or writes", steps: "Steps recorded" };
 const GRAPH_METRICS: Record<GraphMetric, string> = { visited: "Nodes visited", steps: "Steps recorded" };
@@ -29,7 +29,7 @@ const SHAPES: SortShape[] = ["random", "sorted", "reversed", "nearly", "few-uniq
 const SHAPE_LABELS: Record<SortShape, string> = { random: "Random (average of 3)", sorted: PRESET_LABELS.sorted, reversed: PRESET_LABELS.reversed, nearly: PRESET_LABELS.nearly, "few-unique": PRESET_LABELS["few-unique"] };
 
 type MetricKey = "sort" | "graph" | "tree" | "search";
-const metricKey = (family: Family): MetricKey => (family === "sorting" ? "sort" : family === "routes" ? "graph" : family === "trees" ? "tree" : "search");
+const metricKey = (family: Family): MetricKey => (family === "sorting" ? "sort" : family === "routes" || family === "negative" ? "graph" : family === "trees" ? "tree" : "search");
 const metricLabels = (family: Family): Record<string, string> => (family === "sorting" ? SORT_METRICS : family === "routes" ? GRAPH_METRICS : family === "trees" ? TREE_METRICS : SEARCH_METRICS);
 
 interface CompareLabProps {
@@ -39,10 +39,10 @@ interface CompareLabProps {
 
 export function CompareLab({ initialValues, onValuesChange }: CompareLabProps) {
   const [family, setFamily] = useState<Family>("sorting");
-  const [selected, setSelected] = useState<Record<Family, string[]>>({ sorting: ["bubble", "merge", "quick"], routes: ["bfs", "dijkstra", "a-star"], trees: ["kruskal", "prim"], lists: ["binary-search", "linear-search"] });
+  const [selected, setSelected] = useState<Record<Family, string[]>>({ sorting: ["bubble", "merge", "quick"], routes: ["bfs", "dijkstra", "a-star"], trees: ["kruskal", "prim"], lists: ["binary-search", "linear-search"], negative: ["bellman-ford", "floyd-warshall", "dijkstra"] });
   const [values, setValues] = useState<readonly number[]>(initialValues ?? SORT_SAMPLE);
   const [target, setTarget] = useState(SEARCH_TARGET_SAMPLE);
-  const map = useMapInput(family === "routes" ? "route" : family === "trees" ? "tree" : "off");
+  const map = useMapInput(family === "routes" ? "route" : family === "trees" ? "tree" : family === "negative" ? "directed" : "off");
   const [shape, setShape] = useState<SortShape>("random");
   const [obstacles, setObstacles] = useState<GridObstacles>("none");
   const [place, setPlace] = useState<TargetPlace>("absent");
@@ -78,14 +78,18 @@ export function CompareLab({ initialValues, onValuesChange }: CompareLabProps) {
     <h2 className="algoviz-compare-heading">Same input, side by side</h2>
     {family === "sorting" && <ArrayInput values={values} onApply={changeValues} />}
     {family === "lists" && <><ArrayInput values={values} onApply={changeValues} /><TargetInput target={target} onApply={setTarget} /></>}
-    {(family === "routes" || family === "trees") && <>
+    {(family === "routes" || family === "trees" || family === "negative") && <>
       <div className="algoviz-input-panel"><MapSelect map={map} /></div>
       <MapControls map={map} />
       {family === "routes" && map.mapKind === "grid" && <GridBoard grid={map.grid} tool={map.tool} step={NO_STEP} route={[]} onChange={map.setGrid} />}
-      {(map.mapKind === "custom" || family === "trees") && <GraphCanvas graph={map.graph} step={NO_STEP} route={[]} editing={map.mapKind === "custom" ? map.editing : undefined} />}
+      {(map.mapKind === "custom" || family === "trees" || family === "negative") && <GraphCanvas graph={map.graph} step={NO_STEP} route={[]} editing={map.mapKind === "custom" ? map.editing : undefined} />}
     </>}
     <SameInputResults family={family} ids={ids} values={values} target={target} graph={map.graph} />
 
+    {family === "negative" ? <>
+      <h2 className="algoviz-compare-heading">Why there is no growth chart here</h2>
+      <p className="algoviz-compare-note">With negative edges the interesting difference is whether the answer is right, not how quickly it arrives. Try the sample with a negative edge, then the sample with a negative cycle, and see which algorithms notice.</p>
+    </> : <>
     <h2 className="algoviz-compare-heading">How the cost grows with input size</h2>
     <div className="algoviz-input-panel">
       {family === "sorting" && <label className="algoviz-field">Data shape<select value={shape} onChange={(event) => setShape(event.target.value as SortShape)}>{SHAPES.map((item) => <option key={item} value={item}>{SHAPE_LABELS[item]}</option>)}</select></label>}
@@ -97,6 +101,7 @@ export function CompareLab({ initialValues, onValuesChange }: CompareLabProps) {
       </fieldset>
     </div>
     <GrowthChart family={family} ids={ids} shape={shape} obstacles={obstacles} place={place} metrics={metrics} scale={scale} />
+    </>}
   </section>;
 }
 
@@ -108,6 +113,7 @@ const COLUMNS: Record<Family, Column[]> = {
   routes: [{ key: "visited", label: "Nodes visited" }, { key: "steps", label: "Steps recorded" }, { key: "cost", label: "Route cost" }],
   trees: [{ key: "edges", label: "Edges kept" }, { key: "weight", label: "Total weight" }, { key: "operations", label: "Edge checks" }, { key: "steps", label: "Steps recorded" }],
   lists: [{ key: "comparisons", label: "Comparisons" }, { key: "steps", label: "Steps recorded" }],
+  negative: [{ key: "cost", label: "Route cost" }, { key: "visited", label: "Nodes visited" }, { key: "steps", label: "Steps recorded" }],
 };
 
 function SameInputResults({ family, ids, values, target, graph }: { family: Family; ids: string[]; values: readonly number[]; target: number; graph: GraphInput }) {
@@ -115,12 +121,14 @@ function SameInputResults({ family, ids, values, target, graph }: { family: Fami
     const pick = <T extends { id: string }>(all: readonly T[]) => all.filter((algorithm) => ids.includes(algorithm.id));
     if (family === "sorting") return pick(SORTING_ALGORITHMS).map((algorithm) => ({ id: algorithm.id, name: algorithm.name, measure: measure(algorithm.run(values)) }));
     if (family === "lists") return pick(ARRAY_SEARCH_ALGORITHMS).map((algorithm) => ({ id: algorithm.id, name: algorithm.name, measure: measure(algorithm.run(values, target)) }));
+    if (family === "negative") return pick(NEGATIVE_ALGORITHMS).map((algorithm) => ({ id: algorithm.id, name: algorithm.name, measure: measure(algorithm.run(graph), graph) }));
     if (family === "trees") return pick(SPANNING_ALGORITHMS).map((algorithm) => ({ id: algorithm.id, name: algorithm.name, measure: measure(algorithm.run(graph), graph) }));
     return pick(ROUTE_ALGORITHMS).map((algorithm) => ({ id: algorithm.id, name: algorithm.name, measure: measure(algorithm.run(graph), graph) }));
   }, [family, graph, ids, target, values]);
   const columns = COLUMNS[family];
   const input = family === "sorting" ? `${values.length} numbers: ${values.join(", ")}`
     : family === "lists" ? `find ${target} in ${values.length} numbers: ${values.join(", ")}`
+      : family === "negative" ? `${graph.label ?? "Directed graph"}: ${graph.start} → ${graph.goal}`
       : family === "trees" ? `${graph.label ?? "Sample graph"}: ${graph.nodes.length} nodes, ${graph.edges.length} edges, from ${graph.start}`
         : `${graph.label ?? "Sample graph"}: ${graph.start} → ${graph.goal}`;
   const best = (key: keyof Measure) => {
@@ -140,8 +148,9 @@ function SameInputResults({ family, ids, values, target, graph }: { family: Fami
           <th scope="row">{result.name}</th>
           {columns.map((column) => {
             const value = result.measure[column.key];
-            if (value === null) return <td key={column.key}>No route</td>;
-            const top = effort(column.key) && best(column.key) === value;
+            if (value === null) return <td key={column.key}>{result.measure.negativeCycle ? "Negative cycle" : "No route"}</td>;
+            // With a negative cycle there is no cheapest route, so a cost Dijkstra reports anyway is not "lowest".
+            const top = effort(column.key) && best(column.key) === value && !(column.key === "cost" && results.some((item) => item.measure.negativeCycle));
             return <td key={column.key}><span className="algoviz-bar" aria-hidden="true"><i style={{ width: `${Math.max(3, (Number(value) / worst(column.key)) * 100)}%` }} /></span><strong>{formatNumber(Number(value))}</strong>{top && results.length > 1 && <small className="algoviz-lowest"> lowest</small>}</td>;
           })}
         </tr>)}</tbody>
@@ -155,6 +164,7 @@ const NOTES: Record<Family, string> = {
   sorting: "Counts come from the recorded runs. Merge, counting and radix sort write values into place, so their writes appear under swaps. Counting and radix sort never compare two values, so their comparisons are zero.",
   routes: "Steps are the moments each algorithm records for display, not time. Bellman-Ford only records improvements, so it looks short here even though it checks every edge in every pass. Floyd-Warshall records one step per stop-over node. Nodes visited counts the nodes an algorithm touched.",
   trees: "Edge checks are what each algorithm counted itself: Kruskal looks at each edge once; Prim looks at every edge that leaves the tree in every round. Steps are the moments recorded for display, not time.",
+  negative: "Bellman-Ford and Floyd-Warshall handle negative edges and notice a negative cycle. Dijkstra assumes there are none, so it can report a route that is not the cheapest, and it never notices a cycle. Steps are the moments recorded for display, not time.",
   lists: "Both searches get your numbers in ascending order. Comparisons are what each search counted itself; steps are the moments recorded for display, not time.",
 };
 
@@ -174,6 +184,7 @@ function verdict(family: Family, results: Result[], values: readonly number[], t
     const partial = results[0].measure.edges < graph.nodes.length - 1 ? " The graph is not fully connected, so the tree covers only part of it." : "";
     return `${results.length === 2 ? "Both" : "All"} built a tree of weight ${results[0].measure.weight} from ${results[0].measure.edges} edges. ${fewestMost("operations", "edge checks")}${partial}`;
   }
+  if (family === "negative") return negativeVerdict(results);
   const found = results.filter((result) => result.measure.cost !== null);
   if (!found.length) return "No route exists between the start and the goal on this map.";
   const cheapest = Math.min(...found.map((result) => result.measure.cost!));
@@ -184,9 +195,25 @@ function verdict(family: Family, results: Result[], values: readonly number[], t
   return `${lead} ${fewest.name} visited the fewest nodes (${fewest.measure.visited}).${missing.length ? ` ${missing.map((result) => result.name).join(", ")} found no route.` : ""}`;
 }
 
+function negativeVerdict(results: Result[]): string {
+  const names = (list: Result[]) => list.map((item) => item.name).join(" and ");
+  const cycle = results.filter((item) => item.measure.negativeCycle);
+  if (cycle.length) {
+    const others = results.filter((item) => !item.measure.negativeCycle);
+    return `${names(cycle)} found a negative cycle on the way to the goal, so no route is the cheapest.${others.length ? ` ${others.map((item) => `${item.name} ${item.measure.cost === null ? "found no route" : `still reports a route costing ${item.measure.cost}`}`).join("; ")}.` : ""}`;
+  }
+  const found = results.filter((item) => item.measure.cost !== null);
+  if (!found.length) return "No route exists between the start and the goal on this graph.";
+  const cheapest = Math.min(...found.map((item) => item.measure.cost!));
+  const wrong = found.filter((item) => item.measure.cost! > cheapest);
+  const missing = results.filter((item) => item.measure.cost === null);
+  const lead = wrong.length ? `${names(found.filter((item) => item.measure.cost === cheapest))} found the cheapest route (cost ${cheapest}); ${wrong.map((item) => `${item.name} paid ${item.measure.cost}`).join(", ")}.${wrong.some((item) => item.id === "dijkstra") ? " Dijkstra assumes no edge is negative." : ""}` : `All found routes cost ${cheapest}.`;
+  return `${lead}${missing.length ? ` ${names(missing)} found no route.` : ""}`;
+}
+
 interface GrowthProps { family: Family; ids: string[]; shape: SortShape; obstacles: GridObstacles; place: TargetPlace; metrics: { sort: SortMetric; graph: GraphMetric; tree: TreeMetric; search: SearchMetric }; scale: ChartScale }
 
-const AXES: Record<Family, { x: string; unit: string }> = {
+const AXES: Record<Exclude<Family, "negative">, { x: string; unit: string }> = {
   sorting: { x: "Numbers to sort", unit: "Numbers" }, routes: { x: "Map cells (side × side)", unit: "Cells" }, trees: { x: "Nodes in the graph (about 3 edges each)", unit: "Nodes" }, lists: { x: "Items in the sorted list", unit: "Items" },
 };
 
@@ -194,7 +221,8 @@ function GrowthChart(props: GrowthProps) {
   // The chart is the slow part, so it follows the controls a moment later instead of blocking them.
   const deferred = useDeferredValue(props);
   const stale = deferred !== props;
-  const { family, ids, shape, obstacles, place, metrics, scale } = deferred;
+  const { ids, shape, obstacles, place, metrics, scale } = deferred;
+  const family = deferred.family === "negative" ? "routes" : deferred.family;
   const series = useMemo(() => family === "sorting" ? sortGrowth(ids, shape, metrics.sort) : family === "routes" ? graphGrowth(ids, obstacles, metrics.graph) : family === "trees" ? treeGrowth(ids, metrics.tree) : searchGrowth(ids, place, metrics.search), [family, ids, metrics, obstacles, place, shape]);
   const shorts = new Map(Object.values(ALGORITHMS).flat().map((algorithm) => [algorithm.id, algorithm.short]));
   const metricLabel = metricLabels(family)[metrics[metricKey(family)]];
