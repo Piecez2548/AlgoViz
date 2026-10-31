@@ -5,7 +5,7 @@ import AlgoVizModulePage from "./algoviz/pages/AlgoVizModulePage";
 import AlgoVizNotFound from "./algoviz/pages/AlgoVizNotFound";
 
 /** Every lab that appears in the navigation needs a route here; AlgoVizRoutes.test.tsx checks it. */
-export const MODULE_PATHS = ["search", "pathfinding", "spanning", "sorting", "array-search", "compare"] as const;
+export const MODULE_PATHS = ["search", "pathfinding", "spanning", "sorting", "array-search", "negative-weights", "compare"] as const;
 
 export function AlgoVizRoutes() {
   return (

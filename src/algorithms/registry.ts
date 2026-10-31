@@ -29,6 +29,9 @@ export const SPANNING_ALGORITHMS: readonly GraphAlgorithm[] = [
   { id: "prim", name: "Prim's Algorithm", short: "Prim", run: (graph) => runPrim(graph) },
 ];
 
+/** Shortest-path algorithms for directed graphs with negative weights. Dijkstra is included to show where it goes wrong. */
+export const NEGATIVE_ALGORITHMS: readonly GraphAlgorithm[] = ["bellman-ford", "floyd-warshall", "dijkstra"].map((id) => PATHFINDING_ALGORITHMS.find((algorithm) => algorithm.id === id)!);
+
 /** Everything that finds a route from a start to a goal, so any of them can be compared on one map. */
 export const ROUTE_ALGORITHMS: readonly GraphAlgorithm[] = [...SEARCH_ALGORITHMS, ...PATHFINDING_ALGORITHMS];
 

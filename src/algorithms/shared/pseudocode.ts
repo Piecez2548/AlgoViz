@@ -54,7 +54,7 @@ export const PSEUDOCODE: Readonly<Record<string, Pseudocode>> = {
     lineFor: { compare: 4, swap: 5, complete: 1 },
   },
   "bellman-ford": {
-    lines: ["set the start distance to 0, all others to infinity", "repeat at most V − 1 times:", "  for every edge, in both directions:", "    if going through it is shorter, update the distance", "  if a whole pass changed nothing: stop"],
+    lines: ["set the start distance to 0, all others to infinity", "repeat at most V − 1 times:", "  for every edge (both ways, unless the graph is directed):", "    if going through it is shorter, update the distance", "  if a whole pass changed nothing: stop"],
     lineFor: { enqueue: 0, update: 3, compare: 4, path: 4, complete: 4 },
   },
   kruskal: {

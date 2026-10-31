@@ -11,6 +11,7 @@ const navItems = [
   { to: "/spanning", label: "Spanning trees" },
   { to: "/sorting", label: "Sorting" },
   { to: "/array-search", label: "Array search" },
+  { to: "/negative-weights", label: "Negative edges" },
   { to: "/compare", label: "Compare" },
 ];
 

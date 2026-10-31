@@ -58,3 +58,21 @@ describe("graph editing", () => {
     expect(weight(runPrim(ready))).toBe(weight(runKruskal(ready)));
   });
 });
+
+describe("directed graph editing", () => {
+  const directed = { ...SAMPLE_GRAPH, directed: true, edges: [{ from: "A", to: "B", weight: 4 }] };
+
+  it("treats A → B and B → A as different edges and accepts negative weights", () => {
+    const both = setEdge(directed, "B", "A", -2);
+    expect(both.edges).toEqual([{ from: "A", to: "B", weight: 4 }, { from: "B", to: "A", weight: -2 }]);
+    expect(setEdge(both, "A", "B", -9).edges[0]).toEqual({ from: "A", to: "B", weight: -9 });
+    expect(removeEdge(both, "B", "A").edges).toEqual([{ from: "A", to: "B", weight: 4 }]);
+  });
+
+  it("keeps the 1 to 99 rule for two-way graphs and uses -99 to 99 for directed ones", () => {
+    expect(setEdge(SAMPLE_GRAPH, "A", "F", -1)).toBe(SAMPLE_GRAPH);
+    expect(setEdge(directed, "A", "C", -99).edges).toHaveLength(2);
+    expect(setEdge(directed, "A", "C", -100)).toBe(directed);
+    expect(setEdge(directed, "A", "C", 100)).toBe(directed);
+  });
+});

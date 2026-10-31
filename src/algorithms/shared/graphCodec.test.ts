@@ -32,3 +32,21 @@ describe("graph link codec", () => {
     expect(decodeGraph("A:10:10,B:80:80~~A~B")?.edges).toEqual([]);
   });
 });
+
+describe("directed graphs in links", () => {
+  it("round-trips the direction, the order of each edge and negative weights", () => {
+    const graph = { ...SAMPLE_GRAPH, directed: true, edges: [{ from: "B", to: "A", weight: -3 }, { from: "A", to: "B", weight: 2 }] };
+    const text = encodeGraph(graph);
+    expect(text.endsWith("~d")).toBe(true);
+    const back = decodeGraph(text)!;
+    expect(back.directed).toBe(true);
+    expect(back.edges).toEqual(graph.edges);
+  });
+
+  it("does not mark a two-way graph as directed and still rejects negative weights there", () => {
+    expect(decodeGraph(encodeGraph(SAMPLE_GRAPH))!.directed).toBeUndefined();
+    expect(decodeGraph("A:1:1,B:2:2~A:B:-1~A~B")).toBeNull();
+    expect(decodeGraph("A:1:1,B:2:2~A:B:-1~A~B~d")).not.toBeNull();
+    expect(decodeGraph("A:1:1,B:2:2~A:B:-1~A~B~x")).toBeNull();
+  });
+});

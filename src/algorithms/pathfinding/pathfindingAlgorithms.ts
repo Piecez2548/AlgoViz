@@ -45,8 +45,9 @@ export const runAStar = (graph: GraphInput = SAMPLE_GRAPH) => run("a-star", grap
 /**
  * Bellman-Ford: instead of always settling the closest node (Dijkstra), sweep over every edge again and
  * again, relaxing any edge that offers a shorter route, until a whole sweep changes nothing. Edges here
- * are two-way with positive weights, so there are no negative cycles to detect; the algorithm
- * stops after at most V - 1 sweeps. Only the relaxations are recorded as steps; the edge checks that
+ * are two-way with positive weights unless the graph is directed, where weights may be negative. After
+ * V - 1 sweeps nothing should improve; if a V-th sweep still does, a negative cycle is reachable and is reported.
+ * The algorithm stops early after a sweep that changes nothing. Only the relaxations are recorded as steps; the edge checks that
  * change nothing are counted in the metrics.
  */
 export function runBellmanFord(graph: GraphInput = SAMPLE_GRAPH): AlgorithmExecution {
@@ -58,22 +59,52 @@ export function runBellmanFord(graph: GraphInput = SAMPLE_GRAPH): AlgorithmExecu
   const reached = () => graph.nodes.filter((node) => Number.isFinite(distance.get(node.id) ?? Infinity)).map((node) => node.id);
   const table = () => [...distance.entries()].filter(([, value]) => Number.isFinite(value)).map(([id, value]) => ({ label: id, value: String(value) }));
   steps.push(createAlgorithmStep(0, "enqueue", `Bellman-Ford starts with distance 0 at ${graph.start} and unknown (infinite) distance everywhere else.`, { currentNode: graph.start, visited: reached(), dataStructure: table(), metrics: { visitedNodes: 1, operations: 0 } }));
-  const directed = graph.edges.flatMap((edge) => [{ from: edge.from, to: edge.to, weight: edge.weight }, { from: edge.to, to: edge.from, weight: edge.weight }]);
-  for (let pass = 1; pass <= graph.nodes.length - 1; pass++) {
+  const arcs = graph.directed ? [...graph.edges] : graph.edges.flatMap((edge) => [{ from: edge.from, to: edge.to, weight: edge.weight }, { from: edge.to, to: edge.from, weight: edge.weight }]);
+  // V - 1 sweeps are enough when there is no negative cycle, so a sweep from the V-th on that still improves something proves there is one.
+  // Keep sweeping until the parent links form a loop: a loop in the parent links is always a negative cycle.
+  const findCycle = (): string[] | null => {
+    const state = new Map<string, number>();
+    for (const node of graph.nodes) {
+      const walk: string[] = []; let at: string | undefined = node.id;
+      while (at !== undefined && !state.get(at)) { state.set(at, 1); walk.push(at); at = parent.get(at); }
+      if (at !== undefined && state.get(at) === 1) { const loop = walk.slice(walk.indexOf(at)); return [at, ...loop.slice(1).reverse(), at]; }
+      for (const id of walk) state.set(id, 2);
+    }
+    return null;
+  };
+  let cycle: string[] | null = null;
+  const unsettled = new Set<string>();
+  const n = graph.nodes.length;
+  for (let pass = 1; pass <= 3 * n; pass++) {
     let changed = 0;
-    for (const edge of directed) {
+    for (const edge of arcs) {
       checks++;
       const through = (distance.get(edge.from) ?? Infinity) + edge.weight;
       if (through >= (distance.get(edge.to) ?? Infinity)) continue;
       distance.set(edge.to, through); parent.set(edge.to, edge.from); changed++;
+      if (pass >= n) unsettled.add(edge.to);
       steps.push(createAlgorithmStep(steps.length, "update", `Pass ${pass}: going ${edge.from} → ${edge.to} is shorter, so ${edge.to}'s distance becomes ${through}.`, { currentNode: edge.from, targetNode: edge.to, visited: reached(), dataStructure: table(), metrics: { visitedNodes: reached().length, operations: checks } }));
+    }
+    cycle = changed && pass >= n ? findCycle() : null;
+    if (cycle) {
+      steps.push(createAlgorithmStep(steps.length, "compare", `Pass ${pass} still made ${changed} improvement${changed === 1 ? "" : "s"}, although a shortest route needs at most ${n - 1} edges. Some loop keeps getting cheaper: the negative cycle ${cycle.join(" → ")}.`, { visited: [...new Set(cycle)], dataStructure: [{ label: "Negative cycle", value: cycle.join(" → ") }], metrics: { visitedNodes: reached().length, operations: checks } }));
+      break;
     }
     steps.push(createAlgorithmStep(steps.length, "compare", changed ? `Pass ${pass} finished with ${changed} improvement${changed === 1 ? "" : "s"}; sweep again.` : `Pass ${pass} changed nothing, so every distance is final.`, { visited: reached(), dataStructure: table(), metrics: { visitedNodes: reached().length, operations: checks } }));
     if (!changed) break;
   }
-  const path = reconstructPath(parent, graph.start, graph.goal);
+  // Every node a negative cycle can reach has no smallest distance. Is the goal one of them?
+  const doomed = new Set<string>(cycle ?? []);
+  for (const id of unsettled) doomed.add(id);
+  const queue = [...doomed];
+  for (let head = 0; head < queue.length; head++) for (const edge of arcs) if (edge.from === queue[head] && !doomed.has(edge.to)) { doomed.add(edge.to); queue.push(edge.to); }
+  const blocked = doomed.has(graph.goal);
+  const path = blocked ? [] : reconstructPath(parent, graph.start, graph.goal);
   if (path.length) steps.push(createAlgorithmStep(steps.length, "path", `Shortest path to ${graph.goal}: ${path.join(" → ")} (cost ${distance.get(graph.goal)}).`, { currentNode: graph.goal, visited: reached(), dataStructure: [{ label: "Path", value: path.join(" → ") }], metrics: { visitedNodes: reached().length, operations: checks } }));
-  steps.push(createAlgorithmStep(steps.length, "complete", path.length ? "Bellman-Ford completed." : `Bellman-Ford completed: ${graph.goal} cannot be reached from ${graph.start}.`, { visited: reached(), metrics: { visitedNodes: reached().length, operations: checks } }));
+  const loopText = cycle ? cycle.join(" → ") : "";
+  const cycleName = cycle ? `the negative cycle ${loopText}` : "a negative cycle";
+  const ending = blocked ? `Bellman-Ford stopped: ${cycleName} can be reached from ${graph.start} and leads to ${graph.goal}, so the distance can be made as small as you like and there is no cheapest route.` : path.length ? (cycle ? `Bellman-Ford completed. ${cycleName[0].toUpperCase()}${cycleName.slice(1)} exists, but it cannot lead to ${graph.goal}, so this route is still the cheapest.` : "Bellman-Ford completed.") : `Bellman-Ford completed: ${graph.goal} cannot be reached from ${graph.start}.`;
+  steps.push(createAlgorithmStep(steps.length, "complete", ending, { visited: blocked && cycle ? [...new Set(cycle)] : reached(), ...(blocked ? { dataStructure: [{ label: "Negative cycle", value: cycle ? loopText : "not found" }] } : {}), metrics: { visitedNodes: reached().length, operations: checks } }));
   return { algorithmId: "bellman-ford", inputLabel: `${graph.label ?? "Weighted graph"} · ${graph.start} → ${graph.goal}`, steps, completed: true };
 }
 
@@ -93,7 +124,8 @@ export function runFloydWarshall(graph: GraphInput = SAMPLE_GRAPH): AlgorithmExe
   for (let i = 0; i < n; i++) { dist[i * n + i] = 0; next[i * n + i] = i; }
   for (const edge of graph.edges) {
     const a = index.get(edge.from)!; const b = index.get(edge.to)!;
-    if (edge.weight < dist[a * n + b]) { dist[a * n + b] = edge.weight; dist[b * n + a] = edge.weight; next[a * n + b] = b; next[b * n + a] = a; }
+    if (edge.weight < dist[a * n + b]) { dist[a * n + b] = edge.weight; next[a * n + b] = b; }
+    if (!graph.directed && edge.weight < dist[b * n + a]) { dist[b * n + a] = edge.weight; next[b * n + a] = a; }
   }
   let checks = 0; let improvedPairs = 0;
   const reached = () => graph.nodes.filter((_, position) => Number.isFinite(dist[start * n + position])).map((node) => node.id);
@@ -115,9 +147,13 @@ export function runFloydWarshall(graph: GraphInput = SAMPLE_GRAPH): AlgorithmExe
     const node = graph.nodes[k].id;
     steps.push(createAlgorithmStep(steps.length, fromStart ? "update" : "visit", `Allow routes through ${node}: ${improved} pair${improved === 1 ? "" : "s"} got shorter${improved ? `, ${fromStart} of them from ${graph.start}` : ""}.`, { currentNode: node, visited: reached(), dataStructure: table(), metrics: { visitedNodes: reached().length, operations: checks } }));
   }
+  // A node whose distance to itself became negative lies on a negative cycle. It only matters if the start can reach it and it can reach the goal.
+  const onCycle = graph.nodes.filter((_, i) => dist[i * n + i] < 0).map((node) => node.id);
+  const blocking = graph.nodes.filter((_, i) => dist[i * n + i] < 0 && Number.isFinite(dist[start * n + i]) && Number.isFinite(dist[i * n + goal])).map((node) => node.id);
   const route: string[] = [];
-  if (Number.isFinite(dist[start * n + goal])) { let at = start; route.push(graph.nodes[at].id); while (at !== goal) { at = next[at * n + goal]; route.push(graph.nodes[at].id); } }
+  if (!blocking.length && Number.isFinite(dist[start * n + goal])) { let at = start; route.push(graph.nodes[at].id); while (at !== goal) { at = next[at * n + goal]; route.push(graph.nodes[at].id); } }
   if (route.length) steps.push(createAlgorithmStep(steps.length, "path", `Shortest path to ${graph.goal}: ${route.join(" → ")} (cost ${dist[start * n + goal]}).`, { currentNode: graph.goal, visited: reached(), dataStructure: [{ label: "Path", value: route.join(" → ") }], metrics: { visitedNodes: reached().length, operations: checks } }));
-  steps.push(createAlgorithmStep(steps.length, "complete", route.length ? "Floyd-Warshall completed: every pair now has its shortest distance." : `Floyd-Warshall completed: ${graph.goal} cannot be reached from ${graph.start}.`, { visited: reached(), metrics: { visitedNodes: reached().length, operations: checks } }));
+  const ending = blocking.length ? `Floyd-Warshall stopped: ${blocking.join(" and ")} lie on a negative cycle that the route from ${graph.start} to ${graph.goal} can pass through, so there is no cheapest route.` : route.length ? `Floyd-Warshall completed: every pair now has its shortest distance.${onCycle.length ? ` (${onCycle.join(", ")} lie on a negative cycle, but not on any route from ${graph.start} to ${graph.goal}.)` : ""}` : `Floyd-Warshall completed: ${graph.goal} cannot be reached from ${graph.start}.`;
+  steps.push(createAlgorithmStep(steps.length, "complete", ending, { visited: reached(), ...(blocking.length ? { dataStructure: [{ label: "Negative cycle", value: `through ${blocking.join(", ")}` }] } : {}), metrics: { visitedNodes: reached().length, operations: checks } }));
   return { algorithmId: "floyd-warshall", inputLabel: `${graph.label ?? "Weighted graph"} · ${graph.start} → ${graph.goal}`, steps, completed: true };
 }

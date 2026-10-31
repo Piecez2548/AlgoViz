@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, BarChart3, BookOpen, GitCompareArrows, Network, Pause, Play, Route, Search } from "lucide-react";
+import { ArrowRight, BarChart3, BookOpen, GitCompareArrows, Network, Pause, Play, Route, Search, TrendingDown } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import type { AlgorithmDefinition } from "@/algorithms/shared/types";
@@ -38,6 +38,13 @@ const categories: AlgorithmDefinition[] = [
     name: "Array search",
     category: "array-search",
     summary: "Find a value in a list: look at every item, or halve the range each time.",
+    status: "available",
+  },
+  {
+    id: "negative-weights",
+    name: "Negative edges",
+    category: "negative-weights",
+    summary: "Directed graphs with negative weights, and the negative cycle that breaks shortest paths.",
     status: "available",
   },
 ];
@@ -160,6 +167,7 @@ export default function AlgoVizHomePage() {
                 {index === 2 && <Network size={20} />}
                 {index === 3 && <BarChart3 size={20} />}
                 {index === 4 && <Search size={20} />}
+                {index === 5 && <TrendingDown size={20} />}
               </span>
               <span className="algoviz-category-index">0{index + 1}</span>
               <span className="algoviz-category-copy"><strong>{category.name}</strong><span>{category.summary}</span></span>

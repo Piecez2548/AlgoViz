@@ -16,7 +16,8 @@ export function nextNodeId(graph: GraphInput): string {
   return [...LETTERS].find((letter) => !used.has(letter)) ?? `N${graph.nodes.length + 1}`;
 }
 
-export const validWeight = (value: number): boolean => Number.isInteger(value) && value >= MIN_WEIGHT && value <= MAX_WEIGHT;
+/** Directed graphs may have negative (and zero) weights; two-way graphs keep 1 to 99. */
+export const validWeight = (value: number, directed = false): boolean => Number.isInteger(value) && value >= (directed ? -MAX_WEIGHT : MIN_WEIGHT) && value <= MAX_WEIGHT;
 
 /** Adds a node at (x, y); returns the graph unchanged when it is full. */
 export function addNode(graph: GraphInput, x: number, y: number): GraphInput {
@@ -49,19 +50,23 @@ export function removeNode(graph: GraphInput, id: string): GraphInput {
   return { ...graph, nodes, edges: graph.edges.filter((edge) => edge.from !== id && edge.to !== id), start, goal };
 }
 
-/** Adds the edge between two nodes, or changes its weight if it already exists. Ignores loops and bad weights. */
+/** Name of an edge: order matters on a directed graph, not on a two-way one. */
+export const arcKey = (graph: Pick<GraphInput, "directed">, a: string, b: string): string => (graph.directed ? `${a}>${b}` : edgeKey(a, b));
+
+/** Adds the edge between two nodes (from a to b when directed), or changes its weight if it already exists. Ignores loops and bad weights. */
 export function setEdge(graph: GraphInput, a: string, b: string, weight: number): GraphInput {
-  if (a === b || !validWeight(weight)) return graph;
+  if (a === b || !validWeight(weight, graph.directed)) return graph;
   if (!graph.nodes.some((node) => node.id === a) || !graph.nodes.some((node) => node.id === b)) return graph;
-  const key = edgeKey(a, b);
-  const exists = graph.edges.some((edge) => edgeKey(edge.from, edge.to) === key);
-  const edges = exists ? graph.edges.map((edge) => (edgeKey(edge.from, edge.to) === key ? { ...edge, weight } : edge)) : [...graph.edges, { from: a < b ? a : b, to: a < b ? b : a, weight }];
+  const key = arcKey(graph, a, b);
+  const exists = graph.edges.some((edge) => arcKey(graph, edge.from, edge.to) === key);
+  const [from, to] = graph.directed || a < b ? [a, b] : [b, a];
+  const edges = exists ? graph.edges.map((edge) => (arcKey(graph, edge.from, edge.to) === key ? { ...edge, weight } : edge)) : [...graph.edges, { from, to, weight }];
   return { ...graph, edges };
 }
 
 export function removeEdge(graph: GraphInput, a: string, b: string): GraphInput {
-  const key = edgeKey(a, b);
-  return { ...graph, edges: graph.edges.filter((edge) => edgeKey(edge.from, edge.to) !== key) };
+  const key = arcKey(graph, a, b);
+  return { ...graph, edges: graph.edges.filter((edge) => arcKey(graph, edge.from, edge.to) !== key) };
 }
 
 /** Choose the start or goal; picking the node the other end uses swaps them so they always differ. */

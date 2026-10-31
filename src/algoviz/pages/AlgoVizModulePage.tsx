@@ -1,8 +1,8 @@
 import { useCallback, useMemo } from "react";
 import type { GraphInput } from "../../algorithms/shared/graphTypes";
-import { ArrowLeft, GitCompareArrows, ListFilter, Network, Route, Search, Sigma } from "lucide-react";
+import { ArrowLeft, GitCompareArrows, ListFilter, Network, Route, Search, Sigma, TrendingDown } from "lucide-react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
-import { ARRAY_SEARCH_ALGORITHMS, PATHFINDING_ALGORITHMS, SEARCH_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../../algorithms/registry";
+import { ARRAY_SEARCH_ALGORITHMS, NEGATIVE_ALGORITHMS, PATHFINDING_ALGORITHMS, SEARCH_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../../algorithms/registry";
 import { parseNumberList } from "../../algorithms/shared/arrayInput";
 import { decodeGraph, encodeGraph } from "../../algorithms/shared/graphCodec";
 import { AlgoVizLab } from "../components/AlgoVizLab";
@@ -14,6 +14,7 @@ const moduleContent = {
   spanning: { icon: Network, name: "Spanning trees", description: "Connect every node with the least total weight, one edge at a time.", category: "spanning" as const, eyebrow: "Minimum spanning tree lab", defaultAlgorithm: "kruskal", options: SPANNING_ALGORITHMS },
   sorting: { icon: Sigma, name: "Sorting algorithms", description: "Watch comparisons and swaps turn an unsorted array into order.", category: "sorting" as const, eyebrow: "Array sorting lab", defaultAlgorithm: "bubble", options: SORTING_ALGORITHMS },
   "array-search": { icon: ListFilter, name: "Array search", description: "Find a value in a sorted list: check every item, or halve the range with each look.", category: "array-search" as const, eyebrow: "List search lab", defaultAlgorithm: "binary-search", options: ARRAY_SEARCH_ALGORITHMS },
+  "negative-weights": { icon: TrendingDown, name: "Negative edges", description: "Shortest paths on a directed graph where some edges have negative weights, and what happens when a loop of them makes every lap cheaper.", category: "negative" as const, eyebrow: "Directed graph lab", defaultAlgorithm: "bellman-ford", options: NEGATIVE_ALGORITHMS },
   compare: { icon: GitCompareArrows, name: "Compare algorithms", description: "Run several algorithms on the same input, then see how each one's cost grows as the input gets bigger.", category: "compare" as const, eyebrow: "Comparison lab" },
 } as const;
 

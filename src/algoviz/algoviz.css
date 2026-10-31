@@ -557,6 +557,10 @@
   background: #aab9ff18;
   color: var(--algo-accent);
 }
+.icon-negative-weights {
+  background: #ffb4a218;
+  color: #ffb4a2;
+}
 .icon-sorting {
   background: #f5d36b18;
   color: var(--algo-yellow);
@@ -909,6 +913,7 @@
 .algoviz-predict-options .is-right { border-color: var(--algo-accent); background: #266148; color: #fff; }
 .algoviz-predict-options .is-wrong { border-color: #ff9aa8; background: #5a2531; color: #fff; }
 .algoviz-predict-result { margin: 0 0 0.8rem; }
+.algoviz-edge-label.is-negative { fill: #ffb4a2; font-weight: 700; }
 .algoviz-custom-graph { display: grid; gap: 1rem; }
 .algoviz-graph-canvas.is-editable svg { touch-action: none; }
 .algoviz-graph-canvas.is-editable .algoviz-node { cursor: grab; }

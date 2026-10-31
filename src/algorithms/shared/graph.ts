@@ -22,6 +22,27 @@ export const SAMPLE_GRAPH: GraphInput = {
   goal: "F",
 };
 
+/** Directed graph with one negative edge (C → B, −3). Dijkstra settles B too early and misses the cheaper route through C. */
+export const DIRECTED_SAMPLE: GraphInput = {
+  label: "Directed sample",
+  directed: true,
+  nodes: SAMPLE_GRAPH.nodes.map((node) => ({ ...node, heuristic: 0 })),
+  edges: [
+    { from: "A", to: "B", weight: 4 },
+    { from: "A", to: "C", weight: 5 },
+    { from: "C", to: "B", weight: -3 },
+    { from: "B", to: "D", weight: 3 },
+    { from: "D", to: "F", weight: 2 },
+    { from: "C", to: "E", weight: 2 },
+    { from: "E", to: "F", weight: 6 },
+  ],
+  start: "A",
+  goal: "F",
+};
+
+/** The same graph with an extra edge E → C (−5): going C → E → C costs −3 each lap. */
+export const DIRECTED_CYCLE_SAMPLE: GraphInput = { ...DIRECTED_SAMPLE, label: "Directed sample with a negative cycle", edges: [...DIRECTED_SAMPLE.edges, { from: "E", to: "C", weight: -5 }] };
+
 export function getGraphNode(graph: GraphInput, id: string): GraphNode {
   return graph.nodes.find((node) => node.id === id) ?? graph.nodes[0];
 }
@@ -29,7 +50,7 @@ export function getGraphNode(graph: GraphInput, id: string): GraphNode {
 export function getNeighbors(graph: GraphInput, nodeId: string): GraphEdge[] {
   return graph.edges.flatMap((edge) => {
     if (edge.from === nodeId) return [edge];
-    if (edge.to === nodeId) return [{ from: nodeId, to: edge.from, weight: edge.weight }];
+    if (!graph.directed && edge.to === nodeId) return [{ from: nodeId, to: edge.from, weight: edge.weight }];
     return [];
   });
 }
@@ -62,6 +83,8 @@ export function pathCost(graph: GraphInput, path: readonly string[]): number {
  * Rounded down so the estimate never overshoots.
  */
 export function withHeuristics(graph: GraphInput): GraphInput {
+  // Weights can be negative on a directed graph, so no straight-line estimate is safe; those graphs are not used with A*.
+  if (graph.directed) return graph;
   const goal = getGraphNode(graph, graph.goal);
   const ratios = graph.edges.flatMap((edge) => {
     const from = getGraphNode(graph, edge.from); const to = getGraphNode(graph, edge.to);

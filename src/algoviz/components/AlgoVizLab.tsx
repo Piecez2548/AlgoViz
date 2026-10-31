@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { GraphInput } from "../../algorithms/shared/graphTypes";
+import { pathCost } from "../../algorithms/shared/graph";
+import { runBellmanFord } from "../../algorithms/pathfinding/pathfindingAlgorithms";
 import { SEARCH_TARGET_SAMPLE } from "../../algorithms/searching/arraySearchAlgorithms";
 import { SORT_SAMPLE } from "../../algorithms/sorting/sortingAlgorithms";
 import { PSEUDOCODE, activeLine } from "../../algorithms/shared/pseudocode";
@@ -26,7 +28,7 @@ interface CommonProps {
 type AlgoVizLabProps = CommonProps & (
   | { category: "sorting"; options: readonly ArrayLabOption[]; initialValues?: readonly number[]; onValuesChange?: (values: readonly number[]) => void }
   | { category: "array-search"; options: readonly TargetLabOption[]; initialValues?: readonly number[]; initialTarget?: number; onValuesChange?: (values: readonly number[]) => void; onTargetChange?: (target: number) => void }
-  | { category: "search" | "pathfinding" | "spanning"; options: readonly GraphLabOption[]; initialGraph?: GraphInput | null; /** Called with your own graph (or null when it is not in use) so the page can keep it in the link. */ onGraphChange?: (graph: GraphInput | null) => void }
+  | { category: "search" | "pathfinding" | "spanning" | "negative"; options: readonly GraphLabOption[]; initialGraph?: GraphInput | null; /** Called with your own graph (or null when it is not in use) so the page can keep it in the link. */ onGraphChange?: (graph: GraphInput | null) => void }
 );
 
 export function AlgoVizLab(props: AlgoVizLabProps) {
@@ -38,8 +40,9 @@ export function AlgoVizLab(props: AlgoVizLabProps) {
 
   // Search and pathfinding take a start and goal; spanning trees use the whole graph, so they get the sample or your own graph only.
   const usesMap = category === "search" || category === "pathfinding";
-  const usesGraph = usesMap || category === "spanning";
-  const map = useMapInput(usesMap ? "route" : category === "spanning" ? "tree" : "off", props.category === "array-search" || props.category === "sorting" ? null : props.initialGraph ?? null);
+  const directed = category === "negative";
+  const usesGraph = usesMap || directed || category === "spanning";
+  const map = useMapInput(usesMap ? "route" : directed ? "directed" : category === "spanning" ? "tree" : "off", props.category === "array-search" || props.category === "sorting" ? null : props.initialGraph ?? null);
   const onGraphChange = props.category === "array-search" || props.category === "sorting" ? undefined : props.onGraphChange;
   const shownCustom = usesGraph && map.mapKind === "custom" ? map.custom : null;
   // Dragging changes the graph many times a second, so the link follows a moment later.
@@ -66,7 +69,9 @@ export function AlgoVizLab(props: AlgoVizLabProps) {
     }
     return [] as readonly string[];
   }, [execution, playback.stepIndex]);
-  const noRoute = usesMap && !execution.steps.some((candidate) => candidate.type === "path");
+  const negativeCycle = directed ? execution.steps.at(-1)?.dataStructure?.find((entry) => entry.label === "Negative cycle")?.value : undefined;
+  const noRoute = (usesMap || directed) && !negativeCycle && !execution.steps.some((candidate) => candidate.type === "path");
+  const dijkstraNote = useMemo(() => (directed && algorithmId === "dijkstra" ? compareWithBellmanFord(graph, execution) : null), [algorithmId, directed, execution, graph]);
 
   useEffect(() => {
     if (options.some((candidate) => candidate.id === defaultAlgorithm)) setAlgorithmId(defaultAlgorithm);
@@ -92,6 +97,8 @@ export function AlgoVizLab(props: AlgoVizLabProps) {
     {isArray && <ArrayInput values={values} onApply={changeValues} />}
     {category === "array-search" && <TargetInput target={target} onApply={(next) => { setTarget(next); if (props.category === "array-search") props.onTargetChange?.(next); }} />}
     {usesGraph && <MapControls map={map} />}
+    {negativeCycle && <p className="algoviz-field-error" role="status">A negative cycle ({negativeCycle}) can be reached from {graph.start} and leads to {graph.goal}, so no route is the cheapest: every lap round the cycle makes the total smaller. Change an edge on the cycle to make it non-negative.</p>}
+    {dijkstraNote && <p className="algoviz-field-help" role="status">{dijkstraNote}</p>}
     {noRoute && <p className="algoviz-field-error" role="status">No route exists from {graph.start} to {graph.goal} on this map. Open a gap in the walls to connect them.</p>}
 
     <div className="algoviz-lab-grid">
@@ -127,3 +134,23 @@ const STEP_TITLES: Partial<Record<AlgorithmStep["type"], string>> = { accept: "K
 function stepTitle(type: AlgorithmStep["type"]) { return STEP_TITLES[type] ?? type[0].toUpperCase() + type.slice(1); }
 
 function Metric({ label, value }: { label: string; value: number }) { return <div><strong>{value}</strong><span>{label}</span></div>; }
+
+const routeOf = (execution: AlgorithmExecution): string[] | null => {
+  const value = execution.steps.find((candidate) => candidate.type === "path")?.dataStructure?.find((entry) => entry.label === "Path")?.value;
+  return value === undefined ? null : String(value).split(" → ");
+};
+
+/** Dijkstra assumes no edge is negative; say what that costs on this graph by checking it against Bellman-Ford. */
+function compareWithBellmanFord(graph: GraphInput, dijkstra: AlgorithmExecution): string {
+  const mine = routeOf(dijkstra);
+  const cost = mine ? pathCost(graph, mine) : null;
+  const reference = runBellmanFord(graph);
+  const cycle = reference.steps.at(-1)?.dataStructure?.find((entry) => entry.label === "Negative cycle")?.value;
+  const bestRoute = routeOf(reference);
+  const best = bestRoute ? pathCost(graph, bestRoute) : null;
+  const assumption = "Dijkstra assumes no edge is negative.";
+  if (cycle) return `${assumption} This graph has a negative cycle on the way to ${graph.goal}, so there is no cheapest route at all; Dijkstra still reports ${cost === null ? "no route" : `one costing ${cost}`}.`;
+  if (best === null) return `${assumption} ${cost === null ? "Here no route exists, and it correctly finds none." : `It reports a route costing ${cost}, but Bellman-Ford finds no route.`}`;
+  if (cost === null) return `${assumption} It finds no route, but Bellman-Ford finds one costing ${best}.`;
+  return cost > best ? `${assumption} Here it settles a node too early and reports a route costing ${cost}, but Bellman-Ford finds one costing ${best}.` : `${assumption} Here it happens to find the cheapest route (cost ${best}), but that is only guaranteed when no edge is negative.`;
+}
