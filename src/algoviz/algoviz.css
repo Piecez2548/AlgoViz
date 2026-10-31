@@ -1517,3 +1517,67 @@
 /* Let wide tables scroll inside their own box instead of stretching the page. */
 .algoviz-compare-lab, .algoviz-compare-lab > * { min-width: 0; }
 .algoviz-table-wrap { max-width: 100%; }
+
+/* Grouped navigation: three menus instead of a row of eleven links. */
+.algoviz-nav-group {
+  position: relative;
+}
+.algoviz-nav-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.algoviz-nav-popover {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: -0.75rem;
+  z-index: 20;
+  display: grid;
+  min-width: 190px;
+  gap: 0.15rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--algo-line);
+  border-radius: 10px;
+  background: var(--algo-surface-raised);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.35);
+}
+.algoviz-nav-popover .algoviz-nav-link {
+  min-height: 36px;
+  padding: 0.35rem 0;
+}
+.algoviz-mobile-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1.35rem;
+  width: 100%;
+}
+.algoviz-mobile-group-label {
+  width: 100%;
+  color: var(--algo-faint);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.algoviz-catalog-group + .algoviz-catalog-group {
+  margin-top: 2.25rem;
+}
+.algoviz-catalog-group-title {
+  margin: 0 0 0.9rem;
+  color: var(--algo-ink);
+  font-size: 1rem;
+}
+.algoviz-catalog-group-title span {
+  margin-left: 0.4rem;
+  color: var(--algo-faint);
+  font-size: 0.8rem;
+  font-weight: 600;
+}

@@ -1,26 +1,51 @@
-import { useEffect, useState } from "react";
-import { Link, NavLink, Outlet } from "react-router-dom";
-import { GitCompareArrows, Menu, Network, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
+import { ChevronDown, GitCompareArrows, Menu, Network, X } from "lucide-react";
 
 import "../../algoviz.css";
 
-const navItems = [
-  { to: "", label: "Learn", end: true },
-  { to: "/search", label: "Search" },
-  { to: "/pathfinding", label: "Pathfinding" },
-  { to: "/spanning", label: "Spanning trees" },
-  { to: "/sorting", label: "Sorting" },
-  { to: "/array-search", label: "Array search" },
-  { to: "/negative-weights", label: "Negative edges" },
-  { to: "/topological-sort", label: "Topological sort" },
-  { to: "/strongly-connected", label: "Components" },
-  { to: "/max-flow", label: "Max flow" },
-  { to: "/matching", label: "Matching" },
-  { to: "/compare", label: "Compare" },
+interface NavLeaf { to: string; label: string; end?: boolean }
+interface NavGroup { label: string; items: NavLeaf[] }
+const home: NavLeaf = { to: "", label: "Learn", end: true };
+const compare: NavLeaf = { to: "/compare", label: "Compare" };
+const groups: NavGroup[] = [
+  { label: "Graphs", items: [{ to: "/search", label: "Search" }, { to: "/pathfinding", label: "Pathfinding" }, { to: "/spanning", label: "Spanning trees" }, { to: "/negative-weights", label: "Negative edges" }, { to: "/topological-sort", label: "Topological sort" }, { to: "/strongly-connected", label: "Components" }] },
+  { label: "Sorting & searching", items: [{ to: "/sorting", label: "Sorting" }, { to: "/array-search", label: "Array search" }] },
+  { label: "Flow & matching", items: [{ to: "/max-flow", label: "Max flow" }, { to: "/matching", label: "Matching" }] },
 ];
+
+const linkClass = ({ isActive }: { isActive: boolean }) => (isActive ? "algoviz-nav-link is-active" : "algoviz-nav-link");
+
+function GroupMenu({ group, open, onToggle, onClose }: { group: NavGroup; open: boolean; onToggle: () => void; onClose: () => void }) {
+  const { pathname } = useLocation();
+  const active = group.items.some((item) => pathname === item.to || pathname.startsWith(`${item.to}/`));
+  return (
+    <div className="algoviz-nav-group">
+      <button type="button" className={active ? "algoviz-nav-link algoviz-nav-trigger is-active" : "algoviz-nav-link algoviz-nav-trigger"} aria-expanded={open} onClick={onToggle}>
+        {group.label} <ChevronDown size={14} aria-hidden="true" />
+      </button>
+      {open && (
+        <div className="algoviz-nav-popover">
+          {group.items.map((item) => <NavLink key={item.to} to={item.to} className={linkClass} onClick={onClose}>{item.label}</NavLink>)}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function AlgoVizLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const navRef = useRef<HTMLElement>(null);
+
+  // A group menu closes on Escape, or when a click or focus lands outside the navigation.
+  useEffect(() => {
+    if (!openGroup) return;
+    const close = (event: Event) => { if (!navRef.current?.contains(event.target as Node)) setOpenGroup(null); };
+    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") setOpenGroup(null); };
+    document.addEventListener("pointerdown", close); document.addEventListener("focusin", close); document.addEventListener("keydown", escape);
+    return () => { document.removeEventListener("pointerdown", close); document.removeEventListener("focusin", close); document.removeEventListener("keydown", escape); };
+  }, [openGroup]);
 
   useEffect(() => {
     const previousTitle = document.title;
@@ -38,17 +63,10 @@ export default function AlgoVizLayout() {
             <span>AlgoViz</span>
           </Link>
 
-          <nav className="algoviz-desktop-nav" aria-label="Primary navigation">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) => isActive ? "algoviz-nav-link is-active" : "algoviz-nav-link"}
-              >
-                {item.label}
-              </NavLink>
-            ))}
+          <nav ref={navRef} className="algoviz-desktop-nav" aria-label="Primary navigation">
+            <NavLink to={home.to} end={home.end} className={linkClass}>{home.label}</NavLink>
+            {groups.map((group) => <GroupMenu key={group.label} group={group} open={openGroup === group.label} onToggle={() => setOpenGroup((current) => (current === group.label ? null : group.label))} onClose={() => setOpenGroup(null)} />)}
+            <NavLink to={compare.to} className={linkClass}>{compare.label}</NavLink>
           </nav>
 
           <div className="algoviz-header-actions">
@@ -68,17 +86,14 @@ export default function AlgoVizLayout() {
 
         {menuOpen && (
           <nav id="algoviz-mobile-nav" className="algoviz-mobile-nav" aria-label="Mobile navigation">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) => isActive ? "algoviz-nav-link is-active" : "algoviz-nav-link"}
-                onClick={() => setMenuOpen(false)}
-              >
-                {item.label}
-              </NavLink>
+            <NavLink to={home.to} end={home.end} className={linkClass} onClick={() => setMenuOpen(false)}>{home.label}</NavLink>
+            {groups.map((group) => (
+              <div className="algoviz-mobile-group" role="group" aria-label={group.label} key={group.label}>
+                <span className="algoviz-mobile-group-label">{group.label}</span>
+                {group.items.map((item) => <NavLink key={item.to} to={item.to} className={linkClass} onClick={() => setMenuOpen(false)}>{item.label}</NavLink>)}
+              </div>
             ))}
+            <NavLink to={compare.to} className={linkClass} onClick={() => setMenuOpen(false)}>{compare.label}</NavLink>
           </nav>
         )}
       </header>

@@ -110,6 +110,12 @@ const algorithmCatalog = [
   { id: "linear-search", name: "Linear search", shortName: "Linear", category: "array-search", complexity: "O(n)", summary: "Check every value from the left until it turns up." },
 ] as const;
 
+const catalogGroups: { label: string; categories: string[] }[] = [
+  { label: "Graphs", categories: ["search", "pathfinding", "spanning", "negative-weights", "topological-sort", "strongly-connected"] },
+  { label: "Sorting and searching", categories: ["sorting", "array-search"] },
+  { label: "Flow and matching", categories: ["max-flow", "matching"] },
+];
+
 function ExecutionPreview() {
   const previewSteps = [
     { node: "A", queue: "[B, C]", action: "Starting at A", explanation: "A is the starting node. Its neighbors become the first frontier to explore." },
@@ -224,19 +230,27 @@ export default function AlgoVizHomePage() {
             <p className="algoviz-eyebrow">Algorithm catalog</p>
             <h2 id="catalog-heading">The growing algorithm set.</h2>
           </div>
-          <p>Twenty-nine algorithms for teaching graph search, shortest paths, spanning trees, sorting, and searching lists with the same step-by-step contract.</p>
+          <p>Thirty algorithms for teaching graph search, shortest paths, spanning trees, sorting, flow, matching, and searching lists with the same step-by-step contract.</p>
         </div>
-        <div className="algoviz-catalog-grid">
-          {algorithmCatalog.map((algorithm, index) => (
-            <Link className="algoviz-catalog-card" to={`/${algorithm.category}?algorithm=${algorithm.id}`} key={algorithm.shortName}>
-              <span className="algoviz-catalog-number">{String(index + 1).padStart(2, "0")}</span>
-              <span className={`algoviz-catalog-tag icon-${algorithm.category}`}>{algorithm.shortName}</span>
-              <strong>{algorithm.name}</strong>
-              <span>{algorithm.summary}</span>
-              <code>{algorithm.complexity}</code>
-            </Link>
-          ))}
-        </div>
+        {catalogGroups.map((group) => {
+          const cards = algorithmCatalog.filter((algorithm) => group.categories.includes(algorithm.category));
+          return (
+            <div className="algoviz-catalog-group" key={group.label}>
+              <h3 className="algoviz-catalog-group-title">{group.label} <span>{cards.length}</span></h3>
+              <div className="algoviz-catalog-grid">
+                {cards.map((algorithm) => (
+                  <Link className="algoviz-catalog-card" to={`/${algorithm.category}?algorithm=${algorithm.id}`} key={algorithm.shortName}>
+                    <span className="algoviz-catalog-number">{String(algorithmCatalog.indexOf(algorithm) + 1).padStart(2, "0")}</span>
+                    <span className={`algoviz-catalog-tag icon-${algorithm.category}`}>{algorithm.shortName}</span>
+                    <strong>{algorithm.name}</strong>
+                    <span>{algorithm.summary}</span>
+                    <code>{algorithm.complexity}</code>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </section>
 
       <section className="algoviz-workflow-section" aria-labelledby="workflow-heading">
