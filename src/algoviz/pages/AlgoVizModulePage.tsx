@@ -52,7 +52,7 @@ export default function AlgoVizModulePage() {
     : "";
   return <div className="algoviz-page algoviz-module-page">
     <section className="algoviz-module-hero">
-      <Link className="algoviz-back-link" to=""><ArrowLeft size={16} /> Back to Learn</Link>
+      <Link className="algoviz-back-link" to="/"><ArrowLeft size={16} /> Back to Learn</Link>
       <span className="algoviz-module-icon" aria-hidden="true"><Icon size={28} /></span>
       <p className="algoviz-eyebrow">{module.eyebrow}</p>
       <h1>{module.name}</h1>

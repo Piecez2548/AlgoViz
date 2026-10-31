@@ -52,3 +52,19 @@ describe("home catalog groups", () => {
     expect(cards.length).toBe(30);
   });
 });
+
+describe("back to Learn", () => {
+  it("leads to the home page from every lab, not back to the same lab", () => {
+    for (const path of ["/search", "/matching", "/compare", "/sorting"]) {
+      const { unmount } = openAt(path);
+      expect(screen.getByRole("link", { name: /Back to Learn/ }), path).toHaveAttribute("href", "/");
+      unmount();
+    }
+  });
+
+  it("opens the home page when clicked", () => {
+    openAt("/matching");
+    fireEvent.click(screen.getByRole("link", { name: /Back to Learn/ }));
+    expect(screen.getByRole("heading", { level: 1, name: /See algorithms/ })).toBeInTheDocument();
+  });
+});
