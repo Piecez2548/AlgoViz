@@ -30,6 +30,25 @@ export function ArrayInput({ values, onApply }: { values: readonly number[]; onA
   </form>;
 }
 
+export function TargetInput({ target, onApply }: { target: number; onApply: (target: number) => void }) {
+  const [text, setText] = useState(String(target));
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => { setText(String(target)); setError(null); }, [target]);
+  const apply = () => {
+    const value = Number(text);
+    if (!text.trim() || !Number.isInteger(value) || value < 1 || value > MAX_VALUE) { setError(`The value to find must be a whole number from 1 to ${MAX_VALUE}.`); return; }
+    setError(null); onApply(value);
+  };
+  return <form className="algoviz-input-panel" onSubmit={(event) => { event.preventDefault(); apply(); }}>
+    <label className="algoviz-field">Value to find
+      <input type="text" inputMode="numeric" value={text} onChange={(event) => setText(event.target.value)} aria-invalid={Boolean(error)} />
+    </label>
+    <button type="submit" className="algoviz-button">Search for it</button>
+    <p className="algoviz-field-help">Both searches look through your numbers in ascending order, so they search the same list. Pick a value that is not in the list to see the worst case.</p>
+    {error && <p className="algoviz-field-error" role="alert">{error}</p>}
+  </form>;
+}
+
 export type GridTool = "wall" | "heavy" | "erase" | "start" | "goal";
 const TOOLS: { id: GridTool; label: string }[] = [
   { id: "wall", label: "Wall" }, { id: "heavy", label: `Heavy ground (cost ${HEAVY_COST})` }, { id: "erase", label: "Erase" }, { id: "start", label: "Move start" }, { id: "goal", label: "Move goal" },

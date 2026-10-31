@@ -111,3 +111,73 @@ describe("compare: growth chart", () => {
     expect(screen.getByText(/A\* heads straight for the goal/)).toBeInTheDocument();
   });
 });
+
+describe("compare: spanning trees", () => {
+  const pickTrees = () => fireEvent.click(screen.getByLabelText("Spanning trees"));
+
+  it("shows Prim and Kruskal building the same tree with different amounts of checking", () => {
+    open();
+    pickTrees();
+    expect(screen.getByText(/Comparing Kruskal.s Algorithm and Prim.s Algorithm./)).toBeInTheDocument();
+    expect(verdictText()).toBe("Both built a tree of weight 10 from 5 edges. Kruskal's Algorithm made the fewest edge checks (7); Prim's Algorithm made the most (13).");
+    expect(cell("Kruskal's Algorithm", "Edge checks")).toContain("7");
+    expect(cell("Kruskal's Algorithm", "Total weight")).toBe(cell("Prim's Algorithm", "Total weight"));
+    // Weight and edge count are the answer, not the effort: never labelled lowest.
+    expect(cell("Kruskal's Algorithm", "Total weight")).not.toContain("lowest");
+  });
+
+  it("explains a disconnected custom graph instead of claiming the same tree", () => {
+    open();
+    pickTrees();
+    fireEvent.change(screen.getByLabelText("Choose map"), { target: { value: "custom" } });
+    fireEvent.click(screen.getByText(/Nodes and edges/));
+    for (const edge of ["D–F", "E–F"]) fireEvent.click(screen.getByRole("button", { name: `Remove edge ${edge}` }));
+    expect(verdictText()).toMatch(/The graph is not fully connected, so the tree covers only part of it.$/);
+    expect(verdictText()).toMatch(/^Both built a tree of weight 9 from 4 edges./);
+  });
+
+  it("charts edge checks against graph size and says why Prim pulls away", async () => {
+    open();
+    pickTrees();
+    await waitFor(() => expect(screen.getByRole("img", { name: /Edge checks against nodes in the graph/ })).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Show the numbers behind the chart"));
+    const data = screen.getByRole("table", { name: /Edge checks by nodes in the graph/ });
+    const last = within(within(data).getAllByRole("row").at(-1)!).getAllByRole("cell").map((item) => Number(item.textContent!.replace(/,/g, "")));
+    expect(Math.max(...last)).toBeGreaterThan(Math.min(...last) * 5);
+    expect(screen.getByText(/Prim looks again at every edge that leaves the tree/)).toBeInTheDocument();
+  });
+});
+
+describe("compare: searching a list", () => {
+  const pickLists = () => fireEvent.click(screen.getByLabelText("Searching a list"));
+
+  it("counts comparisons for the value you choose on the numbers you type", () => {
+    open();
+    pickLists();
+    fireEvent.change(screen.getByLabelText("Your numbers"), { target: { value: "10, 20, 30, 40, 50, 60, 70, 80" } });
+    fireEvent.click(screen.getByRole("button", { name: "Use these numbers" }));
+    fireEvent.change(screen.getByLabelText("Value to find"), { target: { value: "80" } });
+    fireEvent.click(screen.getByRole("button", { name: "Search for it" }));
+    expect(cell("Binary search", "Comparisons")).toContain("4");
+    expect(cell("Linear search", "Comparisons")).toContain("8");
+    expect(verdictText()).toBe("80 is in the list. Binary search made the fewest comparisons (4); Linear search made the most (8).");
+    fireEvent.change(screen.getByLabelText("Value to find"), { target: { value: "5" } });
+    fireEvent.click(screen.getByRole("button", { name: "Search for it" }));
+    expect(verdictText()).toMatch(/^5 is not in the list, so every possibility had to be ruled out./);
+  });
+
+  it("charts a straight diagonal for linear search and a nearly flat line for binary search", async () => {
+    open();
+    pickLists();
+    await waitFor(() => expect(screen.getByRole("img", { name: /Comparisons against items in the sorted list/ })).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Show the numbers behind the chart"));
+    const data = screen.getByRole("table", { name: /Comparisons by items in the sorted list/ });
+    const headers = within(data).getAllByRole("columnheader").map((header) => header.textContent);
+    const last = within(within(data).getAllByRole("row").at(-1)!).getAllByRole("cell").map((item) => item.textContent);
+    expect(last[headers.indexOf("Linear search") - 1]).toBe("1,024");
+    expect(last[headers.indexOf("Binary search") - 1]).toBe("11");
+    expect(screen.getByText(/linear search has to look at every item/)).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Where is the value?"), { target: { value: "first" } });
+    await waitFor(() => expect(screen.getByText(/linear search finds it in one look/)).toBeInTheDocument());
+  });
+});

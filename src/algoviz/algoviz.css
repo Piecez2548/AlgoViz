@@ -904,6 +904,8 @@
 .algoviz-custom-graph { display: grid; gap: 1rem; }
 .algoviz-graph-canvas.is-editable svg { touch-action: none; }
 .algoviz-graph-canvas.is-editable .algoviz-node { cursor: grab; }
+.algoviz-graph-canvas.is-editable .algoviz-edge,
+.algoviz-graph-canvas.is-editable .algoviz-edge-label { pointer-events: none; }
 .algoviz-graph-canvas.is-editable g[role="button"]:focus-visible { outline: none; }
 .algoviz-graph-canvas.is-editable g[role="button"]:focus-visible .algoviz-node { stroke: var(--algo-yellow); stroke-width: 1.6; }
 .algoviz-node.is-pending { stroke: var(--algo-yellow); stroke-width: 1.6; stroke-dasharray: 2 1.2; }

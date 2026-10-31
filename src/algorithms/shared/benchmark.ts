@@ -1,5 +1,5 @@
-import { ROUTE_ALGORITHMS, SORTING_ALGORITHMS } from "../registry";
-import { cellIndex, gridToGraph, pathCost } from "./graph";
+import { ARRAY_SEARCH_ALGORITHMS, ROUTE_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../registry";
+import { cellIndex, edgeKey, gridToGraph, pathCost } from "./graph";
 import type { GraphInput, GridCell, GridState } from "./graphTypes";
 import type { AlgorithmExecution } from "./types";
 
@@ -14,6 +14,12 @@ export interface Measure {
   visited: number;
   /** Total weight of the route it found, or null when it found none. */
   cost: number | null;
+  /** Checks the algorithm counted (edge looks, pair checks), from its own metrics. */
+  operations: number;
+  /** Edges kept in a spanning tree. */
+  edges: number;
+  /** Total weight of that tree. */
+  weight: number;
 }
 
 export function measure(execution: AlgorithmExecution, graph?: GraphInput): Measure {
@@ -22,13 +28,19 @@ export function measure(execution: AlgorithmExecution, graph?: GraphInput): Meas
   const visited = Math.max(0, ...steps.filter((step) => step.type !== "path").map((step) => step.metrics?.visitedNodes ?? step.visited?.length ?? 0));
   const route = steps.find((step) => step.type === "path")?.dataStructure?.find((entry) => entry.label === "Path")?.value;
   const cost = route !== undefined && graph ? pathCost(graph, String(route).split(" → ")) : null;
-  return { steps: steps.length, comparisons: last?.comparisons ?? 0, swaps: last?.swaps ?? 0, visited, cost: cost !== null && Number.isFinite(cost) ? cost : null };
+  const tail = steps.at(-1);
+  const weight = Number(tail?.dataStructure?.find((entry) => entry.label === "Total weight")?.value ?? 0);
+  return { steps: steps.length, comparisons: last?.comparisons ?? 0, swaps: last?.swaps ?? 0, visited, cost: cost !== null && Number.isFinite(cost) ? cost : null, operations: last?.operations ?? 0, edges: tail?.acceptedEdges?.length ?? 0, weight };
 }
 
 export type SortMetric = "comparisons" | "swaps" | "steps";
 export type GraphMetric = "visited" | "steps";
 export type SortShape = "random" | "sorted" | "reversed" | "nearly" | "few-unique";
 export type GridObstacles = "none" | "scattered";
+export type TreeMetric = "operations" | "steps";
+export type SearchMetric = "comparisons" | "steps";
+/** Where the value sits in the list being searched. */
+export type TargetPlace = "absent" | "last" | "middle" | "first";
 
 export interface GrowthPoint { n: number; value: number }
 export interface GrowthSeries { id: string; name: string; points: readonly GrowthPoint[] }
@@ -92,5 +104,49 @@ export function graphGrowth(ids: readonly string[], obstacles: GridObstacles, me
     id: algorithm.id,
     name: algorithm.name,
     points: graphs.map(({ n, graph }) => ({ n, value: measure(algorithm.run(graph), graph)[metric] })),
+  }));
+}
+
+export const TREE_SIZES: readonly number[] = [8, 16, 24, 32, 48, 64];
+export const LIST_SIZES: readonly number[] = [8, 16, 32, 64, 128, 256, 512, 1024];
+
+/**
+ * A connected graph of `n` nodes: a ring plus a few longer chords, with repeatable weights from 1 to 9.
+ * About three edges per node, so the edge count grows in step with the node count.
+ */
+export function ringGraph(n: number): GraphInput {
+  const random = seeded(n * 13 + 7);
+  const nodes = Array.from({ length: n }, (_, index) => ({ id: `N${index}`, x: 50 + 42 * Math.cos((index / n) * 2 * Math.PI), y: 50 + 42 * Math.sin((index / n) * 2 * Math.PI), heuristic: 0 }));
+  const seen = new Set<string>(); const edges: { from: string; to: string; weight: number }[] = [];
+  for (let index = 0; index < n; index++) {
+    for (const hop of [1, 2, 5]) {
+      const other = (index + hop) % n;
+      const key = edgeKey(nodes[index].id, nodes[other].id);
+      if (other === index || seen.has(key)) continue;
+      seen.add(key); edges.push({ from: nodes[index].id, to: nodes[other].id, weight: 1 + Math.floor(random() * 9) });
+    }
+  }
+  return { label: "Ring graph", nodes, edges, start: nodes[0].id, goal: nodes[n - 1].id };
+}
+
+export function treeGrowth(ids: readonly string[], metric: TreeMetric, sizes: readonly number[] = TREE_SIZES): GrowthSeries[] {
+  const graphs = sizes.map((n) => ({ n, graph: ringGraph(n) }));
+  return SPANNING_ALGORITHMS.filter((algorithm) => ids.includes(algorithm.id)).map((algorithm) => ({
+    id: algorithm.id,
+    name: algorithm.name,
+    points: graphs.map(({ n, graph }) => ({ n, value: measure(algorithm.run(graph), graph)[metric] })),
+  }));
+}
+
+/** The value to look for in the list 1..n. */
+export function targetFor(place: TargetPlace, n: number): number {
+  return place === "absent" ? n + 1 : place === "last" ? n : place === "middle" ? Math.ceil(n / 2) : 1;
+}
+
+export function searchGrowth(ids: readonly string[], place: TargetPlace, metric: SearchMetric, sizes: readonly number[] = LIST_SIZES): GrowthSeries[] {
+  return ARRAY_SEARCH_ALGORITHMS.filter((algorithm) => ids.includes(algorithm.id)).map((algorithm) => ({
+    id: algorithm.id,
+    name: algorithm.name,
+    points: sizes.map((n) => ({ n, value: measure(algorithm.run(Array.from({ length: n }, (_, index) => index + 1), targetFor(place, n)))[metric] })),
   }));
 }

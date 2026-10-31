@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { ROUTE_ALGORITHMS, SORTING_ALGORITHMS } from "../registry";
+import { ROUTE_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../registry";
 import { runBubbleSort } from "../sorting/sortingAlgorithms";
-import { graphGrowth, measure, MAP_SIDES, SORT_SIZES, sortGrowth, sortInputs, squareMap } from "./benchmark";
+import { graphGrowth, LIST_SIZES, measure, MAP_SIDES, ringGraph, searchGrowth, SORT_SIZES, sortGrowth, sortInputs, squareMap, targetFor, TREE_SIZES, treeGrowth } from "./benchmark";
 import { gridToGraph } from "./graph";
 
 const ids = SORTING_ALGORITHMS.map((algorithm) => algorithm.id);
@@ -96,5 +96,49 @@ describe("map growth", () => {
     expect(first.cells[first.start.row * 10]).toBe("empty");
     expect(first.cells[first.goal.row * 10 + 9]).toBe("empty");
     expect(first.cells.filter((cell) => cell === "wall").length).toBeGreaterThan(5);
+  });
+});
+
+describe("spanning tree growth", () => {
+  it("builds connected graphs with about three edges per node", () => {
+    for (const n of TREE_SIZES) {
+      const graph = ringGraph(n);
+      expect(graph.nodes).toHaveLength(n);
+      expect(graph.edges.length).toBeGreaterThan(2 * n);
+      expect(graph.edges.length).toBeLessThanOrEqual(3 * n);
+    }
+  });
+
+  it("gives Prim and Kruskal the same tree weight, while Prim's checks grow much faster", () => {
+    const graph = ringGraph(48);
+    const results = SPANNING_ALGORITHMS.map((algorithm) => measure(algorithm.run(graph), graph));
+    expect(results[0].weight).toBe(results[1].weight);
+    expect(results.every((result) => result.edges === 47)).toBe(true);
+    const series = treeGrowth(["kruskal", "prim"], "operations");
+    const last = (id: string) => series.find((item) => item.id === id)!.points.at(-1)!.value;
+    // Kruskal looks at each edge once; Prim re-examines every edge leaving the tree each round.
+    expect(last("kruskal")).toBe(ringGraph(64).edges.length);
+    expect(last("prim")).toBeGreaterThan(last("kruskal") * 5);
+  });
+});
+
+describe("list search growth", () => {
+  it("places the value as asked", () => {
+    expect([targetFor("absent", 8), targetFor("last", 8), targetFor("middle", 8), targetFor("first", 8)]).toEqual([9, 8, 4, 1]);
+  });
+
+  it("shows linear search growing in a straight line and binary search barely moving", () => {
+    const series = searchGrowth(["binary-search", "linear-search"], "absent", "comparisons");
+    const value = (id: string, n: number) => series.find((item) => item.id === id)!.points.find((point) => point.n === n)!.value;
+    for (const n of LIST_SIZES) {
+      expect(value("linear-search", n)).toBe(n);
+      expect(value("binary-search", n)).toBe(Math.floor(Math.log2(n)) + 1);
+    }
+  });
+
+  it("makes linear search win when the value is the first item", () => {
+    const series = searchGrowth(["binary-search", "linear-search"], "first", "comparisons");
+    expect(series.find((item) => item.id === "linear-search")!.points.every((point) => point.value === 1)).toBe(true);
+    expect(series.find((item) => item.id === "binary-search")!.points.at(-1)!.value).toBeGreaterThan(1);
   });
 });

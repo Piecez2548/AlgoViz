@@ -5,8 +5,7 @@ import { SORT_SAMPLE } from "../../algorithms/sorting/sortingAlgorithms";
 import { PSEUDOCODE, activeLine } from "../../algorithms/shared/pseudocode";
 import type { AlgorithmExecution, AlgorithmStep } from "../../algorithms/shared/types";
 import { getStepLabel } from "../../algorithms/shared/utils";
-import { MAX_VALUE } from "../../algorithms/shared/arrayInput";
-import { ArrayInput, GridBoard } from "./InputEditors";
+import { ArrayInput, GridBoard, TargetInput } from "./InputEditors";
 import { GraphCanvas } from "./GraphCanvas";
 import { MapControls, MapSelect, useMapInput } from "./MapInput";
 import { PlaybackControls } from "./PlaybackControls";
@@ -112,22 +111,3 @@ const STEP_TITLES: Partial<Record<AlgorithmStep["type"], string>> = { accept: "K
 function stepTitle(type: AlgorithmStep["type"]) { return STEP_TITLES[type] ?? type[0].toUpperCase() + type.slice(1); }
 
 function Metric({ label, value }: { label: string; value: number }) { return <div><strong>{value}</strong><span>{label}</span></div>; }
-
-function TargetInput({ target, onApply }: { target: number; onApply: (target: number) => void }) {
-  const [text, setText] = useState(String(target));
-  const [error, setError] = useState<string | null>(null);
-  useEffect(() => { setText(String(target)); setError(null); }, [target]);
-  const apply = () => {
-    const value = Number(text);
-    if (!text.trim() || !Number.isInteger(value) || value < 1 || value > MAX_VALUE) { setError(`The value to find must be a whole number from 1 to ${MAX_VALUE}.`); return; }
-    setError(null); onApply(value);
-  };
-  return <form className="algoviz-input-panel" onSubmit={(event) => { event.preventDefault(); apply(); }}>
-    <label className="algoviz-field">Value to find
-      <input type="text" inputMode="numeric" value={text} onChange={(event) => setText(event.target.value)} aria-invalid={Boolean(error)} />
-    </label>
-    <button type="submit" className="algoviz-button">Search for it</button>
-    <p className="algoviz-field-help">Both searches look through your numbers in ascending order, so they search the same list. Pick a value that is not in the list to see the worst case.</p>
-    {error && <p className="algoviz-field-error" role="alert">{error}</p>}
-  </form>;
-}
