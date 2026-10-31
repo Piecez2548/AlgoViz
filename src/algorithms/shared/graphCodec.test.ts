@@ -50,3 +50,14 @@ describe("directed graphs in links", () => {
     expect(decodeGraph("A:1:1,B:2:2~A:B:-1~A~B~x")).toBeNull();
   });
 });
+
+describe("task graphs in links", () => {
+  it("keeps the unweighted flag", async () => {
+    const { DAG_SAMPLE } = await import("./graph");
+    const text = encodeGraph(DAG_SAMPLE);
+    expect(text.endsWith("~du")).toBe(true);
+    const back = decodeGraph(text)!;
+    expect(back).toMatchObject({ directed: true, unweighted: true });
+    expect(back.edges).toHaveLength(DAG_SAMPLE.edges.length);
+  });
+});

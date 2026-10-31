@@ -16,6 +16,8 @@ export interface GraphInput {
   label?: string;
   /** Edges can only be followed from `from` to `to`, and weights may be negative. */
   directed?: boolean;
+  /** Edges only say "this comes before that"; their weights are not used or shown. */
+  unweighted?: boolean;
   nodes: readonly GraphNode[];
   edges: readonly GraphEdge[];
   start: string;

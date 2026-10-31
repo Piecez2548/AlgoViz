@@ -43,6 +43,28 @@ export const DIRECTED_SAMPLE: GraphInput = {
 /** The same graph with an extra edge E → C (−5): going C → E → C costs −3 each lap. */
 export const DIRECTED_CYCLE_SAMPLE: GraphInput = { ...DIRECTED_SAMPLE, label: "Directed sample with a negative cycle", edges: [...DIRECTED_SAMPLE.edges, { from: "E", to: "C", weight: -5 }] };
 
+/** Tasks and what must come before them: an edge A → B means A has to be done before B. */
+export const DAG_SAMPLE: GraphInput = {
+  label: "Task graph",
+  directed: true,
+  unweighted: true,
+  nodes: SAMPLE_GRAPH.nodes.map((node) => ({ ...node, heuristic: 0 })),
+  edges: [
+    { from: "A", to: "B", weight: 1 },
+    { from: "A", to: "C", weight: 1 },
+    { from: "B", to: "D", weight: 1 },
+    { from: "C", to: "D", weight: 1 },
+    { from: "C", to: "E", weight: 1 },
+    { from: "D", to: "F", weight: 1 },
+    { from: "E", to: "F", weight: 1 },
+  ],
+  start: "A",
+  goal: "F",
+};
+
+/** The same tasks with one more rule, F before C, which closes the loop C → D → F → C. */
+export const DAG_CYCLE_SAMPLE: GraphInput = { ...DAG_SAMPLE, label: "Task graph with a loop", edges: [...DAG_SAMPLE.edges, { from: "F", to: "C", weight: 1 }] };
+
 export function getGraphNode(graph: GraphInput, id: string): GraphNode {
   return graph.nodes.find((node) => node.id === id) ?? graph.nodes[0];
 }

@@ -561,6 +561,10 @@
   background: #ffb4a218;
   color: #ffb4a2;
 }
+.icon-topological-sort {
+  background: #c9b6ff18;
+  color: #c9b6ff;
+}
 .icon-sorting {
   background: #f5d36b18;
   color: var(--algo-yellow);

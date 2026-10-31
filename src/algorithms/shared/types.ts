@@ -17,7 +17,7 @@ export type AlgorithmStepType =
   | "reject"
   | "complete";
 
-export type AlgorithmCategory = "search" | "pathfinding" | "spanning" | "sorting" | "array-search" | "negative-weights";
+export type AlgorithmCategory = "search" | "pathfinding" | "spanning" | "sorting" | "array-search" | "negative-weights" | "ordering" | "topological-sort";
 
 export interface AlgorithmMetrics {
   comparisons?: number;

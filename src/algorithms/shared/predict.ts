@@ -12,7 +12,7 @@ export interface Question {
 
 const MAX_OPTIONS = 4;
 /** Algorithms where the questions below describe the run exactly. */
-const NODE_PICKERS = new Set(["bfs", "dfs", "bidirectional-bfs", "greedy-best-first", "dijkstra", "a-star"]);
+const NODE_PICKERS = new Set(["kahn", "bfs", "dfs", "bidirectional-bfs", "greedy-best-first", "dijkstra", "a-star"]);
 const PAIR_SWAPPERS = new Set(["bubble", "insertion", "shell"]);
 
 const OTHERS = ["kruskal", "prim", "binary-search", "linear-search", "selection", "quick", "merge", "heap", "counting", "radix", "bellman-ford", "floyd-warshall"];

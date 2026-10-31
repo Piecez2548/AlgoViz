@@ -12,6 +12,7 @@ const navItems = [
   { to: "/sorting", label: "Sorting" },
   { to: "/array-search", label: "Array search" },
   { to: "/negative-weights", label: "Negative edges" },
+  { to: "/topological-sort", label: "Topological sort" },
   { to: "/compare", label: "Compare" },
 ];
 

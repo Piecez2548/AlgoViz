@@ -28,7 +28,7 @@ interface CommonProps {
 type AlgoVizLabProps = CommonProps & (
   | { category: "sorting"; options: readonly ArrayLabOption[]; initialValues?: readonly number[]; onValuesChange?: (values: readonly number[]) => void }
   | { category: "array-search"; options: readonly TargetLabOption[]; initialValues?: readonly number[]; initialTarget?: number; onValuesChange?: (values: readonly number[]) => void; onTargetChange?: (target: number) => void }
-  | { category: "search" | "pathfinding" | "spanning" | "negative"; options: readonly GraphLabOption[]; initialGraph?: GraphInput | null; /** Called with your own graph (or null when it is not in use) so the page can keep it in the link. */ onGraphChange?: (graph: GraphInput | null) => void }
+  | { category: "search" | "pathfinding" | "spanning" | "negative" | "ordering"; options: readonly GraphLabOption[]; initialGraph?: GraphInput | null; /** Called with your own graph (or null when it is not in use) so the page can keep it in the link. */ onGraphChange?: (graph: GraphInput | null) => void }
 );
 
 export function AlgoVizLab(props: AlgoVizLabProps) {
@@ -41,8 +41,9 @@ export function AlgoVizLab(props: AlgoVizLabProps) {
   // Search and pathfinding take a start and goal; spanning trees use the whole graph, so they get the sample or your own graph only.
   const usesMap = category === "search" || category === "pathfinding";
   const directed = category === "negative";
-  const usesGraph = usesMap || directed || category === "spanning";
-  const map = useMapInput(usesMap ? "route" : directed ? "directed" : category === "spanning" ? "tree" : "off", props.category === "array-search" || props.category === "sorting" ? null : props.initialGraph ?? null);
+  const ordering = category === "ordering";
+  const usesGraph = usesMap || directed || ordering || category === "spanning";
+  const map = useMapInput(usesMap ? "route" : directed ? "directed" : ordering ? "dag" : category === "spanning" ? "tree" : "off", props.category === "array-search" || props.category === "sorting" ? null : props.initialGraph ?? null);
   const onGraphChange = props.category === "array-search" || props.category === "sorting" ? undefined : props.onGraphChange;
   const shownCustom = usesGraph && map.mapKind === "custom" ? map.custom : null;
   // Dragging changes the graph many times a second, so the link follows a moment later.
@@ -70,6 +71,7 @@ export function AlgoVizLab(props: AlgoVizLabProps) {
     return [] as readonly string[];
   }, [execution, playback.stepIndex]);
   const negativeCycle = directed ? execution.steps.at(-1)?.dataStructure?.find((entry) => entry.label === "Negative cycle")?.value : undefined;
+  const dependencyLoop = ordering ? execution.steps.at(-1)?.dataStructure?.find((entry) => entry.label === "Cycle")?.value : undefined;
   const noRoute = (usesMap || directed) && !negativeCycle && !execution.steps.some((candidate) => candidate.type === "path");
   const dijkstraNote = useMemo(() => (directed && algorithmId === "dijkstra" ? compareWithBellmanFord(graph, execution) : null), [algorithmId, directed, execution, graph]);
 
@@ -97,6 +99,7 @@ export function AlgoVizLab(props: AlgoVizLabProps) {
     {isArray && <ArrayInput values={values} onApply={changeValues} />}
     {category === "array-search" && <TargetInput target={target} onApply={(next) => { setTarget(next); if (props.category === "array-search") props.onTargetChange?.(next); }} />}
     {usesGraph && <MapControls map={map} />}
+    {dependencyLoop && <p className="algoviz-field-error" role="status">These tasks depend on each other in a loop ({dependencyLoop}), so no order can satisfy every dependency. Remove one dependency on the loop to get an order.</p>}
     {negativeCycle && <p className="algoviz-field-error" role="status">A negative cycle ({negativeCycle}) can be reached from {graph.start} and leads to {graph.goal}, so no route is the cheapest: every lap round the cycle makes the total smaller. Change an edge on the cycle to make it non-negative.</p>}
     {dijkstraNote && <p className="algoviz-field-help" role="status">{dijkstraNote}</p>}
     {noRoute && <p className="algoviz-field-error" role="status">No route exists from {graph.start} to {graph.goal} on this map. Open a gap in the walls to connect them.</p>}
@@ -127,7 +130,7 @@ function Pseudocode({ algorithmId, step }: { algorithmId: string; step: Algorith
 
 function LabInspector({ step, category, algorithmId }: { step: AlgorithmStep; category: string; algorithmId: string }) {
   const data = step.dataStructure ?? [];
-  return <aside className="algoviz-inspector"><p className="algoviz-eyebrow">Current action</p><h2 aria-live="polite" aria-atomic="true">{stepTitle(step.type)}</h2><p className="algoviz-explanation" aria-live="polite" aria-atomic="true">{step.explanation}</p><Pseudocode algorithmId={algorithmId} step={step} /><div className="algoviz-inspector-block"><span>{category === "sorting" || category === "array-search" ? "Array state" : "Data structure"}</span>{data.length ? data.map((entry) => <div className="algoviz-data-row" key={`${entry.label}-${entry.value}`}><span>{entry.label}</span><strong>{entry.value}</strong></div>) : <p className="algoviz-empty-data">No pending items</p>}</div><div className="algoviz-inspector-block algoviz-metrics"><span>Live metrics</span><div className="algoviz-metric-grid">{category === "array-search" ? <Metric label="Comparisons" value={step.metrics?.comparisons ?? 0} /> : category === "sorting" ? <><Metric label="Comparisons" value={step.metrics?.comparisons ?? 0} /><Metric label={["merge", "counting", "radix"].includes(algorithmId) ? "Writes" : "Swaps"} value={step.metrics?.swaps ?? 0} /></> : category === "spanning" ? <Metric label="Edges kept" value={step.acceptedEdges?.length ?? 0} /> : <Metric label="Visited" value={step.metrics?.visitedNodes ?? step.visited?.length ?? 0} />}<Metric label="Operations" value={step.metrics?.operations ?? 0} /></div></div></aside>;
+  return <aside className="algoviz-inspector"><p className="algoviz-eyebrow">Current action</p><h2 aria-live="polite" aria-atomic="true">{stepTitle(step.type)}</h2><p className="algoviz-explanation" aria-live="polite" aria-atomic="true">{step.explanation}</p><Pseudocode algorithmId={algorithmId} step={step} /><div className="algoviz-inspector-block"><span>{category === "sorting" || category === "array-search" ? "Array state" : "Data structure"}</span>{data.length ? data.map((entry) => <div className="algoviz-data-row" key={`${entry.label}-${entry.value}`}><span>{entry.label}</span><strong>{entry.value}</strong></div>) : <p className="algoviz-empty-data">No pending items</p>}</div><div className="algoviz-inspector-block algoviz-metrics"><span>Live metrics</span><div className="algoviz-metric-grid">{category === "array-search" ? <Metric label="Comparisons" value={step.metrics?.comparisons ?? 0} /> : category === "sorting" ? <><Metric label="Comparisons" value={step.metrics?.comparisons ?? 0} /><Metric label={["merge", "counting", "radix"].includes(algorithmId) ? "Writes" : "Swaps"} value={step.metrics?.swaps ?? 0} /></> : category === "spanning" ? <Metric label="Edges kept" value={step.acceptedEdges?.length ?? 0} /> : category === "ordering" ? <Metric label="Placed" value={step.metrics?.visitedNodes ?? 0} /> : <Metric label="Visited" value={step.metrics?.visitedNodes ?? step.visited?.length ?? 0} />}<Metric label="Operations" value={step.metrics?.operations ?? 0} /></div></div></aside>;
 }
 
 const STEP_TITLES: Partial<Record<AlgorithmStep["type"], string>> = { accept: "Keep edge", reject: "Skip edge", complete: "Complete" };

@@ -3,6 +3,7 @@ import { runBfs, runBidirectionalBfs, runDfs, runGreedyBestFirst } from "./searc
 import { runBinarySearch, runLinearSearch } from "./searching/arraySearchAlgorithms";
 import type { GraphInput } from "./shared/graphTypes";
 import type { AlgorithmExecution } from "./shared/types";
+import { runDfsTopological, runKahn } from "./ordering/orderingAlgorithms";
 import { runKruskal, runPrim } from "./spanning/spanningAlgorithms";
 import { runBubbleSort, runCountingSort, runHeapSort, runInsertionSort, runMergeSort, runQuickSort, runRadixSort, runSelectionSort, runShellSort } from "./sorting/sortingAlgorithms";
 
@@ -27,6 +28,12 @@ export const PATHFINDING_ALGORITHMS: readonly GraphAlgorithm[] = [
 export const SPANNING_ALGORITHMS: readonly GraphAlgorithm[] = [
   { id: "kruskal", name: "Kruskal's Algorithm", short: "Kruskal", run: (graph) => runKruskal(graph) },
   { id: "prim", name: "Prim's Algorithm", short: "Prim", run: (graph) => runPrim(graph) },
+];
+
+/** Ways to put tasks in an order so every task comes after the ones it depends on. */
+export const ORDERING_ALGORITHMS: readonly GraphAlgorithm[] = [
+  { id: "kahn", name: "Kahn's Algorithm", short: "Kahn", run: (graph) => runKahn(graph) },
+  { id: "dfs-topological", name: "Depth-First Ordering", short: "DFS order", run: (graph) => runDfsTopological(graph) },
 ];
 
 /** Shortest-path algorithms for directed graphs with negative weights. Dijkstra is included to show where it goes wrong. */

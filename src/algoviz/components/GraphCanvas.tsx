@@ -70,7 +70,7 @@ export function GraphCanvas({ graph, step, route, editing }: { graph: GraphInput
         const lit = onRoute(edge.from, edge.to);
         return <g key={`${edge.from}-${edge.to}`}>
           <line className={edgeClass(edge.from, edge.to)} x1={a.x} y1={a.y} x2={endX} y2={endY} markerEnd={graph.directed ? `url(#${lit ? "algoviz-arrow-path" : "algoviz-arrow"})` : undefined} />
-          <text className={`algoviz-edge-label${edge.weight < 0 ? " is-negative" : ""}`} x={(a.x + b.x) / 2 - uy * lift} y={(a.y + b.y) / 2 + ux * lift - (graph.directed ? 0 : 2)}>{edge.weight}</text>
+          {!graph.unweighted && <text className={`algoviz-edge-label${edge.weight < 0 ? " is-negative" : ""}`} x={(a.x + b.x) / 2 - uy * lift} y={(a.y + b.y) / 2 + ux * lift - (graph.directed ? 0 : 2)}>{edge.weight}</text>}
         </g>;
       })}
       {graph.nodes.map((item) => <g key={item.id} {...(editable ? { role: "button", tabIndex: 0, "aria-label": `Node ${item.id}${item.id === graph.start ? ", start" : ""}${item.id === graph.goal ? ", goal" : ""}${pending === item.id ? ", selected" : ""}`, onKeyDown: (event: KeyboardEvent) => keyDown(event, item.id), onClick: () => choose(item.id), onPointerDown: (event: PointerEvent) => { if (editing?.tool === "move") { (event.target as Element).setPointerCapture?.(event.pointerId); setDragging(item.id); } } } : {})}>

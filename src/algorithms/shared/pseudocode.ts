@@ -93,6 +93,14 @@ export const PSEUDOCODE: Readonly<Record<string, Pseudocode>> = {
     lines: ["put the start in one queue and the goal in another", "while neither queue is empty and the searches have not met:", "  take the smaller queue and expand its whole level", "    for each neighbor: if the other search has reached it, the searches meet", "    otherwise mark it reached and queue it", "join the two routes at the meeting point"],
     lineFor: { enqueue: 0, dequeue: 2, discover: 3, path: 5, complete: 5 },
   },
+  kahn: {
+    lines: ["count how many tasks each task waits for", "put every task that waits for nothing in a queue", "while the queue is not empty:", "  take a task and place it next in the order", "  for each task that was waiting for it: wait for one less", "  if one now waits for nothing, queue it", "tasks left over when the queue is empty: they wait on each other (a loop)"],
+    lineFor: { enqueue: 1, dequeue: 3, update: 4, discover: 5, reject: 6, complete: 6 },
+  },
+  "dfs-topological": {
+    lines: ["for each task not yet explored:", "  start exploring it", "  explore every task it points to first", "  if one of them is still being explored: that is a loop", "  when all of those are finished, put this task in front of the order"],
+    lineFor: { enqueue: 0, visit: 1, reject: 3, dequeue: 4, complete: 4 },
+  },
   quick: {
     lines: ["pick the last value as the pivot", "for each value before the pivot:", "  compare it with the pivot", "  if smaller, move it to the left side", "put the pivot between the two sides, then sort each side"],
     lineFor: { compare: 2, swap: 3, complete: 4 },

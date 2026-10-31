@@ -29,6 +29,8 @@ describe("AlgoViz module selection", () => {
     ["sorting", "counting"],
     ["sorting", "radix"],
     ["array-search", "binary-search"],
+    ["topological-sort", "kahn"],
+    ["topological-sort", "dfs-topological"],
     ["array-search", "linear-search"],
   ])("opens %s with the requested algorithm %s", (module, algorithm) => {
     render(
