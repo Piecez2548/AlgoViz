@@ -3,6 +3,7 @@ import { ArrowRight, BarChart3, BookOpen, GitCompareArrows, Link2, ListOrdered, 
 import { Link } from "react-router-dom";
 
 import type { AlgorithmDefinition } from "@/algorithms/shared/types";
+import { useT } from "../preferences";
 
 const categories: AlgorithmDefinition[] = [
   {
@@ -117,6 +118,7 @@ const catalogGroups: { label: string; categories: string[] }[] = [
 ];
 
 function ExecutionPreview() {
+  const t = useT();
   const previewSteps = [
     { node: "A", queue: "[B, C]", action: "Starting at A", explanation: "A is the starting node. Its neighbors become the first frontier to explore." },
     { node: "B", queue: "[C, D]", action: "Visiting B", explanation: "B is the next node in the queue. Its neighbors are added to the frontier for the next level." },
@@ -140,10 +142,10 @@ function ExecutionPreview() {
   };
 
   return (
-    <div className="algoviz-preview" aria-label="Illustrative graph execution preview">
+    <div className="algoviz-preview" aria-label={t("Illustrative graph execution preview")}>
       <div className="algoviz-preview-toolbar">
-        <span><span className="algoviz-live-dot" aria-hidden="true" /> Illustrative execution preview</span>
-        <span className="algoviz-preview-step">Step 0{previewStep + 1} <span>/</span> 03</span>
+        <span><span className="algoviz-live-dot" aria-hidden="true" /> {t("Illustrative execution preview")}</span>
+        <span className="algoviz-preview-step">{t("Step")} 0{previewStep + 1} <span>/</span> 03</span>
       </div>
       <div className="algoviz-preview-body">
         <div className="algoviz-graph" aria-hidden="true">
@@ -157,38 +159,39 @@ function ExecutionPreview() {
           <span className="algoviz-node node-e is-goal">E</span>
         </div>
         <aside className="algoviz-step-note">
-          <span className="algoviz-note-label">Current action</span>
+          <span className="algoviz-note-label">{t("Current action")}</span>
           <strong>{current.action}</strong>
           <p>{current.explanation}</p>
-          <div className="algoviz-note-meta"><span>Queue</span><code>{current.queue}</code></div>
+          <div className="algoviz-note-meta"><span>{t("Queue")}</span><code>{current.queue}</code></div>
         </aside>
       </div>
-      <div className="algoviz-preview-controls" aria-label="Preview controls">
-        <button type="button" aria-label="Previous preview step" onClick={() => movePreview(-1)}><span aria-hidden="true">←</span></button>
-        <button type="button" className="is-play" aria-label={isPlaying ? "Pause preview" : "Play preview"} onClick={() => setIsPlaying((playing) => !playing)}>
+      <div className="algoviz-preview-controls" aria-label={t("Preview controls")}>
+        <button type="button" aria-label={t("Previous preview step")} onClick={() => movePreview(-1)}><span aria-hidden="true">←</span></button>
+        <button type="button" className="is-play" aria-label={t(isPlaying ? "Pause preview" : "Play preview")} onClick={() => setIsPlaying((playing) => !playing)}>
           {isPlaying ? <Pause size={15} fill="currentColor" /> : <Play size={15} fill="currentColor" />}
         </button>
-        <button type="button" aria-label="Next preview step" onClick={() => movePreview(1)}><span aria-hidden="true">→</span></button>
+        <button type="button" aria-label={t("Next preview step")} onClick={() => movePreview(1)}><span aria-hidden="true">→</span></button>
         <span className="algoviz-control-rule" />
-        <span>Preview <b>{isPlaying ? "Playing" : "Ready"}</b></span>
+        <span>{t("Preview")} <b>{t(isPlaying ? "Playing" : "Ready")}</b></span>
       </div>
     </div>
   );
 }
 
 export default function AlgoVizHomePage() {
+  const t = useT();
   return (
     <div className="algoviz-page algoviz-home-page">
       <section className="algoviz-hero">
         <div className="algoviz-hero-copy">
-          <p className="algoviz-eyebrow">Interactive algorithm lab <span aria-hidden="true">/</span> 01</p>
-          <h1>See algorithms <em>think.</em></h1>
-          <p className="algoviz-hero-lede">Explore algorithms step by step and understand not only what they do, but why they do it.</p>
+          <p className="algoviz-eyebrow">{t("Interactive algorithm lab")} <span aria-hidden="true">/</span> 01</p>
+          <h1>{t("See algorithms")} <em>{t("think.")}</em></h1>
+          <p className="algoviz-hero-lede">{t("Explore algorithms step by step and understand not only what they do, but why they do it.")}</p>
           <div className="algoviz-hero-actions">
-            <Link className="algoviz-button algoviz-button-primary" to="/search">Start visualizing <ArrowRight size={17} /></Link>
-            <Link className="algoviz-button algoviz-button-secondary" to="/compare"><GitCompareArrows size={17} /> Compare algorithms</Link>
+            <Link className="algoviz-button algoviz-button-primary" to="/search">{t("Start visualizing")} <ArrowRight size={17} /></Link>
+            <Link className="algoviz-button algoviz-button-secondary" to="/compare"><GitCompareArrows size={17} /> {t("Compare algorithms")}</Link>
           </div>
-          <p className="algoviz-hero-footnote"><span aria-hidden="true">↳</span> No sign-up. No backend. Just the next step.</p>
+          <p className="algoviz-hero-footnote"><span aria-hidden="true">↳</span> {t("No sign-up. No backend. Just the next step.")}</p>
         </div>
         <ExecutionPreview />
       </section>
@@ -196,10 +199,10 @@ export default function AlgoVizHomePage() {
       <section className="algoviz-section algoviz-explore-section" id="explore" aria-labelledby="explore-heading">
         <div className="algoviz-section-heading">
           <div>
-            <p className="algoviz-eyebrow">Choose your lens</p>
-            <h2 id="explore-heading">Start with a question.</h2>
+            <p className="algoviz-eyebrow">{t("Choose your lens")}</p>
+            <h2 id="explore-heading">{t("Start with a question.")}</h2>
           </div>
-          <p>Every visualization will expose the decision, the data structure behind it, and the change it caused.</p>
+          <p>{t("Every visualization will expose the decision, the data structure behind it, and the change it caused.")}</p>
         </div>
         <div className="algoviz-category-list">
           {categories.map((category, index) => (
@@ -217,8 +220,8 @@ export default function AlgoVizHomePage() {
                 {index === 9 && <Link2 size={20} />}
               </span>
               <span className="algoviz-category-index">0{index + 1}</span>
-              <span className="algoviz-category-copy"><strong>{category.name}</strong><span>{category.summary}</span></span>
-              <span className="algoviz-category-status">{category.status === "planned" ? "Planned" : "Live lab"} <ArrowRight size={17} /></span>
+              <span className="algoviz-category-copy"><strong>{t(category.name)}</strong><span>{t(category.summary)}</span></span>
+              <span className="algoviz-category-status">{t(category.status === "planned" ? "Planned" : "Live lab")} <ArrowRight size={17} /></span>
             </Link>
           ))}
         </div>
@@ -227,23 +230,23 @@ export default function AlgoVizHomePage() {
       <section className="algoviz-section algoviz-catalog-section" aria-labelledby="catalog-heading">
         <div className="algoviz-section-heading">
           <div>
-            <p className="algoviz-eyebrow">Algorithm catalog</p>
-            <h2 id="catalog-heading">The growing algorithm set.</h2>
+            <p className="algoviz-eyebrow">{t("Algorithm catalog")}</p>
+            <h2 id="catalog-heading">{t("The growing algorithm set.")}</h2>
           </div>
-          <p>Thirty algorithms for teaching graph search, shortest paths, spanning trees, sorting, flow, matching, and searching lists with the same step-by-step contract.</p>
+          <p>{t("Thirty algorithms for teaching graph search, shortest paths, spanning trees, sorting, flow, matching, and searching lists with the same step-by-step contract.")}</p>
         </div>
         {catalogGroups.map((group) => {
           const cards = algorithmCatalog.filter((algorithm) => group.categories.includes(algorithm.category));
           return (
             <div className="algoviz-catalog-group" key={group.label}>
-              <h3 className="algoviz-catalog-group-title">{group.label} <span>{cards.length}</span></h3>
+              <h3 className="algoviz-catalog-group-title">{t(group.label)} <span>{cards.length}</span></h3>
               <div className="algoviz-catalog-grid">
                 {cards.map((algorithm) => (
                   <Link className="algoviz-catalog-card" to={`/${algorithm.category}?algorithm=${algorithm.id}`} key={algorithm.shortName}>
                     <span className="algoviz-catalog-number">{String(algorithmCatalog.indexOf(algorithm) + 1).padStart(2, "0")}</span>
                     <span className={`algoviz-catalog-tag icon-${algorithm.category}`}>{algorithm.shortName}</span>
                     <strong>{algorithm.name}</strong>
-                    <span>{algorithm.summary}</span>
+                    <span>{t(algorithm.summary)}</span>
                     <code>{algorithm.complexity}</code>
                   </Link>
                 ))}
@@ -255,15 +258,15 @@ export default function AlgoVizHomePage() {
 
       <section className="algoviz-workflow-section" aria-labelledby="workflow-heading">
         <div className="algoviz-workflow-intro">
-          <p className="algoviz-eyebrow">The learning loop</p>
-          <h2 id="workflow-heading">From curiosity to clarity.</h2>
-          <p>AlgoViz is built around the moment an abstract rule finally becomes a visible decision.</p>
+          <p className="algoviz-eyebrow">{t("The learning loop")}</p>
+          <h2 id="workflow-heading">{t("From curiosity to clarity.")}</h2>
+          <p>{t("AlgoViz is built around the moment an abstract rule finally becomes a visible decision.")}</p>
         </div>
         <ol className="algoviz-workflow-list">
           {['Choose', 'Visualize', 'Step through', 'Understand', 'Compare'].map((step, index) => (
             <li key={step}>
               <span>0{index + 1}</span>
-              <strong>{step}</strong>
+              <strong>{t(step)}</strong>
               {index < 4 && <ArrowRight size={17} aria-hidden="true" />}
             </li>
           ))}

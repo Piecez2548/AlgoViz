@@ -14,12 +14,12 @@ interface LineChartProps {
 
 // Colour is never the only cue: every series also has its own marker shape and dash pattern.
 export const SERIES_STYLES = [
-  { color: "#a8ffcb", dash: undefined, marker: "circle" },
-  { color: "#aab9ff", dash: "7 4", marker: "square" },
-  { color: "#f5d36b", dash: "2 4", marker: "triangle" },
-  { color: "#ff9a9a", dash: "10 4 2 4", marker: "diamond" },
-  { color: "#e0a8ff", dash: "4 4", marker: "cross" },
-  { color: "#7fd8ff", dash: "14 5", marker: "hexagon" },
+  { color: "var(--chart-1)", dash: undefined, marker: "circle" },
+  { color: "var(--chart-2)", dash: "7 4", marker: "square" },
+  { color: "var(--chart-3)", dash: "2 4", marker: "triangle" },
+  { color: "var(--chart-4)", dash: "10 4 2 4", marker: "diamond" },
+  { color: "var(--chart-5)", dash: "4 4", marker: "cross" },
+  { color: "var(--chart-6)", dash: "14 5", marker: "hexagon" },
 ] as const;
 
 const W = 680; const H = 340;
@@ -60,7 +60,7 @@ export function spreadLabels(ys: readonly number[], gap: number, min: number, ma
 }
 
 function Marker({ shape, x, y, color, size = 4.5 }: { shape: string; x: number; y: number; color: string; size?: number }) {
-  const common = { fill: color, stroke: "#0d1020", strokeWidth: 1 };
+  const common = { fill: color, stroke: "var(--algo-bg)", strokeWidth: 1 };
   switch (shape) {
     case "square": return <rect {...common} x={x - size} y={y - size} width={size * 2} height={size * 2} />;
     case "triangle": return <path {...common} d={`M${x},${y - size - 1} L${x + size + 1},${y + size} L${x - size - 1},${y + size} Z`} />;

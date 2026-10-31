@@ -9,6 +9,7 @@ import { SORT_SAMPLE } from "../../algorithms/sorting/sortingAlgorithms";
 import { GraphCanvas } from "./GraphCanvas";
 import { ArrayInput, GridBoard, TargetInput } from "./InputEditors";
 import { LineChart, formatNumber, type ChartScale } from "./LineChart";
+import { useT } from "../preferences";
 import { graphFits, MapControls, MapSelect, useMapInput, type MapMode } from "./MapInput";
 
 type Family = "sorting" | "routes" | "trees" | "lists" | "negative" | "components" | "flow" | "matching";
@@ -49,6 +50,7 @@ interface CompareLabProps {
 }
 
 export function CompareLab({ initialValues, onValuesChange, initialFamily, onFamilyChange, initialTarget, onTargetChange, initialGraph, onGraphChange }: CompareLabProps) {
+  const t = useT();
   const [family, setFamilyState] = useState<Family>(initialFamily ?? "sorting");
   const setFamily = (next: Family) => { setFamilyState(next); onFamilyChange?.(next); };
   const [selected, setSelected] = useState<Record<Family, string[]>>({ sorting: ["bubble", "merge", "quick"], routes: ["bfs", "dijkstra", "a-star"], trees: ["kruskal", "prim"], lists: ["binary-search", "linear-search"], negative: ["bellman-ford", "floyd-warshall", "dijkstra"], components: ["tarjan", "kosaraju"], flow: ["edmonds-karp", "ford-fulkerson"], matching: ["kuhn", "hopcroft-karp", "greedy-matching"] });
@@ -83,12 +85,12 @@ export function CompareLab({ initialValues, onValuesChange, initialFamily, onFam
 
   return <section className="algoviz-compare-lab" aria-label="Algorithm comparison">
     <div className="algoviz-input-panel algoviz-compare-controls">
-      <fieldset className="algoviz-tools"><legend>What to compare</legend>
-        {FAMILIES.map(({ id, label }) => <label key={id} className={family === id ? "is-active" : ""}><input type="radio" name="compare-family" checked={family === id} onChange={() => setFamily(id)} />{label}</label>)}
+      <fieldset className="algoviz-tools"><legend>{t("What to compare")}</legend>
+        {FAMILIES.map(({ id, label }) => <label key={id} className={family === id ? "is-active" : ""}><input type="radio" name="compare-family" checked={family === id} onChange={() => setFamily(id)} />{t(label)}</label>)}
       </fieldset>
       {fixedPair
         ? <p className="algoviz-field-help">Comparing {options.map((algorithm) => algorithm.name).join(" and ")}.</p>
-        : <fieldset className="algoviz-tools"><legend>Algorithms (pick at least {MIN_SELECTED})</legend>
+        : <fieldset className="algoviz-tools"><legend>{t("Algorithms (pick at least {0})", MIN_SELECTED)}</legend>
           {options.map((algorithm) => {
             const checked = ids.includes(algorithm.id);
             return <label key={algorithm.id} className={checked ? "is-active" : ""}><input type="checkbox" checked={checked} disabled={checked && ids.length <= MIN_SELECTED} onChange={() => toggle(algorithm.id)} />{algorithm.name}</label>;
@@ -96,7 +98,7 @@ export function CompareLab({ initialValues, onValuesChange, initialFamily, onFam
         </fieldset>}
     </div>
 
-    <h2 className="algoviz-compare-heading">Same input, side by side</h2>
+    <h2 className="algoviz-compare-heading">{t("Same input, side by side")}</h2>
     {family === "sorting" && <ArrayInput values={values} onApply={changeValues} />}
     {family === "lists" && <><ArrayInput values={values} onApply={changeValues} /><TargetInput target={target} onApply={setTarget} /></>}
     {(family === "routes" || family === "trees" || family === "negative" || family === "components" || family === "flow" || family === "matching") && <>
@@ -108,17 +110,17 @@ export function CompareLab({ initialValues, onValuesChange, initialFamily, onFam
     <SameInputResults family={family} ids={ids} values={values} target={target} graph={map.graph} />
 
     {family === "negative" || family === "flow" ? <>
-      <h2 className="algoviz-compare-heading">Why there is no growth chart here</h2>
+      <h2 className="algoviz-compare-heading">{t("Why there is no growth chart here")}</h2>
       <p className="algoviz-compare-note">{family === "negative" ? "With negative edges the interesting difference is whether the answer is right, not how quickly it arrives. Try the sample with a negative edge, then the sample with a negative cycle, and see which algorithms notice." : "How many rounds each algorithm needs depends on the capacities and on which paths it happens to pick, so one growth chart would say little. Edit the graph and watch how the rounds change."}</p>
     </> : <>
-    <h2 className="algoviz-compare-heading">How the cost grows with input size</h2>
+    <h2 className="algoviz-compare-heading">{t("How the cost grows with input size")}</h2>
     <div className="algoviz-input-panel">
       {family === "sorting" && <label className="algoviz-field">Data shape<select value={shape} onChange={(event) => setShape(event.target.value as SortShape)}>{SHAPES.map((item) => <option key={item} value={item}>{SHAPE_LABELS[item]}</option>)}</select></label>}
       {family === "routes" && <label className="algoviz-field">Obstacles<select value={obstacles} onChange={(event) => setObstacles(event.target.value as GridObstacles)}><option value="none">None (open map)</option><option value="scattered">Scattered walls</option></select></label>}
       {family === "lists" && <label className="algoviz-field">Where is the value?<select value={place} onChange={(event) => setPlace(event.target.value as TargetPlace)}>{(Object.keys(PLACES) as TargetPlace[]).map((item) => <option key={item} value={item}>{PLACES[item]}</option>)}</select></label>}
-      <label className="algoviz-field">Measure<select value={metrics[metricKey(family)]} onChange={(event) => setMetrics((current) => ({ ...current, [metricKey(family)]: event.target.value }))}>{Object.entries(metricLabels(family)).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
-      <fieldset className="algoviz-tools"><legend>Scale</legend>
-        {(["linear", "log"] as const).map((item) => <label key={item} className={scale === item ? "is-active" : ""}><input type="radio" name="chart-scale" checked={scale === item} onChange={() => setScale(item)} />{item === "linear" ? "Linear" : "Log (shows growth rate)"}</label>)}
+      <label className="algoviz-field">{t("Measure")}<select value={metrics[metricKey(family)]} onChange={(event) => setMetrics((current) => ({ ...current, [metricKey(family)]: event.target.value }))}>{Object.entries(metricLabels(family)).map(([key, label]) => <option key={key} value={key}>{t(label)}</option>)}</select></label>
+      <fieldset className="algoviz-tools"><legend>{t("Scale")}</legend>
+        {(["linear", "log"] as const).map((item) => <label key={item} className={scale === item ? "is-active" : ""}><input type="radio" name="chart-scale" checked={scale === item} onChange={() => setScale(item)} />{t(item === "linear" ? "Linear" : "Log (shows growth rate)")}</label>)}
       </fieldset>
     </div>
     <GrowthChart family={family} ids={ids} shape={shape} obstacles={obstacles} place={place} metrics={metrics} scale={scale} />

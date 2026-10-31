@@ -6,13 +6,13 @@ import { SEARCH_TARGET_SAMPLE } from "../../algorithms/searching/arraySearchAlgo
 import { SORT_SAMPLE } from "../../algorithms/sorting/sortingAlgorithms";
 import { PSEUDOCODE, activeLine } from "../../algorithms/shared/pseudocode";
 import type { AlgorithmExecution, AlgorithmStep } from "../../algorithms/shared/types";
-import { getStepLabel } from "../../algorithms/shared/utils";
 import { ArrayInput, GridBoard, TargetInput } from "./InputEditors";
 import { GraphCanvas } from "./GraphCanvas";
 import { MapControls, MapSelect, useMapInput } from "./MapInput";
 import { canPredict, questionAt } from "../../algorithms/shared/predict";
 import { PlaybackControls } from "./PlaybackControls";
 import { PredictPanel } from "./PredictPanel";
+import { useT } from "../preferences";
 import { usePlayback } from "./usePlayback";
 
 export interface GraphLabOption { id: string; name: string; run: (graph: GraphInput) => AlgorithmExecution }
@@ -32,6 +32,7 @@ type AlgoVizLabProps = CommonProps & (
 );
 
 export function AlgoVizLab(props: AlgoVizLabProps) {
+  const t = useT();
   const { category, options, defaultAlgorithm, onAlgorithmChange } = props;
   const [algorithmId, setAlgorithmId] = useState(defaultAlgorithm);
   const isArray = category === "sorting" || category === "array-search";
@@ -87,28 +88,28 @@ export function AlgoVizLab(props: AlgoVizLabProps) {
 
   return <section className="algoviz-lab" aria-label={`${category} algorithm visualizer`}>
     <div className="algoviz-lab-toolbar">
-      <label className="algoviz-select-label">Algorithm
-        <select value={algorithmId} onChange={(event) => { setAlgorithmId(event.target.value); onAlgorithmChange?.(event.target.value); }} aria-label="Choose algorithm">
+      <label className="algoviz-select-label">{t("Algorithm")}
+        <select value={algorithmId} onChange={(event) => { setAlgorithmId(event.target.value); onAlgorithmChange?.(event.target.value); }} aria-label={t("Choose algorithm")}>
           {options.map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name}</option>)}
         </select>
       </label>
       {usesGraph && <MapSelect map={map} />}
-      <label className="algoviz-check"><input type="checkbox" checked={predict} onChange={(event) => setPredict(event.target.checked)} />Predict the next step</label>
-      <span className="algoviz-input-label">Input <strong>{execution.inputLabel}</strong></span>
+      <label className="algoviz-check"><input type="checkbox" checked={predict} onChange={(event) => setPredict(event.target.checked)} />{t("Predict the next step")}</label>
+      <span className="algoviz-input-label">{t("Input")} <strong>{execution.inputLabel}</strong></span>
     </div>
 
     {isArray && <ArrayInput values={values} onApply={changeValues} />}
     {category === "array-search" && <TargetInput target={target} onApply={(next) => { setTarget(next); if (props.category === "array-search") props.onTargetChange?.(next); }} />}
     {usesGraph && <MapControls map={map} />}
-    {notBipartite && <p className="algoviz-field-error" role="status">This graph cannot be split into two sides (the edge {notBipartite} joins two nodes that would be on the same side), so there is nothing to match. Remove that edge or move it between the two sides.</p>}
-    {dependencyLoop && <p className="algoviz-field-error" role="status">These tasks depend on each other in a loop ({dependencyLoop}), so no order can satisfy every dependency. Remove one dependency on the loop to get an order.</p>}
-    {negativeCycle && <p className="algoviz-field-error" role="status">A negative cycle ({negativeCycle}) can be reached from {graph.start} and leads to {graph.goal}, so no route is the cheapest: every lap round the cycle makes the total smaller. Change an edge on the cycle to make it non-negative.</p>}
+    {notBipartite && <p className="algoviz-field-error" role="status">{t("This graph cannot be split into two sides (the edge {0} joins two nodes that would be on the same side), so there is nothing to match. Remove that edge or move it between the two sides.", String(notBipartite))}</p>}
+    {dependencyLoop && <p className="algoviz-field-error" role="status">{t("These tasks depend on each other in a loop ({0}), so no order can satisfy every dependency. Remove one dependency on the loop to get an order.", String(dependencyLoop))}</p>}
+    {negativeCycle && <p className="algoviz-field-error" role="status">{t("A negative cycle ({0}) can be reached from {1} and leads to {2}, so no route is the cheapest: every lap round the cycle makes the total smaller. Change an edge on the cycle to make it non-negative.", String(negativeCycle), graph.start, graph.goal)}</p>}
     {dijkstraNote && <p className="algoviz-field-help" role="status">{dijkstraNote}</p>}
-    {noRoute && <p className="algoviz-field-error" role="status">No route exists from {graph.start} to {graph.goal} on this map. Open a gap in the walls to connect them.</p>}
+    {noRoute && <p className="algoviz-field-error" role="status">{t("No route exists from {0} to {1} on this map. Open a gap in the walls to connect them.", graph.start, graph.goal)}</p>}
 
     <div className="algoviz-lab-grid">
       <div className="algoviz-stage">
-        <div className="algoviz-stage-header" aria-live="polite" aria-atomic="true"><span><i className="algoviz-status-dot" /> Execution surface</span><span>{getStepLabel(step, execution.steps.length)}</span></div>
+        <div className="algoviz-stage-header" aria-live="polite" aria-atomic="true"><span><i className="algoviz-status-dot" /> {t("Execution surface")}</span><span>{t("Step {0} / {1}", Math.min(step.id + 1, execution.steps.length), execution.steps.length)}</span></div>
         {isArray ? <SortCanvas step={step} /> : usesMap && mapKind === "grid" ? <GridBoard grid={grid} tool={tool} step={step} route={foundPath} onChange={map.setGrid} /> : <GraphCanvas graph={graph} step={step} route={foundPath} editing={usesGraph && mapKind === "custom" ? map.editing : undefined} />}
         <PlaybackControls stepIndex={playback.stepIndex} last={playback.last} isPlaying={playback.isPlaying} speed={playback.speed} onToggle={playback.toggle} onAdvance={playback.advance} onSeek={playback.seek} onSpeed={playback.setSpeed} />
         {predict && <PredictPanel question={question} supported={canPredict(option.id)} stepIndex={playback.stepIndex} resetKey={execution} onContinue={() => playback.advance(1)} />}
@@ -124,15 +125,17 @@ function SortCanvas({ step }: { step: AlgorithmStep }) {
 }
 
 function Pseudocode({ algorithmId, step }: { algorithmId: string; step: AlgorithmStep }) {
+  const t = useT();
   const code = PSEUDOCODE[algorithmId];
   if (!code) return null;
   const active = activeLine(algorithmId, step);
-  return <div className="algoviz-inspector-block"><span>Pseudocode</span><ol className="algoviz-pseudocode">{code.lines.map((line, index) => <li key={index} className={index === active ? "is-active" : ""} aria-current={index === active ? "step" : undefined}><code>{line}</code></li>)}</ol></div>;
+  return <div className="algoviz-inspector-block"><span>{t("Pseudocode")}</span><ol className="algoviz-pseudocode">{code.lines.map((line, index) => <li key={index} className={index === active ? "is-active" : ""} aria-current={index === active ? "step" : undefined}><code>{line}</code></li>)}</ol></div>;
 }
 
 function LabInspector({ step, category, algorithmId }: { step: AlgorithmStep; category: string; algorithmId: string }) {
+  const t = useT();
   const data = step.dataStructure ?? [];
-  return <aside className="algoviz-inspector"><p className="algoviz-eyebrow">Current action</p><h2 aria-live="polite" aria-atomic="true">{stepTitle(step.type, category)}</h2><p className="algoviz-explanation" aria-live="polite" aria-atomic="true">{step.explanation}</p><Pseudocode algorithmId={algorithmId} step={step} /><div className="algoviz-inspector-block"><span>{category === "sorting" || category === "array-search" ? "Array state" : "Data structure"}</span>{data.length ? data.map((entry) => <div className="algoviz-data-row" key={`${entry.label}-${entry.value}`}><span>{entry.label}</span><strong>{entry.value}</strong></div>) : <p className="algoviz-empty-data">No pending items</p>}</div><div className="algoviz-inspector-block algoviz-metrics"><span>Live metrics</span><div className="algoviz-metric-grid">{category === "array-search" ? <Metric label="Comparisons" value={step.metrics?.comparisons ?? 0} /> : category === "sorting" ? <><Metric label="Comparisons" value={step.metrics?.comparisons ?? 0} /><Metric label={["merge", "counting", "radix"].includes(algorithmId) ? "Writes" : "Swaps"} value={step.metrics?.swaps ?? 0} /></> : category === "spanning" ? <Metric label="Edges kept" value={step.acceptedEdges?.length ?? 0} /> : category === "ordering" ? <Metric label="Placed" value={step.metrics?.visitedNodes ?? 0} /> : category === "components" ? <Metric label="Components" value={step.groups?.length ?? 0} /> : category === "flow" ? <Metric label="Flow" value={step.metrics?.flow ?? 0} /> : category === "matching" ? <Metric label="Matched" value={step.metrics?.matched ?? 0} /> : <Metric label="Visited" value={step.metrics?.visitedNodes ?? step.visited?.length ?? 0} />}<Metric label="Operations" value={step.metrics?.operations ?? 0} /></div></div></aside>;
+  return <aside className="algoviz-inspector"><p className="algoviz-eyebrow">{t("Current action")}</p><h2 aria-live="polite" aria-atomic="true">{t(stepTitle(step.type, category))}</h2><p className="algoviz-explanation" aria-live="polite" aria-atomic="true">{step.explanation}</p><Pseudocode algorithmId={algorithmId} step={step} /><div className="algoviz-inspector-block"><span>{t(category === "sorting" || category === "array-search" ? "Array state" : "Data structure")}</span>{data.length ? data.map((entry) => <div className="algoviz-data-row" key={`${entry.label}-${entry.value}`}><span>{entry.label}</span><strong>{entry.value}</strong></div>) : <p className="algoviz-empty-data">{t("No pending items")}</p>}</div><div className="algoviz-inspector-block algoviz-metrics"><span>{t("Live metrics")}</span><div className="algoviz-metric-grid">{category === "array-search" ? <Metric label="Comparisons" value={step.metrics?.comparisons ?? 0} /> : category === "sorting" ? <><Metric label="Comparisons" value={step.metrics?.comparisons ?? 0} /><Metric label={["merge", "counting", "radix"].includes(algorithmId) ? "Writes" : "Swaps"} value={step.metrics?.swaps ?? 0} /></> : category === "spanning" ? <Metric label="Edges kept" value={step.acceptedEdges?.length ?? 0} /> : category === "ordering" ? <Metric label="Placed" value={step.metrics?.visitedNodes ?? 0} /> : category === "components" ? <Metric label="Components" value={step.groups?.length ?? 0} /> : category === "flow" ? <Metric label="Flow" value={step.metrics?.flow ?? 0} /> : category === "matching" ? <Metric label="Matched" value={step.metrics?.matched ?? 0} /> : <Metric label="Visited" value={step.metrics?.visitedNodes ?? step.visited?.length ?? 0} />}<Metric label="Operations" value={step.metrics?.operations ?? 0} /></div></div></aside>;
 }
 
 const STEP_TITLES: Partial<Record<AlgorithmStep["type"], string>> = { accept: "Keep edge", reject: "Skip edge", complete: "Complete" };
@@ -140,7 +143,7 @@ const STEP_TITLES: Partial<Record<AlgorithmStep["type"], string>> = { accept: "K
 const CATEGORY_TITLES: Record<string, Partial<Record<AlgorithmStep["type"], string>>> = { components: { accept: "Component found" }, ordering: { reject: "Dependency loop" }, flow: { compare: "Find a path", update: "Send flow" }, matching: { compare: "Check partner", update: "Ask to move", accept: "Pair up", reject: "Stays unmatched" } };
 function stepTitle(type: AlgorithmStep["type"], category: string) { return CATEGORY_TITLES[category]?.[type] ?? STEP_TITLES[type] ?? type[0].toUpperCase() + type.slice(1); }
 
-function Metric({ label, value }: { label: string; value: number }) { return <div><strong>{value}</strong><span>{label}</span></div>; }
+function Metric({ label, value }: { label: string; value: number }) { const t = useT(); return <div><strong>{value}</strong><span>{t(label)}</span></div>; }
 
 const routeOf = (execution: AlgorithmExecution): string[] | null => {
   const value = execution.steps.find((candidate) => candidate.type === "path")?.dataStructure?.find((entry) => entry.label === "Path")?.value;

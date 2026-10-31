@@ -61,7 +61,7 @@ export function GraphCanvas({ graph, step, route, editing }: { graph: GraphInput
       onPointerMove={(event) => { if (dragging && editing) { const at = point(event); editing.onMove(dragging, at.x, at.y); } }}
       onPointerUp={() => setDragging(null)} onPointerCancel={() => setDragging(null)}>
       {graph.directed && <defs>
-        <marker id="algoviz-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="4.5" markerHeight="4.5" orient="auto"><path d="M0,0 L10,5 L0,10 z" style={{ fill: "#8f9bbf" }} /></marker>
+        <marker id="algoviz-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="4.5" markerHeight="4.5" orient="auto"><path d="M0,0 L10,5 L0,10 z" style={{ fill: "var(--c-8f9bbf)" }} /></marker>
         <marker id="algoviz-arrow-path" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="4.5" markerHeight="4.5" orient="auto"><path d="M0,0 L10,5 L0,10 z" style={{ fill: "var(--algo-accent)" }} /></marker>
       </defs>}
       {graph.edges.map((edge) => {

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { ChevronDown, GitCompareArrows, Menu, Network, X } from "lucide-react";
+import { ChevronDown, GitCompareArrows, Menu, Moon, Network, Sun, X } from "lucide-react";
+
+import { PreferencesProvider, usePreferences } from "../../preferences";
 
 import "../../algoviz.css";
 
@@ -18,15 +20,16 @@ const linkClass = ({ isActive }: { isActive: boolean }) => (isActive ? "algoviz-
 
 function GroupMenu({ group, open, onToggle, onClose }: { group: NavGroup; open: boolean; onToggle: () => void; onClose: () => void }) {
   const { pathname } = useLocation();
+  const { t } = usePreferences();
   const active = group.items.some((item) => pathname === item.to || pathname.startsWith(`${item.to}/`));
   return (
     <div className="algoviz-nav-group">
       <button type="button" className={active ? "algoviz-nav-link algoviz-nav-trigger is-active" : "algoviz-nav-link algoviz-nav-trigger"} aria-expanded={open} onClick={onToggle}>
-        {group.label} <ChevronDown size={14} aria-hidden="true" />
+        {t(group.label)} <ChevronDown size={14} aria-hidden="true" />
       </button>
       {open && (
         <div className="algoviz-nav-popover">
-          {group.items.map((item) => <NavLink key={item.to} to={item.to} className={linkClass} onClick={onClose}>{item.label}</NavLink>)}
+          {group.items.map((item) => <NavLink key={item.to} to={item.to} className={linkClass} onClick={onClose}>{t(item.label)}</NavLink>)}
         </div>
       )}
     </div>
@@ -34,6 +37,11 @@ function GroupMenu({ group, open, onToggle, onClose }: { group: NavGroup; open: 
 }
 
 export default function AlgoVizLayout() {
+  return <PreferencesProvider><AlgoVizShell /></PreferencesProvider>;
+}
+
+function AlgoVizShell() {
+  const { t, lang, theme, setLang, setTheme } = usePreferences();
   const [menuOpen, setMenuOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const navRef = useRef<HTMLElement>(null);
@@ -55,28 +63,34 @@ export default function AlgoVizLayout() {
 
   return (
     <div className="algoviz-app">
-      <a className="algoviz-skip-link" href="#algoviz-main">Skip to content</a>
+      <a className="algoviz-skip-link" href="#algoviz-main">{t("Skip to content")}</a>
       <header className="algoviz-header">
         <div className="algoviz-header-inner">
-          <Link className="algoviz-brand" to="" aria-label="AlgoViz home">
+          <Link className="algoviz-brand" to="" aria-label={t("AlgoViz home")}>
             <span className="algoviz-brand-mark" aria-hidden="true"><Network size={18} strokeWidth={2.5} /></span>
             <span>AlgoViz</span>
           </Link>
 
-          <nav ref={navRef} className="algoviz-desktop-nav" aria-label="Primary navigation">
-            <NavLink to={home.to} end={home.end} className={linkClass}>{home.label}</NavLink>
+          <nav ref={navRef} className="algoviz-desktop-nav" aria-label={t("Primary navigation")}>
+            <NavLink to={home.to} end={home.end} className={linkClass}>{t(home.label)}</NavLink>
             {groups.map((group) => <GroupMenu key={group.label} group={group} open={openGroup === group.label} onToggle={() => setOpenGroup((current) => (current === group.label ? null : group.label))} onClose={() => setOpenGroup(null)} />)}
-            <NavLink to={compare.to} className={linkClass}>{compare.label}</NavLink>
+            <NavLink to={compare.to} className={linkClass}>{t(compare.label)}</NavLink>
           </nav>
 
           <div className="algoviz-header-actions">
-            <span className="algoviz-status-pill"><span aria-hidden="true" /> Client-side lab</span>
+            <span className="algoviz-status-pill"><span aria-hidden="true" /> {t("Client-side lab")}</span>
+            <button type="button" className="algoviz-icon-button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} aria-label={t(theme === "dark" ? "Switch to light theme" : "Switch to dark theme")}>
+              {theme === "dark" ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}
+            </button>
+            <button type="button" className="algoviz-icon-button algoviz-lang-button" onClick={() => setLang(lang === "en" ? "th" : "en")} aria-label={t(lang === "en" ? "Switch to Thai" : "Switch to English")} lang={lang === "en" ? "th" : "en"}>
+              {lang === "en" ? "ไทย" : "EN"}
+            </button>
             <button
               type="button"
               className="algoviz-menu-button"
               aria-expanded={menuOpen}
               aria-controls="algoviz-mobile-nav"
-              aria-label={menuOpen ? "Close navigation" : "Open navigation"}
+              aria-label={t(menuOpen ? "Close navigation" : "Open navigation")}
               onClick={() => setMenuOpen((open) => !open)}
             >
               {menuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -85,15 +99,15 @@ export default function AlgoVizLayout() {
         </div>
 
         {menuOpen && (
-          <nav id="algoviz-mobile-nav" className="algoviz-mobile-nav" aria-label="Mobile navigation">
-            <NavLink to={home.to} end={home.end} className={linkClass} onClick={() => setMenuOpen(false)}>{home.label}</NavLink>
+          <nav id="algoviz-mobile-nav" className="algoviz-mobile-nav" aria-label={t("Mobile navigation")}>
+            <NavLink to={home.to} end={home.end} className={linkClass} onClick={() => setMenuOpen(false)}>{t(home.label)}</NavLink>
             {groups.map((group) => (
-              <div className="algoviz-mobile-group" role="group" aria-label={group.label} key={group.label}>
-                <span className="algoviz-mobile-group-label">{group.label}</span>
-                {group.items.map((item) => <NavLink key={item.to} to={item.to} className={linkClass} onClick={() => setMenuOpen(false)}>{item.label}</NavLink>)}
+              <div className="algoviz-mobile-group" role="group" aria-label={t(group.label)} key={group.label}>
+                <span className="algoviz-mobile-group-label">{t(group.label)}</span>
+                {group.items.map((item) => <NavLink key={item.to} to={item.to} className={linkClass} onClick={() => setMenuOpen(false)}>{t(item.label)}</NavLink>)}
               </div>
             ))}
-            <NavLink to={compare.to} className={linkClass} onClick={() => setMenuOpen(false)}>{compare.label}</NavLink>
+            <NavLink to={compare.to} className={linkClass} onClick={() => setMenuOpen(false)}>{t(compare.label)}</NavLink>
           </nav>
         )}
       </header>
@@ -103,8 +117,8 @@ export default function AlgoVizLayout() {
       </main>
 
       <footer className="algoviz-footer">
-        <span>AlgoViz interactive labs · deterministic steps</span>
-        <span className="algoviz-footer-note"><GitCompareArrows size={15} aria-hidden="true" /> Built for understanding</span>
+        <span>{t("AlgoViz interactive labs · deterministic steps")}</span>
+        <span className="algoviz-footer-note"><GitCompareArrows size={15} aria-hidden="true" /> {t("Built for understanding")}</span>
       </footer>
     </div>
   );

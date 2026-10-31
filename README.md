@@ -30,7 +30,8 @@ An interactive lab that runs 30 algorithms one step at a time. Every step comes 
 - **Your own input:** type numbers for sorting, draw a grid map with walls and heavy ground, or edit a graph by dragging nodes and adding edges. It all lives in the URL, so a link shares your exact setup.
 - **Predict the next step:** a quiz mode whose questions and answers are computed from the recorded run, with a score.
 - **Compare:** run several algorithms on the same input and get a table of measured counts, a summary sentence, and a growth chart over input size on a linear or log scale. Every number comes from an actual run.
-- **Accessible:** labelled controls, data-table fallbacks for charts, colour is never the only signal, and axe-core reports no violations at 1280 px or 375 px.
+- **Light and dark themes, English and Thai:** two buttons in the header, remembered in the browser. The page around the algorithms is translated; the step explanations, pseudocode and predict questions stay in English.
+- **Accessible:** labelled controls, data-table fallbacks for charts, colour is never the only signal, and axe-core reports no violations at 1280 px or 375 px, in both themes and both languages.
 
 ![Compare](docs/screenshots/compare.png)
 
@@ -46,7 +47,7 @@ src/algoviz/               React pages, components, styles
 
 ### Testing
 
-375 tests (Vitest, jsdom, Testing Library). Engine tests do not just check examples: they compare results against independent oracles on random inputs, for example A* against Dijkstra, Bellman-Ford against Floyd-Warshall, Kruskal against Prim, SCCs against reachability, max flow against a brute-force min cut, and bipartite matching against a max-flow network.
+384 tests (Vitest, jsdom, Testing Library). Engine tests do not just check examples: they compare results against independent oracles on random inputs, for example A* against Dijkstra, Bellman-Ford against Floyd-Warshall, Kruskal against Prim, SCCs against reachability, max flow against a brute-force min cut, and bipartite matching against a max-flow network.
 
 ### Stack
 

@@ -7,6 +7,7 @@ import { parseNumberList } from "../../algorithms/shared/arrayInput";
 import { decodeGraph, encodeGraph } from "../../algorithms/shared/graphCodec";
 import { AlgoVizLab } from "../components/AlgoVizLab";
 import { CompareLab, parseFamily } from "../components/CompareLab";
+import { useT } from "../preferences";
 
 const moduleContent = {
   search: { icon: Search, name: "Search algorithms", description: "Explore BFS, DFS, bidirectional BFS, and Greedy Best-First Search step by step.", category: "search" as const, eyebrow: "Graph search lab", defaultAlgorithm: "bfs", options: SEARCH_ALGORITHMS },
@@ -23,6 +24,7 @@ const moduleContent = {
 } as const;
 
 export default function AlgoVizModulePage() {
+  const t = useT();
   const location = useLocation();
   const [, setSearchParams] = useSearchParams();
   // Several parts of a page can change the link in the same moment (the family, then your graph a moment later), so
@@ -52,11 +54,11 @@ export default function AlgoVizModulePage() {
     : "";
   return <div className="algoviz-page algoviz-module-page">
     <section className="algoviz-module-hero">
-      <Link className="algoviz-back-link" to="/"><ArrowLeft size={16} /> Back to Learn</Link>
+      <Link className="algoviz-back-link" to="/"><ArrowLeft size={16} /> {t("Back to Learn")}</Link>
       <span className="algoviz-module-icon" aria-hidden="true"><Icon size={28} /></span>
-      <p className="algoviz-eyebrow">{module.eyebrow}</p>
-      <h1>{module.name}</h1>
-      <p className="algoviz-module-lede">{module.description}</p>
+      <p className="algoviz-eyebrow">{t(module.eyebrow)}</p>
+      <h1>{t(module.name)}</h1>
+      <p className="algoviz-module-lede">{t(module.description)}</p>
     </section>
     {module.category === "compare" ? <CompareLab initialValues={initialValues} onValuesChange={(values) => updateParams("values", values.join(","))} initialFamily={parseFamily(new URLSearchParams(location.search).get("family"))} onFamilyChange={(family) => updateParams("family", family)} initialTarget={initialTarget} onTargetChange={(next) => updateParams("target", String(next))} initialGraph={initialGraph} onGraphChange={onGraphChange} /> : module.category === "sorting"
       ? <AlgoVizLab category="sorting" options={module.options} defaultAlgorithm={selectedAlgorithm} initialValues={initialValues} onValuesChange={(values) => updateParams("values", values.join(","))} onAlgorithmChange={(id) => updateParams("algorithm", id)} />

@@ -3,6 +3,7 @@ import { defaultGrid, DAG_CYCLE_SAMPLE, DAG_SAMPLE, DIRECTED_CYCLE_SAMPLE, DIREC
 import { addNode, allowsNegative, DEFAULT_WEIGHT, freeSpot, MAX_NODES, MAX_WEIGHT, MIN_NODES, MIN_WEIGHT, moveNode, removeEdge, removeNode, setEdge, setEndpoint as setGraphEndpoint, validWeight } from "../../algorithms/shared/graphEdit";
 import type { GraphInput, GridState } from "../../algorithms/shared/graphTypes";
 import type { GraphEditing, GraphTool } from "./GraphCanvas";
+import { useT } from "../preferences";
 import { GridToolbar, type GridTool } from "./InputEditors";
 
 export type MapKind = "sample" | "cycle" | "extra" | "grid" | "custom";
@@ -72,23 +73,25 @@ export function useMapInput(mode: MapMode = "route", initialCustom: GraphInput |
 export type MapInputState = ReturnType<typeof useMapInput>;
 
 export function MapSelect({ map }: { map: MapInputState }) {
-  return <label className="algoviz-select-label">{map.mode === "route" ? "Map" : "Graph"}
-    <select value={map.mapKind} onChange={(event) => map.setMapKind(event.target.value as MapKind)} aria-label="Choose map">
-      <option value="sample">{map.mode === "directed" ? "Sample with a negative edge" : map.mode === "dag" ? "Sample task graph" : map.mode === "scc" ? "Sample with loops" : map.mode === "flow" ? "Sample flow network" : map.mode === "match" ? "Sample: people and jobs" : "Sample graph"}</option>
-      {map.mode === "directed" && <option value="cycle">Sample with a negative cycle</option>}
-      {map.mode === "dag" && <option value="cycle">Sample with a loop</option>}
-      {map.mode === "scc" && <option value="cycle">Sample with no loops</option>}
-      {map.mode === "flow" && <option value="cycle">Sample with a narrow bridge</option>}
-      {map.mode === "match" && <option value="cycle">Sample where one person must be left out</option>}
-      {map.mode === "flow" && <option value="extra">Sample where depth-first needs many rounds</option>}
-      {map.mode === "route" && <option value="grid">Draw your own map</option>}
-      <option value="custom">Build your own graph</option>
+  const t = useT();
+  return <label className="algoviz-select-label">{t(map.mode === "route" ? "Map" : "Graph")}
+    <select value={map.mapKind} onChange={(event) => map.setMapKind(event.target.value as MapKind)} aria-label={t("Choose map")}>
+      <option value="sample">{t(map.mode === "directed" ? "Sample with a negative edge" : map.mode === "dag" ? "Sample task graph" : map.mode === "scc" ? "Sample with loops" : map.mode === "flow" ? "Sample flow network" : map.mode === "match" ? "Sample: people and jobs" : "Sample graph")}</option>
+      {map.mode === "directed" && <option value="cycle">{t("Sample with a negative cycle")}</option>}
+      {map.mode === "dag" && <option value="cycle">{t("Sample with a loop")}</option>}
+      {map.mode === "scc" && <option value="cycle">{t("Sample with no loops")}</option>}
+      {map.mode === "flow" && <option value="cycle">{t("Sample with a narrow bridge")}</option>}
+      {map.mode === "match" && <option value="cycle">{t("Sample where one person must be left out")}</option>}
+      {map.mode === "flow" && <option value="extra">{t("Sample where depth-first needs many rounds")}</option>}
+      {map.mode === "route" && <option value="grid">{t("Draw your own map")}</option>}
+      <option value="custom">{t("Build your own graph")}</option>
     </select>
   </label>;
 }
 
 /** Start/goal pickers for the sample graph, drawing tools for a map, or node and edge editing for your own graph. */
 export function MapControls({ map }: { map: MapInputState }) {
+  const t = useT();
   if (map.mode === "off") return null;
   if (map.mapKind === "grid" && map.mode === "route") {
     return <GridToolbar tool={map.tool} onTool={map.setTool} onClearWalls={() => map.setGrid((current) => ({ ...current, cells: current.cells.map((cell) => (cell === "wall" ? "empty" : cell)) }))} onReset={() => map.setGrid(defaultGrid())} />;
@@ -96,12 +99,13 @@ export function MapControls({ map }: { map: MapInputState }) {
   if (map.mapKind === "custom") return <CustomGraphControls map={map} />;
   if (map.mode === "tree" || map.mode === "directed" || map.mode === "dag" || map.mode === "scc" || map.mode === "flow" || map.mode === "match") return null;
   return <div className="algoviz-input-panel">
-    <label className="algoviz-field">Start<select value={map.endpoints.start} onChange={(event) => map.setEndpoint("start", event.target.value)}>{SAMPLE_NODE_IDS.map((id) => <option key={id} value={id}>{id}</option>)}</select></label>
-    <label className="algoviz-field">Goal<select value={map.endpoints.goal} onChange={(event) => map.setEndpoint("goal", event.target.value)}>{SAMPLE_NODE_IDS.map((id) => <option key={id} value={id}>{id}</option>)}</select></label>
+    <label className="algoviz-field">{t("Start")}<select value={map.endpoints.start} onChange={(event) => map.setEndpoint("start", event.target.value)}>{SAMPLE_NODE_IDS.map((id) => <option key={id} value={id}>{id}</option>)}</select></label>
+    <label className="algoviz-field">{t("Goal")}<select value={map.endpoints.goal} onChange={(event) => map.setEndpoint("goal", event.target.value)}>{SAMPLE_NODE_IDS.map((id) => <option key={id} value={id}>{id}</option>)}</select></label>
   </div>;
 }
 
 function CustomGraphControls({ map }: { map: MapInputState }) {
+  const t = useT();
   const { custom, setCustom } = map;
   const ids = custom.nodes.map((node) => node.id);
   const [from, setFrom] = useState(custom.start); const [to, setTo] = useState(custom.goal);
@@ -118,35 +122,35 @@ function CustomGraphControls({ map }: { map: MapInputState }) {
   const sample = (): GraphInput => ({ ...(map.mode === "match" ? MATCH_SAMPLE : map.mode === "flow" ? FLOW_SAMPLE : map.mode === "scc" ? SCC_SAMPLE : unweighted ? DAG_SAMPLE : directed ? DIRECTED_SAMPLE : SAMPLE_GRAPH), label: "Your graph" });
   return <div className="algoviz-custom-graph">
     <div className="algoviz-input-panel">
-      <fieldset className="algoviz-tools"><legend>With the pointer</legend>
-        {GRAPH_TOOLS.map((item) => <label key={item.id} className={map.graphTool === item.id ? "is-active" : ""}><input type="radio" name="graph-tool" checked={map.graphTool === item.id} onChange={() => map.setGraphTool(item.id)} />{item.label}</label>)}
+      <fieldset className="algoviz-tools"><legend>{t("With the pointer")}</legend>
+        {GRAPH_TOOLS.map((item) => <label key={item.id} className={map.graphTool === item.id ? "is-active" : ""}><input type="radio" name="graph-tool" checked={map.graphTool === item.id} onChange={() => map.setGraphTool(item.id)} />{t(item.label)}</label>)}
       </fieldset>
-      {!unweighted && <label className="algoviz-field">{noun} for new edges
+      {!unweighted && <label className="algoviz-field">{t(`${noun} for new edges`)}
         <input type="number" min={minWeight} max={MAX_WEIGHT} value={Number.isNaN(map.edgeWeight) ? "" : map.edgeWeight} onChange={(event) => map.setEdgeWeight(event.target.value === "" ? NaN : Number(event.target.value))} aria-invalid={!weightOk} />
       </label>}
-      {!unweighted && <label className="algoviz-field">{flow ? "Source" : "Start"}<select value={custom.start} onChange={(event) => setCustom((current) => setGraphEndpoint(current, "start", event.target.value))}>{ids.map((id) => <option key={id} value={id}>{id}</option>)}</select></label>}
-      {!unweighted && <label className="algoviz-field">{flow ? "Sink" : "Goal"}<select value={custom.goal} onChange={(event) => setCustom((current) => setGraphEndpoint(current, "goal", event.target.value))}>{ids.map((id) => <option key={id} value={id}>{id}</option>)}</select></label>}
+      {!unweighted && <label className="algoviz-field">{t(flow ? "Source" : "Start")}<select value={custom.start} onChange={(event) => setCustom((current) => setGraphEndpoint(current, "start", event.target.value))}>{ids.map((id) => <option key={id} value={id}>{id}</option>)}</select></label>}
+      {!unweighted && <label className="algoviz-field">{t(flow ? "Sink" : "Goal")}<select value={custom.goal} onChange={(event) => setCustom((current) => setGraphEndpoint(current, "goal", event.target.value))}>{ids.map((id) => <option key={id} value={id}>{id}</option>)}</select></label>}
       <p className="algoviz-field-help">Drag a node to move it, or focus it and use the arrow keys. With “Add nodes”, click empty space. With “Connect nodes”, pick two nodes in turn (Enter or Space with the keyboard). {unweighted ? (directed ? " Each edge means the first task must be done before the second." : " Each edge says the two nodes can be paired. Keep every edge between the two sides.") : ` ${noun}s are whole numbers from ${minWeight} to ${MAX_WEIGHT}.`}{flow ? " Each edge is a one-way pipe that carries at most its capacity." : directed && !unweighted ? " Each edge can only be followed from its first node to its second; negative weights are allowed." : ""}</p>
       {!weightOk && <p className="algoviz-field-error" role="alert">The {noun.toLowerCase()} must be a whole number from {minWeight} to {MAX_WEIGHT}.</p>}
     </div>
     <div className="algoviz-input-panel">
-      <button type="button" className="algoviz-button" disabled={custom.nodes.length >= MAX_NODES} onClick={() => { const spot = freeSpot(custom); setCustom((current) => addNode(current, spot.x, spot.y)); }}>Add node</button>
-      <label className="algoviz-field">Edge from<select value={pickFrom} onChange={(event) => setFrom(event.target.value)}>{ids.map((id) => <option key={id} value={id}>{id}</option>)}</select></label>
-      <label className="algoviz-field">Edge to<select value={pickTo} onChange={(event) => setTo(event.target.value)}>{ids.filter((id) => id !== pickFrom).map((id) => <option key={id} value={id}>{id}</option>)}</select></label>
-      <button type="button" className="algoviz-button" disabled={!weightOk} onClick={() => setCustom((current) => setEdge(current, pickFrom, pickTo, unweighted ? 1 : map.edgeWeight))}>{unweighted ? "Add dependency" : "Set edge"}</button>
-      <button type="button" className="algoviz-button algoviz-button-quiet" onClick={() => setCustom(sample())}>Reset to sample graph</button>
-      <p className="algoviz-field-help">{custom.nodes.length} of {MAX_NODES} nodes · {custom.edges.length} edges. Setting an edge that exists changes its weight.</p>
+      <button type="button" className="algoviz-button" disabled={custom.nodes.length >= MAX_NODES} onClick={() => { const spot = freeSpot(custom); setCustom((current) => addNode(current, spot.x, spot.y)); }}>{t("Add node")}</button>
+      <label className="algoviz-field">{t("Edge from")}<select value={pickFrom} onChange={(event) => setFrom(event.target.value)}>{ids.map((id) => <option key={id} value={id}>{id}</option>)}</select></label>
+      <label className="algoviz-field">{t("Edge to")}<select value={pickTo} onChange={(event) => setTo(event.target.value)}>{ids.filter((id) => id !== pickFrom).map((id) => <option key={id} value={id}>{id}</option>)}</select></label>
+      <button type="button" className="algoviz-button" disabled={!weightOk} onClick={() => setCustom((current) => setEdge(current, pickFrom, pickTo, unweighted ? 1 : map.edgeWeight))}>{t(unweighted ? "Add dependency" : "Set edge")}</button>
+      <button type="button" className="algoviz-button algoviz-button-quiet" onClick={() => setCustom(sample())}>{t("Reset to sample graph")}</button>
+      <p className="algoviz-field-help">{t("{0} of {1} nodes · {2} edges. Setting an edge that exists changes its weight.", custom.nodes.length, MAX_NODES, custom.edges.length)}</p>
     </div>
     <details className="algoviz-chart-data">
-      <summary>Nodes and edges ({custom.nodes.length} nodes, {custom.edges.length} edges)</summary>
-      <ul className="algoviz-chip-list" aria-label="Nodes">
-        {ids.map((id) => <li key={id}><span>{id}</span><button type="button" className="algoviz-button algoviz-button-quiet" aria-label={`Remove node ${id}`} disabled={custom.nodes.length <= MIN_NODES} onClick={() => setCustom((current) => removeNode(current, id))}>Remove</button></li>)}
+      <summary>{t("Nodes and edges ({0} nodes, {1} edges)", custom.nodes.length, custom.edges.length)}</summary>
+      <ul className="algoviz-chip-list" aria-label={t("Nodes")}>
+        {ids.map((id) => <li key={id}><span>{id}</span><button type="button" className="algoviz-button algoviz-button-quiet" aria-label={`Remove node ${id}`} disabled={custom.nodes.length <= MIN_NODES} onClick={() => setCustom((current) => removeNode(current, id))}>{t("Remove")}</button></li>)}
       </ul>
-      <ul className="algoviz-chip-list" aria-label="Edges">
+      <ul className="algoviz-chip-list" aria-label={t("Edges")}>
         {custom.edges.map((edge) => <li key={`${edge.from}-${edge.to}`}><span>{edge.from}{dash}{edge.to}</span>
           {!unweighted && <input type="number" min={minWeight} max={MAX_WEIGHT} value={edge.weight} aria-label={`${noun} of ${edge.from}${dash}${edge.to}`} onChange={(event) => setCustom((current) => setEdge(current, edge.from, edge.to, Number(event.target.value)))} />}
-          <button type="button" className="algoviz-button algoviz-button-quiet" aria-label={`Remove edge ${edge.from}${dash}${edge.to}`} onClick={() => setCustom((current) => removeEdge(current, edge.from, edge.to))}>Remove</button></li>)}
-        {!custom.edges.length && <li>No edges yet. Connect two nodes to add one.</li>}
+          <button type="button" className="algoviz-button algoviz-button-quiet" aria-label={`Remove edge ${edge.from}${dash}${edge.to}`} onClick={() => setCustom((current) => removeEdge(current, edge.from, edge.to))}>{t("Remove")}</button></li>)}
+        {!custom.edges.length && <li>{t("No edges yet. Connect two nodes to add one.")}</li>}
       </ul>
     </details>
   </div>;
