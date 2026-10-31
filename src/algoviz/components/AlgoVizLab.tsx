@@ -8,7 +8,9 @@ import { getStepLabel } from "../../algorithms/shared/utils";
 import { ArrayInput, GridBoard, TargetInput } from "./InputEditors";
 import { GraphCanvas } from "./GraphCanvas";
 import { MapControls, MapSelect, useMapInput } from "./MapInput";
+import { canPredict, questionAt } from "../../algorithms/shared/predict";
 import { PlaybackControls } from "./PlaybackControls";
+import { PredictPanel } from "./PredictPanel";
 import { usePlayback } from "./usePlayback";
 
 export interface GraphLabOption { id: string; name: string; run: (graph: GraphInput) => AlgorithmExecution }
@@ -50,6 +52,10 @@ export function AlgoVizLab(props: AlgoVizLabProps) {
   const option = options.find((candidate) => candidate.id === algorithmId) ?? options[0];
   const execution = useMemo(() => (category === "array-search" ? (option as TargetLabOption).run(values, target) : category === "sorting" ? (option as ArrayLabOption).run(values) : (option as GraphLabOption).run(graph)), [category, graph, option, target, values]);
   const playback = usePlayback(execution.steps.length, execution);
+  const [predict, setPredict] = useState(false);
+  const question = useMemo(() => (predict ? questionAt(option.id, execution, playback.stepIndex, graph) : null), [execution, graph, option.id, playback.stepIndex, predict]);
+  // Autoplay would run past the questions, so turning predictions on stops it.
+  useEffect(() => { if (predict && playback.isPlaying) playback.toggle(); }, [predict, playback.isPlaying]); // eslint-disable-line react-hooks/exhaustive-deps
   const step = execution.steps[playback.stepIndex];
   // Keep the found route on screen for the final "complete" step too. The route comes from the
   // step's recorded "Path" entry, because Dijkstra and A* report every settled node as "visited".
@@ -79,6 +85,7 @@ export function AlgoVizLab(props: AlgoVizLabProps) {
         </select>
       </label>
       {usesGraph && <MapSelect map={map} />}
+      <label className="algoviz-check"><input type="checkbox" checked={predict} onChange={(event) => setPredict(event.target.checked)} />Predict the next step</label>
       <span className="algoviz-input-label">Input <strong>{execution.inputLabel}</strong></span>
     </div>
 
@@ -92,6 +99,7 @@ export function AlgoVizLab(props: AlgoVizLabProps) {
         <div className="algoviz-stage-header" aria-live="polite" aria-atomic="true"><span><i className="algoviz-status-dot" /> Execution surface</span><span>{getStepLabel(step, execution.steps.length)}</span></div>
         {isArray ? <SortCanvas step={step} /> : usesMap && mapKind === "grid" ? <GridBoard grid={grid} tool={tool} step={step} route={foundPath} onChange={map.setGrid} /> : <GraphCanvas graph={graph} step={step} route={foundPath} editing={usesGraph && mapKind === "custom" ? map.editing : undefined} />}
         <PlaybackControls stepIndex={playback.stepIndex} last={playback.last} isPlaying={playback.isPlaying} speed={playback.speed} onToggle={playback.toggle} onAdvance={playback.advance} onSeek={playback.seek} onSpeed={playback.setSpeed} />
+        {predict && <PredictPanel question={question} supported={canPredict(option.id)} stepIndex={playback.stepIndex} resetKey={execution} onContinue={() => playback.advance(1)} />}
       </div>
       <LabInspector step={step} category={category} algorithmId={algorithmId} />
     </div>

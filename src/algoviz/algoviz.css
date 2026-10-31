@@ -901,6 +901,14 @@
   border-color: var(--algo-yellow);
   background: #665521;
 }
+.algoviz-check { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--algo-muted); font-size: 0.85rem; }
+.algoviz-predict { margin: 1rem; padding: 1rem; border: 1px solid #3a4468; border-radius: 10px; background: #151a30; }
+.algoviz-predict-head { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 0.6rem; }
+.algoviz-predict-prompt { margin: 0.4rem 0 0.7rem; }
+.algoviz-predict-options { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.8rem; }
+.algoviz-predict-options .is-right { border-color: var(--algo-accent); background: #266148; color: #fff; }
+.algoviz-predict-options .is-wrong { border-color: #ff9aa8; background: #5a2531; color: #fff; }
+.algoviz-predict-result { margin: 0 0 0.8rem; }
 .algoviz-custom-graph { display: grid; gap: 1rem; }
 .algoviz-graph-canvas.is-editable svg { touch-action: none; }
 .algoviz-graph-canvas.is-editable .algoviz-node { cursor: grab; }
