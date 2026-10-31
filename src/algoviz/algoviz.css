@@ -1,3 +1,11 @@
+/* The page itself is dark: no default 8px body margin, and no white behind or around the app. */
+html,
+body {
+  margin: 0;
+  background: #0d1020;
+  color-scheme: dark;
+}
+
 .algoviz-app {
   --algo-bg: #0d1020;
   --algo-surface: #151a2d;
