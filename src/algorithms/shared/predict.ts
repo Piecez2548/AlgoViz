@@ -15,10 +15,12 @@ const MAX_OPTIONS = 4;
 const NODE_PICKERS = new Set(["kahn", "bfs", "dfs", "bidirectional-bfs", "greedy-best-first", "dijkstra", "a-star"]);
 const PAIR_SWAPPERS = new Set(["bubble", "insertion", "shell"]);
 
-const OTHERS = ["kruskal", "prim", "binary-search", "linear-search", "selection", "quick", "merge", "heap", "counting", "radix", "bellman-ford", "floyd-warshall", "tarjan", "kosaraju", "edmonds-karp", "ford-fulkerson"];
+const MATCHERS = new Set(["kuhn", "greedy-matching"]);
+
+const OTHERS = ["dfs-topological", "kruskal", "prim", "binary-search", "linear-search", "selection", "quick", "merge", "heap", "counting", "radix", "bellman-ford", "floyd-warshall", "tarjan", "kosaraju", "edmonds-karp", "ford-fulkerson"];
 
 export function canPredict(algorithmId: string): boolean {
-  return NODE_PICKERS.has(algorithmId) || PAIR_SWAPPERS.has(algorithmId) || OTHERS.includes(algorithmId);
+  return NODE_PICKERS.has(algorithmId) || PAIR_SWAPPERS.has(algorithmId) || MATCHERS.has(algorithmId) || OTHERS.includes(algorithmId);
 }
 
 const YES_NO = ["Yes", "No"] as const;
@@ -54,6 +56,27 @@ export function questionAt(algorithmId: string, execution: AlgorithmExecution, i
     const taken = new Set(pass2 ? (step.groups ?? []).flat() : step.visited ?? []);
     const options = sortedOptions(next.currentNode, graph.nodes.map((node) => node.id).filter((id) => !taken.has(id)));
     return options.length < 2 ? null : { prompt: pass2 ? "Which node joins a component next?" : "Which node does the search reach next?", options, answer: options.indexOf(next.currentNode), explanation: next.explanation };
+  }
+
+  if (algorithmId === "dfs-topological") {
+    if (next.type !== "dequeue" || !next.currentNode || !graph) return null;
+    // Only tasks that are not finished yet can come next; the ones on the current path are the likely candidates.
+    const done = new Set(step.visited ?? []);
+    const options = sortedOptions(next.currentNode, [...(step.frontier ?? []), ...graph.nodes.map((node) => node.id)].filter((id) => !done.has(id)));
+    return options.length < 2 ? null : { prompt: "Which task is finished and placed in the order next?", options, answer: options.indexOf(next.currentNode), explanation: next.explanation };
+  }
+
+  if (MATCHERS.has(algorithmId)) {
+    if (step.type === "compare" && step.currentNode && step.targetNode) {
+      // The step already asks "is it free?"; the following step shows whether it was.
+      return { prompt: `${step.currentNode} asks ${step.targetNode} to pair up. Is ${step.targetNode} still free?`, options: [...YES_NO], answer: next.type === "accept" ? 0 : 1, explanation: next.explanation };
+    }
+    if (step.type === "visit" && step.currentNode) {
+      const outcome = steps.slice(index + 1).find((later) => (later.type === "accept" || later.type === "reject") && later.currentNode === step.currentNode);
+      if (!outcome) return null;
+      return { prompt: `Now ${step.currentNode} looks for a partner. Will it end up with one?`, options: [...YES_NO], answer: outcome.type === "accept" ? 0 : 1, explanation: outcome.explanation };
+    }
+    return null;
   }
 
   if (algorithmId === "edmonds-karp" || algorithmId === "ford-fulkerson") {

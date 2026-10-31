@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { COMPONENT_ALGORITHMS, FLOW_ALGORITHMS, ROUTE_ALGORITHMS, SPANNING_ALGORITHMS, SORTING_ALGORITHMS } from "../registry";
+import { COMPONENT_ALGORITHMS, FLOW_ALGORITHMS, MATCHING_ALGORITHMS, ORDERING_ALGORITHMS, ROUTE_ALGORITHMS, SPANNING_ALGORITHMS, SORTING_ALGORITHMS } from "../registry";
 import { runBinarySearch, runLinearSearch } from "../searching/arraySearchAlgorithms";
-import { FLOW_SAMPLE, gridToGraph, SAMPLE_GRAPH, SCC_SAMPLE } from "./graph";
+import { DAG_CYCLE_SAMPLE, DAG_SAMPLE, FLOW_SAMPLE, gridToGraph, MATCH_HALL_SAMPLE, MATCH_SAMPLE, SAMPLE_GRAPH, SCC_SAMPLE } from "./graph";
 import { defaultGrid } from "./graph";
 import type { GraphInput } from "./graphTypes";
 import type { AlgorithmExecution } from "./types";
@@ -196,5 +196,59 @@ describe("predict questions for components and flow", () => {
       expect(question.prompt).not.toMatch(/→/);
     }
     expect(questions[0].question.prompt).toContain(id === "edmonds-karp" ? "fewest edges" : "depth-first");
+  });
+});
+
+describe("predict questions for matching and depth-first ordering", () => {
+  const run = (algorithms: readonly { id: string; run: (graph: GraphInput) => AlgorithmExecution }[], id: string, graph: GraphInput) => algorithms.find((algorithm) => algorithm.id === id)!.run(graph);
+
+  it.each(["kuhn", "greedy-matching"])("%s: 'is it free?' and 'will it be matched?' are answered by the recorded steps", (id) => {
+    for (const graph of [MATCH_SAMPLE, MATCH_HALL_SAMPLE]) {
+      const execution = run(MATCHING_ALGORITHMS, id, graph);
+      const questions = all(id, execution, graph);
+      expect(questions.some(({ question }) => question.prompt.includes("still free"))).toBe(true);
+      expect(questions.some(({ question }) => question.prompt.includes("end up with one"))).toBe(true);
+      for (const { index, question } of questions) {
+        const step = execution.steps[index]; const next = execution.steps[index + 1];
+        expect(question.options).toHaveLength(2);
+        if (question.prompt.includes("still free")) {
+          expect(question.options[question.answer]).toBe(next.type === "accept" ? "Yes" : "No");
+          // A partner that is free is never already in a pair.
+          if (next.type === "accept") expect(step.visited ?? []).not.toContain(step.targetNode);
+        } else {
+          const outcome = execution.steps.slice(index + 1).find((later) => later.type === "accept" || later.type === "reject")!;
+          expect(question.options[question.answer]).toBe(outcome.type === "accept" ? "Yes" : "No");
+        }
+      }
+    }
+  });
+
+  it("greedy: a left node that finds every partner taken is answered No", () => {
+    const execution = run(MATCHING_ALGORITHMS, "greedy-matching", MATCH_HALL_SAMPLE);
+    const answers = all("greedy-matching", execution, MATCH_HALL_SAMPLE).filter(({ question }) => question.prompt.includes("end up with one")).map(({ question }) => question.options[question.answer]);
+    expect(answers).toContain("No");
+  });
+
+  it("dfs-topological: the correct option is the task finished next and it is not finished yet", () => {
+    const execution = run(ORDERING_ALGORITHMS, "dfs-topological", DAG_SAMPLE);
+    const questions = all("dfs-topological", execution, DAG_SAMPLE);
+    expect(questions.length).toBeGreaterThanOrEqual(3);
+    for (const { index, question } of questions) {
+      const next = execution.steps[index + 1];
+      expect(question.options[question.answer]).toBe(next.currentNode);
+      expect(new Set(question.options).size).toBe(question.options.length);
+      expect(question.options.length).toBeLessThanOrEqual(4);
+      expect(question.prompt).not.toContain(next.currentNode!);
+      for (const option of question.options) expect(execution.steps[index].visited ?? []).not.toContain(option);
+    }
+  });
+
+  it("dfs-topological: a dependency loop never produces a question about a task that was not placed", () => {
+    const execution = run(ORDERING_ALGORITHMS, "dfs-topological", DAG_CYCLE_SAMPLE);
+    for (const { index, question } of all("dfs-topological", execution, DAG_CYCLE_SAMPLE)) expect(question.options[question.answer]).toBe(execution.steps[index + 1].currentNode);
+  });
+
+  it("both are offered in predict mode", () => {
+    for (const id of ["kuhn", "greedy-matching", "dfs-topological"]) expect(canPredict(id)).toBe(true);
   });
 });
