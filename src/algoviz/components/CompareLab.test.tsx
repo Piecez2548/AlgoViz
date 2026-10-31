@@ -225,3 +225,29 @@ describe("compare: negative cycle costs", () => {
     expect(cell("Dijkstra's Algorithm", "Route cost")).not.toContain("lowest");
   });
 });
+
+describe("compare: strongly connected components", () => {
+  const pickComponents = () => fireEvent.click(screen.getByLabelText("Strongly connected components"));
+
+  it("shows both algorithms finding the same four components, Kosaraju checking more edges", () => {
+    open();
+    pickComponents();
+    expect(screen.getByText(/Comparing Tarjan.s Algorithm and Kosaraju.s Algorithm\./)).toBeInTheDocument();
+    expect(verdictText()).toBe("Both found 4 strongly connected components. Tarjan's Algorithm made the fewest edge checks (10); Kosaraju's Algorithm made the most (20).");
+    expect(cell("Tarjan's Algorithm", "Components found")).toBe(cell("Kosaraju's Algorithm", "Components found"));
+    expect(cell("Tarjan's Algorithm", "Components found")).not.toContain("lowest");
+    expect(cell("Tarjan's Algorithm", "Edge checks")).toContain("lowest");
+  });
+
+  it("charts edge checks against graph size with Kosaraju twice as high", async () => {
+    open();
+    pickComponents();
+    await waitFor(() => expect(screen.getByRole("img", { name: /Edge checks against nodes in the graph/ })).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Show the numbers behind the chart"));
+    const data = screen.getByRole("table", { name: /Edge checks by nodes in the graph/ });
+    const headers = within(data).getAllByRole("columnheader").map((header) => header.textContent);
+    const last = within(within(data).getAllByRole("row").at(-1)!).getAllByRole("cell").map((item) => Number(item.textContent!.replace(/,/g, "")));
+    expect(last[headers.indexOf("Kosaraju's Algorithm") - 1]).toBe(2 * last[headers.indexOf("Tarjan's Algorithm") - 1]);
+    expect(screen.getByText(/exactly twice as high/)).toBeInTheDocument();
+  });
+});

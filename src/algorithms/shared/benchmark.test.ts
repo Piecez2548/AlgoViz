@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { ROUTE_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../registry";
+import { COMPONENT_ALGORITHMS, ROUTE_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../registry";
 import { runBubbleSort } from "../sorting/sortingAlgorithms";
-import { graphGrowth, LIST_SIZES, measure, MAP_SIDES, ringGraph, searchGrowth, SORT_SIZES, sortGrowth, sortInputs, squareMap, targetFor, TREE_SIZES, treeGrowth } from "./benchmark";
+import { componentGrowth, graphGrowth, LIST_SIZES, measure, MAP_SIDES, randomDigraph, ringGraph, searchGrowth, SORT_SIZES, sortGrowth, sortInputs, squareMap, targetFor, TREE_SIZES, treeGrowth } from "./benchmark";
 import { gridToGraph } from "./graph";
 
 const ids = SORTING_ALGORITHMS.map((algorithm) => algorithm.id);
@@ -140,5 +140,30 @@ describe("list search growth", () => {
     const series = searchGrowth(["binary-search", "linear-search"], "first", "comparisons");
     expect(series.find((item) => item.id === "linear-search")!.points.every((point) => point.value === 1)).toBe(true);
     expect(series.find((item) => item.id === "binary-search")!.points.at(-1)!.value).toBeGreaterThan(1);
+  });
+});
+
+describe("component growth", () => {
+  it("builds directed graphs with about three edges per node", () => {
+    for (const n of TREE_SIZES) {
+      const graph = randomDigraph(n);
+      expect(graph.directed).toBe(true);
+      expect(graph.edges.length).toBeGreaterThan(1.5 * n);
+      expect(graph.edges.length).toBeLessThanOrEqual(3 * n);
+    }
+  });
+
+  it("gives Tarjan and Kosaraju the same components, with Kosaraju checking every edge exactly twice", () => {
+    for (const n of TREE_SIZES) {
+      const graph = randomDigraph(n);
+      const [tarjan, kosaraju] = COMPONENT_ALGORITHMS.map((algorithm) => measure(algorithm.run(graph), graph));
+      expect(tarjan.components).toBe(kosaraju.components);
+      expect(tarjan.components).toBeGreaterThanOrEqual(1);
+      expect(tarjan.operations).toBe(graph.edges.length);
+      expect(kosaraju.operations).toBe(2 * graph.edges.length);
+    }
+    const series = componentGrowth(["tarjan", "kosaraju"], "operations");
+    const last = (id: string) => series.find((item) => item.id === id)!.points.at(-1)!.value;
+    expect(last("kosaraju")).toBe(2 * last("tarjan"));
   });
 });

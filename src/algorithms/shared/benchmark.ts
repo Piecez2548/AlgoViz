@@ -1,4 +1,4 @@
-import { ARRAY_SEARCH_ALGORITHMS, ROUTE_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../registry";
+import { ARRAY_SEARCH_ALGORITHMS, COMPONENT_ALGORITHMS, ROUTE_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../registry";
 import { cellIndex, edgeKey, gridToGraph, pathCost } from "./graph";
 import type { GraphInput, GridCell, GridState } from "./graphTypes";
 import type { AlgorithmExecution } from "./types";
@@ -18,6 +18,8 @@ export interface Measure {
   operations: number;
   /** Edges kept in a spanning tree. */
   edges: number;
+  /** Strongly connected components found. */
+  components: number;
   /** The run stopped because it found a negative cycle between the start and the goal. */
   negativeCycle: boolean;
   /** Total weight of that tree. */
@@ -32,7 +34,7 @@ export function measure(execution: AlgorithmExecution, graph?: GraphInput): Meas
   const cost = route !== undefined && graph ? pathCost(graph, String(route).split(" → ")) : null;
   const tail = steps.at(-1);
   const weight = Number(tail?.dataStructure?.find((entry) => entry.label === "Total weight")?.value ?? 0);
-  return { steps: steps.length, comparisons: last?.comparisons ?? 0, swaps: last?.swaps ?? 0, visited, cost: cost !== null && Number.isFinite(cost) ? cost : null, operations: Math.max(0, ...steps.map((step) => step.metrics?.operations ?? 0)), edges: tail?.acceptedEdges?.length ?? 0, weight, negativeCycle: Boolean(tail?.dataStructure?.some((entry) => entry.label === "Negative cycle")) };
+  return { steps: steps.length, comparisons: last?.comparisons ?? 0, swaps: last?.swaps ?? 0, visited, cost: cost !== null && Number.isFinite(cost) ? cost : null, operations: Math.max(0, ...steps.map((step) => step.metrics?.operations ?? 0)), edges: tail?.acceptedEdges?.length ?? 0, weight, components: tail?.groups?.length ?? 0, negativeCycle: Boolean(tail?.dataStructure?.some((entry) => entry.label === "Negative cycle")) };
 }
 
 export type SortMetric = "comparisons" | "swaps" | "steps";
@@ -129,6 +131,31 @@ export function ringGraph(n: number): GraphInput {
     }
   }
   return { label: "Ring graph", nodes, edges, start: nodes[0].id, goal: nodes[n - 1].id };
+}
+
+/**
+ * A directed graph of `n` nodes: every node points at the next one with probability 0.7 and at two random
+ * others, so loops of different sizes form. About three edges per node, repeatable from one run to the next.
+ */
+export function randomDigraph(n: number): GraphInput {
+  const random = seeded(n * 29 + 3);
+  const nodes = Array.from({ length: n }, (_, index) => ({ id: `N${index}`, x: 50 + 42 * Math.cos((index / n) * 2 * Math.PI), y: 50 + 42 * Math.sin((index / n) * 2 * Math.PI), heuristic: 0 }));
+  const seen = new Set<string>(); const edges: { from: string; to: string; weight: number }[] = [];
+  const add = (a: number, b: number) => { const key = `${a}>${b}`; if (a === b || seen.has(key)) return; seen.add(key); edges.push({ from: nodes[a].id, to: nodes[b].id, weight: 1 }); };
+  for (let index = 0; index < n; index++) {
+    if (random() < 0.7) add(index, (index + 1) % n);
+    add(index, Math.floor(random() * n)); add(index, Math.floor(random() * n));
+  }
+  return { label: "Random directed graph", directed: true, unweighted: true, nodes, edges, start: nodes[0].id, goal: nodes[n - 1].id };
+}
+
+export function componentGrowth(ids: readonly string[], metric: TreeMetric, sizes: readonly number[] = TREE_SIZES): GrowthSeries[] {
+  const graphs = sizes.map((n) => ({ n, graph: randomDigraph(n) }));
+  return COMPONENT_ALGORITHMS.filter((algorithm) => ids.includes(algorithm.id)).map((algorithm) => ({
+    id: algorithm.id,
+    name: algorithm.name,
+    points: graphs.map(({ n, graph }) => ({ n, value: measure(algorithm.run(graph), graph)[metric] })),
+  }));
 }
 
 export function treeGrowth(ids: readonly string[], metric: TreeMetric, sizes: readonly number[] = TREE_SIZES): GrowthSeries[] {
