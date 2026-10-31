@@ -45,6 +45,7 @@ const categories: AlgorithmDefinition[] = [
 const algorithmCatalog = [
   { id: "bfs", name: "Breadth-First Search", shortName: "BFS", category: "search", complexity: "O(V + E)", summary: "Explore level by level with a queue." },
   { id: "dfs", name: "Depth-First Search", shortName: "DFS", category: "search", complexity: "O(V + E)", summary: "Go deep before backtracking with a stack." },
+  { id: "bidirectional-bfs", name: "Bidirectional BFS", shortName: "Bi-BFS", category: "search", complexity: "O(b^(d/2))", summary: "Search from both ends and stop where the two searches meet." },
   { id: "greedy-best-first", name: "Greedy Best-First Search", shortName: "GBFS", category: "search", complexity: "Heuristic", summary: "Choose the frontier node that looks closest." },
   { id: "dijkstra", name: "Dijkstra's Algorithm", shortName: "Dijkstra", category: "pathfinding", complexity: "O((V + E) log V)", summary: "Relax edges to find shortest weighted paths." },
   { id: "a-star", name: "A* Search", shortName: "A*", category: "pathfinding", complexity: "O((V + E) log V)", summary: "Combine cost-so-far with a heuristic." },
@@ -56,6 +57,8 @@ const algorithmCatalog = [
   { id: "selection", name: "Selection Sort", shortName: "Selection", category: "sorting", complexity: "O(n²)", summary: "Select the next smallest value." },
   { id: "insertion", name: "Insertion Sort", shortName: "Insertion", category: "sorting", complexity: "O(n²)", summary: "Insert each value into a sorted prefix." },
   { id: "shell", name: "Shell Sort", shortName: "Shell", category: "sorting", complexity: "O(n²) worst", summary: "Insertion sort on values a shrinking gap apart." },
+  { id: "counting", name: "Counting Sort", shortName: "Counting", category: "sorting", complexity: "O(n + k)", summary: "Count each value, then write them back in order. No comparisons." },
+  { id: "radix", name: "Radix Sort", shortName: "Radix", category: "sorting", complexity: "O(d · n)", summary: "Sort digit by digit with buckets, from the ones digit up." },
   { id: "merge", name: "Merge Sort", shortName: "Merge", category: "sorting", complexity: "O(n log n)", summary: "Divide, sort, and merge ordered runs." },
   { id: "quick", name: "Quick Sort", shortName: "Quick", category: "sorting", complexity: "O(n log n)", summary: "Partition around a pivot and recurse." },
   { id: "heap", name: "Heap Sort", shortName: "Heap", category: "sorting", complexity: "O(n log n)", summary: "Build a heap, then pull out the largest value each time." },
@@ -172,7 +175,7 @@ export default function AlgoVizHomePage() {
             <p className="algoviz-eyebrow">Algorithm catalog</p>
             <h2 id="catalog-heading">The growing algorithm set.</h2>
           </div>
-          <p>Eighteen algorithms for teaching graph search, shortest paths, spanning trees, sorting, and searching lists with the same step-by-step contract.</p>
+          <p>Twenty-one algorithms for teaching graph search, shortest paths, spanning trees, sorting, and searching lists with the same step-by-step contract.</p>
         </div>
         <div className="algoviz-catalog-grid">
           {algorithmCatalog.map((algorithm, index) => (

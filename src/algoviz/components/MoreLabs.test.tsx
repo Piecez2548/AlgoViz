@@ -67,3 +67,23 @@ describe("new graph and sorting labs", () => {
     expect(bars).toEqual([2, 3, 4, 5, 6, 7, 8, 9]);
   });
 });
+
+describe("counting, radix and bidirectional labs", () => {
+  it.each(["counting", "radix"])("sorts with %s sort, counts no comparisons, and labels the writes", (id) => {
+    open(`/sorting?algorithm=${id}&values=170,45,75,90,802,24,2,66`);
+    jumpToEnd();
+    const bars = [...document.querySelectorAll(".algoviz-sort-bar span")].map((node) => Number(node.textContent));
+    expect(bars).toEqual([2, 24, 45, 66, 75, 90, 170, 802]);
+    const metrics = [...document.querySelectorAll(".algoviz-metric-grid > div")].map((node) => node.textContent);
+    expect(metrics[0]).toBe("0Comparisons");
+    expect(metrics[1]).toMatch(/Writes$/);
+  });
+
+  it("runs bidirectional BFS on the search page and highlights the joined route", () => {
+    open("/search?algorithm=bidirectional-bfs");
+    expect(screen.getByText("Start-side queue")).toBeInTheDocument();
+    jumpToEnd();
+    expect(explanation()).toBe("Bidirectional BFS completed.");
+    expect(document.querySelectorAll(".algoviz-node.is-path").length).toBeGreaterThan(2);
+  });
+});

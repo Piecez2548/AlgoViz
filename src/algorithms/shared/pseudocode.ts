@@ -81,6 +81,18 @@ export const PSEUDOCODE: Readonly<Record<string, Pseudocode>> = {
     lines: ["keep a range of positions, at first all of them", "while the range is not empty:", "  look at the middle value", "  if equal to the target: stop, found", "  if smaller: keep the right half, otherwise the left half", "range empty: not found"],
     lineFor: { compare: 2, complete: 3 },
   },
+  counting: {
+    lines: ["make a counter for every possible value", "for each value in the array:", "  add one to its counter", "for each value from smallest to largest:", "  write it back as many times as its counter says"],
+    lineFor: { visit: 2, swap: 4, complete: 4 },
+  },
+  radix: {
+    lines: ["for each digit, from the ones digit upwards:", "  put every value in a bucket for that digit", "    look at the digit and pick the bucket", "  collect the buckets in order, keeping each bucket's order", "after the highest digit the array is sorted"],
+    lineFor: { visit: 2, swap: 3, complete: 4 },
+  },
+  "bidirectional-bfs": {
+    lines: ["put the start in one queue and the goal in another", "while neither queue is empty and the searches have not met:", "  take the smaller queue and expand its whole level", "    for each neighbor: if the other search has reached it, the searches meet", "    otherwise mark it reached and queue it", "join the two routes at the meeting point"],
+    lineFor: { enqueue: 0, dequeue: 2, discover: 3, path: 5, complete: 5 },
+  },
   quick: {
     lines: ["pick the last value as the pivot", "for each value before the pivot:", "  compare it with the pivot", "  if smaller, move it to the left side", "put the pivot between the two sides, then sort each side"],
     lineFor: { compare: 2, swap: 3, complete: 4 },

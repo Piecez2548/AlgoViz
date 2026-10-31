@@ -9,7 +9,7 @@ import { AlgoVizLab } from "../components/AlgoVizLab";
 import { CompareLab } from "../components/CompareLab";
 
 const moduleContent = {
-  search: { icon: Search, name: "Search algorithms", description: "Explore BFS, DFS, and Greedy Best-First Search step by step.", category: "search" as const, eyebrow: "Graph search lab", defaultAlgorithm: "bfs", options: SEARCH_ALGORITHMS },
+  search: { icon: Search, name: "Search algorithms", description: "Explore BFS, DFS, bidirectional BFS, and Greedy Best-First Search step by step.", category: "search" as const, eyebrow: "Graph search lab", defaultAlgorithm: "bfs", options: SEARCH_ALGORITHMS },
   pathfinding: { icon: Route, name: "Pathfinding", description: "Compare distance, heuristics, and shortest paths on the same weighted graph, or on a map you draw.", category: "pathfinding" as const, eyebrow: "Weighted graph lab", defaultAlgorithm: "dijkstra", options: PATHFINDING_ALGORITHMS },
   spanning: { icon: Network, name: "Spanning trees", description: "Connect every node with the least total weight, one edge at a time.", category: "spanning" as const, eyebrow: "Minimum spanning tree lab", defaultAlgorithm: "kruskal", options: SPANNING_ALGORITHMS },
   sorting: { icon: Sigma, name: "Sorting algorithms", description: "Watch comparisons and swaps turn an unsorted array into order.", category: "sorting" as const, eyebrow: "Array sorting lab", defaultAlgorithm: "bubble", options: SORTING_ALGORITHMS },

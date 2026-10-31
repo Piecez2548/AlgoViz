@@ -152,7 +152,7 @@ function SameInputResults({ family, ids, values, target, graph }: { family: Fami
 }
 
 const NOTES: Record<Family, string> = {
-  sorting: "Counts come from the recorded runs. Merge sort writes values into place, so its writes appear under swaps.",
+  sorting: "Counts come from the recorded runs. Merge, counting and radix sort write values into place, so their writes appear under swaps. Counting and radix sort never compare two values, so their comparisons are zero.",
   routes: "Steps are the moments each algorithm records for display, not time. Bellman-Ford only records improvements, so it looks short here even though it checks every edge in every pass. Floyd-Warshall records one step per stop-over node. Nodes visited counts the nodes an algorithm touched.",
   trees: "Edge checks are what each algorithm counted itself: Kruskal looks at each edge once; Prim looks at every edge that leaves the tree in every round. Steps are the moments recorded for display, not time.",
   lists: "Both searches get your numbers in ascending order. Comparisons are what each search counted itself; steps are the moments recorded for display, not time.",

@@ -11,6 +11,7 @@ describe("AlgoViz module selection", () => {
   it.each([
     ["search", "bfs"],
     ["search", "dfs"],
+    ["search", "bidirectional-bfs"],
     ["search", "greedy-best-first"],
     ["pathfinding", "dijkstra"],
     ["pathfinding", "a-star"],
@@ -25,6 +26,8 @@ describe("AlgoViz module selection", () => {
     ["sorting", "quick"],
     ["sorting", "heap"],
     ["sorting", "shell"],
+    ["sorting", "counting"],
+    ["sorting", "radix"],
     ["array-search", "binary-search"],
     ["array-search", "linear-search"],
   ])("opens %s with the requested algorithm %s", (module, algorithm) => {

@@ -91,3 +91,46 @@ export function runGreedyBestFirst(graph: GraphInput = SAMPLE_GRAPH): AlgorithmE
 }
 
 function getNodeHeuristic(graph: GraphInput, id: string) { return graph.nodes.find((node) => node.id === id)?.heuristic ?? 0; }
+
+/**
+ * Bidirectional BFS: search from the start and from the goal at the same time and stop where the two
+ * searches meet. Each turn the side with the shorter queue expands a whole level; once a meeting is
+ * found the level is finished and the shortest of the meetings wins, so the route has as few edges as
+ * BFS finds, while far fewer nodes are usually visited.
+ */
+export function runBidirectionalBfs(graph: GraphInput = SAMPLE_GRAPH): AlgorithmExecution {
+  const steps: AlgorithmStep[] = [];
+  const side = (name: string, root: string) => ({ name, queue: [root], dist: new Map([[root, 0]]), parent: new Map<string, string>() });
+  const forward = side("start side", graph.start); const backward = side("goal side", graph.goal);
+  const visited = new Set<string>();
+  const frontier = () => [...forward.queue, ...backward.queue];
+  const queues = () => [{ label: "Start-side queue", value: forward.queue.join(", ") }, { label: "Goal-side queue", value: backward.queue.join(", ") }];
+  const chain = (parent: ReadonlyMap<string, string>, from: string) => { const out = [from]; for (let next = parent.get(from); next !== undefined; next = parent.get(next)) out.push(next); return out; };
+  steps.push(createAlgorithmStep(0, "enqueue", `Search from both ends at once: ${graph.start} going forward and ${graph.goal} going backward.`, { currentNode: graph.start, targetNode: graph.goal, frontier: frontier(), dataStructure: queues() }));
+  let best: { path: string[]; hops: number } | null = null;
+  while (!best && forward.queue.length && backward.queue.length) {
+    const turn = forward.queue.length <= backward.queue.length ? forward : backward;
+    const other = turn === forward ? backward : forward;
+    const level = turn.queue.splice(0, turn.queue.length);
+    for (const current of level) {
+      visited.add(current);
+      steps.push(createAlgorithmStep(steps.length, "dequeue", `From the ${turn.name}: take ${current} and inspect its neighbors.`, { currentNode: current, visited: [...visited], frontier: frontier(), dataStructure: queues(), metrics: { visitedNodes: visited.size, operations: steps.length + 1 } }));
+      for (const edge of getNeighbors(graph, current)) {
+        const neighbor = edge.to;
+        const reach = other.dist.get(neighbor);
+        if (reach !== undefined) {
+          const hops = turn.dist.get(current)! + 1 + reach;
+          if (!best || hops < best.hops) best = { hops, path: turn === forward ? [...chain(forward.parent, current).reverse(), ...chain(backward.parent, neighbor)] : [...chain(forward.parent, neighbor).reverse(), ...chain(backward.parent, current)] };
+          steps.push(createAlgorithmStep(steps.length, "discover", `${neighbor} was already reached from the ${other.name}: the two searches meet here.`, { currentNode: current, targetNode: neighbor, visited: [...visited], frontier: frontier(), dataStructure: queues(), metrics: { visitedNodes: visited.size, operations: steps.length + 1 } }));
+        }
+        if (turn.dist.has(neighbor)) continue;
+        turn.dist.set(neighbor, turn.dist.get(current)! + 1); turn.parent.set(neighbor, current); turn.queue.push(neighbor);
+        steps.push(createAlgorithmStep(steps.length, "discover", `${neighbor} is discovered from ${current} and added to the ${turn.name}'s queue.`, { currentNode: current, targetNode: neighbor, visited: [...visited], frontier: frontier(), dataStructure: queues(), metrics: { visitedNodes: visited.size, operations: steps.length + 1 } }));
+      }
+    }
+  }
+  if (graph.start === graph.goal) best = { hops: 0, path: [graph.start] };
+  if (best) pathStep(steps, best.path, `The searches met. Joining their routes gives ${best.path.join(" → ")}.`);
+  steps.push(createAlgorithmStep(steps.length, "complete", best ? "Bidirectional BFS completed." : `Bidirectional BFS completed: the two searches never met, so ${graph.goal} cannot be reached from ${graph.start}.`, { visited: [...visited], frontier: frontier() }));
+  return execution("bidirectional-bfs", graph, steps);
+}

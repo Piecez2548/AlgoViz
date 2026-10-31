@@ -5,7 +5,8 @@ export const SORT_SAMPLE: readonly number[] = [42, 18, 64, 9, 31, 56, 23];
 
 function sortExecution(algorithmId: string, name: string, input: readonly number[]): AlgorithmExecution {
   const values = [...input]; const steps: AlgorithmStep[] = []; let comparisons = 0; let swaps = 0;
-  const add = (type: "compare" | "swap" | "complete", explanation: string, indices: number[] = [], sortedIndices: number[] = [], line?: number) => steps.push(createAlgorithmStep(steps.length, type, explanation, { ...(line === undefined ? {} : { line }), values: [...values], highlightIndices: indices, sortedIndices, dataStructure: [{ label: "Array", value: values.join(", ") }], metrics: { comparisons, swaps, operations: comparisons + swaps } }));
+  const extra: { label: string; value: string | number }[] = [];
+  const add = (type: "compare" | "swap" | "visit" | "complete", explanation: string, indices: number[] = [], sortedIndices: number[] = [], line?: number) => steps.push(createAlgorithmStep(steps.length, type, explanation, { ...(line === undefined ? {} : { line }), values: [...values], highlightIndices: indices, sortedIndices, dataStructure: [{ label: "Array", value: values.join(", ") }, ...extra], metrics: { comparisons, swaps, operations: comparisons + swaps } }));
   if (algorithmId === "bubble") {
     const sorted: number[] = [];
     for (let end = values.length - 1; end > 0; end--) {
@@ -93,6 +94,44 @@ function sortExecution(algorithmId: string, name: string, input: readonly number
         }
       }
     }
+  } else if (algorithmId === "counting") {
+    // No comparisons at all: count how many times each value occurs, then write the values back in order.
+    const counts = new Map<number, number>();
+    const tally = () => [...counts.entries()].sort((a, b) => a[0] - b[0]).map(([value, count]) => `${value}×${count}`).join(", ");
+    values.forEach((value, index) => {
+      counts.set(value, (counts.get(value) ?? 0) + 1);
+      extra[0] = { label: "Counts", value: tally() };
+      add("visit", `Count ${value}: it has now been seen ${counts.get(value)} time${counts.get(value) === 1 ? "" : "s"}.`, [index]);
+    });
+    const done: number[] = []; let position = 0;
+    for (const [value, count] of [...counts.entries()].sort((a, b) => a[0] - b[0])) {
+      for (let copy = 0; copy < count; copy++) {
+        values[position] = value; swaps++; done.push(position);
+        add("swap", `Write ${value} into position ${position}. The counts remember every original value, so overwriting is safe.`, [position], done);
+        position++;
+      }
+    }
+  } else if (algorithmId === "radix") {
+    // Least-significant-digit radix sort: sort by the ones digit, then tens, then hundreds, keeping earlier order for equal digits.
+    const largest = Math.max(...values);
+    for (let place = 1; Math.floor(largest / place) > 0; place *= 10) {
+      const digitOf = (value: number) => Math.floor(value / place) % 10;
+      const buckets: number[][] = Array.from({ length: 10 }, () => []);
+      const lastPass = place * 10 > largest;
+      const name = place === 1 ? "ones" : place === 10 ? "tens" : "hundreds";
+      values.forEach((value, index) => {
+        buckets[digitOf(value)].push(value);
+        extra[0] = { label: "Buckets", value: buckets.map((bucket, digit) => (bucket.length ? `${digit}: ${bucket.join(" ")}` : "")).filter(Boolean).join(" | ") };
+        add("visit", `Look at the ${name} digit of ${value}: it is ${digitOf(value)}, so ${value} goes into bucket ${digitOf(value)}.`, [index], [], 2);
+      });
+      extra.length = 0;
+      const done: number[] = []; let position = 0;
+      for (const bucket of buckets) for (const value of bucket) {
+        values[position] = value; swaps++; if (lastPass) done.push(position);
+        add("swap", `Collect ${value} from its bucket into position ${position}.`, [position], done, 3);
+        position++;
+      }
+    }
   } else if (algorithmId === "quick") {
     const partition = (low: number, high: number): number => {
       const pivot = values[high];
@@ -133,4 +172,6 @@ export const runInsertionSort = (input: readonly number[] = SORT_SAMPLE) => sort
 export const runMergeSort = (input: readonly number[] = SORT_SAMPLE) => sortExecution("merge", "Merge Sort", input);
 export const runHeapSort = (input: readonly number[] = SORT_SAMPLE) => sortExecution("heap", "Heap Sort", input);
 export const runShellSort = (input: readonly number[] = SORT_SAMPLE) => sortExecution("shell", "Shell Sort", input);
+export const runCountingSort = (input: readonly number[] = SORT_SAMPLE) => sortExecution("counting", "Counting Sort", input);
+export const runRadixSort = (input: readonly number[] = SORT_SAMPLE) => sortExecution("radix", "Radix Sort", input);
 export const runQuickSort = (input: readonly number[] = SORT_SAMPLE) => sortExecution("quick", "Quick Sort", input);
