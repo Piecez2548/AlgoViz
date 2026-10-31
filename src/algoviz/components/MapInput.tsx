@@ -13,12 +13,12 @@ const SAMPLE_NODE_IDS = SAMPLE_GRAPH.nodes.map((node) => node.id);
 const GRAPH_TOOLS: { id: GraphTool; label: string }[] = [{ id: "move", label: "Move nodes" }, { id: "node", label: "Add nodes" }, { id: "connect", label: "Connect nodes" }];
 
 /** The input a lab or comparison runs on: the sample graph, a drawn map, or a graph you build node by node. */
-export function useMapInput(mode: MapMode = "route") {
-  const [mapKind, setMapKind] = useState<MapKind>("sample");
+export function useMapInput(mode: MapMode = "route", initialCustom: GraphInput | null = null) {
+  const [mapKind, setMapKind] = useState<MapKind>(initialCustom && mode !== "off" ? "custom" : "sample");
   const [endpoints, setEndpoints] = useState({ start: SAMPLE_GRAPH.start, goal: SAMPLE_GRAPH.goal });
   const [grid, setGrid] = useState<GridState>(defaultGrid);
   const [tool, setTool] = useState<GridTool>("wall");
-  const [custom, setCustom] = useState<GraphInput>({ ...SAMPLE_GRAPH, label: "Your graph" });
+  const [custom, setCustom] = useState<GraphInput>(initialCustom ?? { ...SAMPLE_GRAPH, label: "Your graph" });
   const [graphTool, setGraphTool] = useState<GraphTool>("move");
   const [edgeWeight, setEdgeWeight] = useState(DEFAULT_WEIGHT);
   const graph = useMemo<GraphInput>(() => {

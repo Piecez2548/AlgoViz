@@ -1,7 +1,10 @@
+import { useCallback, useMemo } from "react";
+import type { GraphInput } from "../../algorithms/shared/graphTypes";
 import { ArrowLeft, GitCompareArrows, ListFilter, Network, Route, Search, Sigma } from "lucide-react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { ARRAY_SEARCH_ALGORITHMS, PATHFINDING_ALGORITHMS, SEARCH_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../../algorithms/registry";
 import { parseNumberList } from "../../algorithms/shared/arrayInput";
+import { decodeGraph, encodeGraph } from "../../algorithms/shared/graphCodec";
 import { AlgoVizLab } from "../components/AlgoVizLab";
 import { CompareLab } from "../components/CompareLab";
 
@@ -17,7 +20,11 @@ const moduleContent = {
 export default function AlgoVizModulePage() {
   const location = useLocation();
   const [, setSearchParams] = useSearchParams();
-  const updateParams = (name: string, value: string) => setSearchParams((previous) => { const params = new URLSearchParams(previous); params.set(name, value); return params; }, { replace: true });
+  const updateParams = (name: string, value: string | null) => setSearchParams((previous) => {
+    const params = new URLSearchParams(previous);
+    if (value === null) params.delete(name); else params.set(name, value);
+    return params.toString() === previous.toString() ? previous : params;
+  }, { replace: true });
   const key = location.pathname.split("/").filter(Boolean).at(-1) as keyof typeof moduleContent;
   const module = moduleContent[key] ?? moduleContent.search;
   const Icon = module.icon;
@@ -26,6 +33,8 @@ export default function AlgoVizModulePage() {
   const initialValues = sharedValues ? parseNumberList(sharedValues).values : undefined;
   const requestedTarget = Number(new URLSearchParams(location.search).get("target"));
   const initialTarget = Number.isInteger(requestedTarget) && requestedTarget >= 1 && requestedTarget <= 999 ? requestedTarget : undefined;
+  const initialGraph = useMemo(() => decodeGraph(new URLSearchParams(location.search).get("graph")), []); // eslint-disable-line react-hooks/exhaustive-deps
+  const onGraphChange = useCallback((graph: GraphInput | null) => updateParams("graph", graph ? encodeGraph(graph) : null), []); // eslint-disable-line react-hooks/exhaustive-deps
   const selectedAlgorithm = "options" in module
     ? module.options.find((option) => option.id === requestedAlgorithm)?.id ?? module.defaultAlgorithm
     : "";
@@ -41,6 +50,6 @@ export default function AlgoVizModulePage() {
       ? <AlgoVizLab category="sorting" options={module.options} defaultAlgorithm={selectedAlgorithm} initialValues={initialValues} onValuesChange={(values) => updateParams("values", values.join(","))} onAlgorithmChange={(id) => updateParams("algorithm", id)} />
       : module.category === "array-search"
         ? <AlgoVizLab category="array-search" options={module.options} defaultAlgorithm={selectedAlgorithm} initialValues={initialValues} initialTarget={initialTarget} onValuesChange={(values) => updateParams("values", values.join(","))} onTargetChange={(target) => updateParams("target", String(target))} onAlgorithmChange={(id) => updateParams("algorithm", id)} />
-      : <AlgoVizLab category={module.category} options={module.options} defaultAlgorithm={selectedAlgorithm} onAlgorithmChange={(id) => updateParams("algorithm", id)} />}
+      : <AlgoVizLab category={module.category} options={module.options} defaultAlgorithm={selectedAlgorithm} initialGraph={initialGraph} onGraphChange={onGraphChange} onAlgorithmChange={(id) => updateParams("algorithm", id)} />}
   </div>;
 }

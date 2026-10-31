@@ -24,7 +24,7 @@ interface CommonProps {
 type AlgoVizLabProps = CommonProps & (
   | { category: "sorting"; options: readonly ArrayLabOption[]; initialValues?: readonly number[]; onValuesChange?: (values: readonly number[]) => void }
   | { category: "array-search"; options: readonly TargetLabOption[]; initialValues?: readonly number[]; initialTarget?: number; onValuesChange?: (values: readonly number[]) => void; onTargetChange?: (target: number) => void }
-  | { category: "search" | "pathfinding" | "spanning"; options: readonly GraphLabOption[] }
+  | { category: "search" | "pathfinding" | "spanning"; options: readonly GraphLabOption[]; initialGraph?: GraphInput | null; /** Called with your own graph (or null when it is not in use) so the page can keep it in the link. */ onGraphChange?: (graph: GraphInput | null) => void }
 );
 
 export function AlgoVizLab(props: AlgoVizLabProps) {
@@ -37,7 +37,15 @@ export function AlgoVizLab(props: AlgoVizLabProps) {
   // Search and pathfinding take a start and goal; spanning trees use the whole graph, so they get the sample or your own graph only.
   const usesMap = category === "search" || category === "pathfinding";
   const usesGraph = usesMap || category === "spanning";
-  const map = useMapInput(usesMap ? "route" : category === "spanning" ? "tree" : "off");
+  const map = useMapInput(usesMap ? "route" : category === "spanning" ? "tree" : "off", props.category === "array-search" || props.category === "sorting" ? null : props.initialGraph ?? null);
+  const onGraphChange = props.category === "array-search" || props.category === "sorting" ? undefined : props.onGraphChange;
+  const shownCustom = usesGraph && map.mapKind === "custom" ? map.custom : null;
+  // Dragging changes the graph many times a second, so the link follows a moment later.
+  useEffect(() => {
+    if (!onGraphChange) return;
+    const timer = window.setTimeout(() => onGraphChange(shownCustom), 250);
+    return () => window.clearTimeout(timer);
+  }, [onGraphChange, shownCustom]);
   const { graph, mapKind, grid, tool } = map;
   const option = options.find((candidate) => candidate.id === algorithmId) ?? options[0];
   const execution = useMemo(() => (category === "array-search" ? (option as TargetLabOption).run(values, target) : category === "sorting" ? (option as ArrayLabOption).run(values) : (option as GraphLabOption).run(graph)), [category, graph, option, target, values]);
