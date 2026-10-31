@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { defaultGrid, DAG_CYCLE_SAMPLE, DAG_SAMPLE, DIRECTED_CYCLE_SAMPLE, DIRECTED_SAMPLE, gridToGraph, SAMPLE_GRAPH, sampleGraphBetween, SCC_SAMPLE, withHeuristics } from "../../algorithms/shared/graph";
 import { addNode, DEFAULT_WEIGHT, freeSpot, MAX_NODES, MAX_WEIGHT, MIN_NODES, MIN_WEIGHT, moveNode, removeEdge, removeNode, setEdge, setEndpoint as setGraphEndpoint, validWeight } from "../../algorithms/shared/graphEdit";
 import type { GraphInput, GridState } from "../../algorithms/shared/graphTypes";
@@ -12,13 +12,35 @@ export type MapMode = "off" | "route" | "tree" | "directed" | "dag" | "scc";
 const SAMPLE_NODE_IDS = SAMPLE_GRAPH.nodes.map((node) => node.id);
 const GRAPH_TOOLS: { id: GraphTool; label: string }[] = [{ id: "move", label: "Move nodes" }, { id: "node", label: "Add nodes" }, { id: "connect", label: "Connect nodes" }];
 
+/** The graph your own graph starts from: the sample that fits the kind of graph the lab works on. */
+function defaultCustom(mode: MapMode): GraphInput {
+  const base = mode === "directed" ? DIRECTED_SAMPLE : mode === "dag" ? DAG_SAMPLE : mode === "scc" ? SCC_SAMPLE : SAMPLE_GRAPH;
+  return { ...base, label: "Your graph" };
+}
+
+/** Whether a graph from a link suits the kind of graph a lab or comparison works on. */
+export function graphFits(mode: MapMode, graph: GraphInput | null | undefined): graph is GraphInput {
+  if (!graph) return false;
+  if (mode === "route" || mode === "tree") return !graph.directed;
+  if (mode === "directed") return Boolean(graph.directed) && !graph.unweighted;
+  if (mode === "dag" || mode === "scc") return Boolean(graph.directed && graph.unweighted);
+  return false;
+}
+
 /** The input a lab or comparison runs on: the sample graph, a drawn map, or a graph you build node by node. */
 export function useMapInput(mode: MapMode = "route", initialCustom: GraphInput | null = null) {
   const [mapKind, setMapKind] = useState<MapKind>(initialCustom && mode !== "off" ? "custom" : "sample");
   const [endpoints, setEndpoints] = useState({ start: SAMPLE_GRAPH.start, goal: SAMPLE_GRAPH.goal });
   const [grid, setGrid] = useState<GridState>(defaultGrid);
   const [tool, setTool] = useState<GridTool>("wall");
-  const [custom, setCustom] = useState<GraphInput>(initialCustom ?? { ...(mode === "directed" ? DIRECTED_SAMPLE : mode === "dag" ? DAG_SAMPLE : mode === "scc" ? SCC_SAMPLE : SAMPLE_GRAPH), label: "Your graph" });
+  const [custom, setCustom] = useState<GraphInput>(initialCustom ?? defaultCustom(mode));
+  // A comparison switches between kinds of graph; start again from a sample that fits the new kind.
+  const lastMode = useRef(mode);
+  useEffect(() => {
+    if (lastMode.current === mode) return;
+    lastMode.current = mode;
+    setMapKind("sample"); setCustom(defaultCustom(mode));
+  }, [mode]);
   const [graphTool, setGraphTool] = useState<GraphTool>("move");
   const [edgeWeight, setEdgeWeight] = useState(DEFAULT_WEIGHT);
   const graph = useMemo<GraphInput>(() => {

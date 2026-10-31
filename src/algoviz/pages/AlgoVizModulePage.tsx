@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import type { GraphInput } from "../../algorithms/shared/graphTypes";
 import { ArrowLeft, GitCompareArrows, ListFilter, Network, Route, Search, ListOrdered, Shapes, Sigma, TrendingDown } from "lucide-react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
@@ -6,7 +6,7 @@ import { ARRAY_SEARCH_ALGORITHMS, COMPONENT_ALGORITHMS, NEGATIVE_ALGORITHMS, ORD
 import { parseNumberList } from "../../algorithms/shared/arrayInput";
 import { decodeGraph, encodeGraph } from "../../algorithms/shared/graphCodec";
 import { AlgoVizLab } from "../components/AlgoVizLab";
-import { CompareLab } from "../components/CompareLab";
+import { CompareLab, parseFamily } from "../components/CompareLab";
 
 const moduleContent = {
   search: { icon: Search, name: "Search algorithms", description: "Explore BFS, DFS, bidirectional BFS, and Greedy Best-First Search step by step.", category: "search" as const, eyebrow: "Graph search lab", defaultAlgorithm: "bfs", options: SEARCH_ALGORITHMS },
@@ -23,11 +23,18 @@ const moduleContent = {
 export default function AlgoVizModulePage() {
   const location = useLocation();
   const [, setSearchParams] = useSearchParams();
-  const updateParams = (name: string, value: string | null) => setSearchParams((previous) => {
-    const params = new URLSearchParams(previous);
+  // Several parts of a page can change the link in the same moment (the family, then your graph a moment later), so
+  // every change starts from the newest link rather than from the one this render saw.
+  const latestSearch = useRef(location.search);
+  latestSearch.current = location.search;
+  const updateParams = useCallback((name: string, value: string | null) => {
+    const params = new URLSearchParams(latestSearch.current);
     if (value === null) params.delete(name); else params.set(name, value);
-    return params.toString() === previous.toString() ? previous : params;
-  }, { replace: true });
+    const next = params.toString();
+    if (next === new URLSearchParams(latestSearch.current).toString()) return;
+    latestSearch.current = next;
+    setSearchParams(params, { replace: true });
+  }, [setSearchParams]);
   const key = location.pathname.split("/").filter(Boolean).at(-1) as keyof typeof moduleContent;
   const module = moduleContent[key] ?? moduleContent.search;
   const Icon = module.icon;
@@ -37,7 +44,7 @@ export default function AlgoVizModulePage() {
   const requestedTarget = Number(new URLSearchParams(location.search).get("target"));
   const initialTarget = Number.isInteger(requestedTarget) && requestedTarget >= 1 && requestedTarget <= 999 ? requestedTarget : undefined;
   const initialGraph = useMemo(() => decodeGraph(new URLSearchParams(location.search).get("graph")), []); // eslint-disable-line react-hooks/exhaustive-deps
-  const onGraphChange = useCallback((graph: GraphInput | null) => updateParams("graph", graph ? encodeGraph(graph) : null), []); // eslint-disable-line react-hooks/exhaustive-deps
+  const onGraphChange = useCallback((graph: GraphInput | null) => updateParams("graph", graph ? encodeGraph(graph) : null), [updateParams]);
   const selectedAlgorithm = "options" in module
     ? module.options.find((option) => option.id === requestedAlgorithm)?.id ?? module.defaultAlgorithm
     : "";
@@ -49,7 +56,7 @@ export default function AlgoVizModulePage() {
       <h1>{module.name}</h1>
       <p className="algoviz-module-lede">{module.description}</p>
     </section>
-    {module.category === "compare" ? <CompareLab initialValues={initialValues} onValuesChange={(values) => updateParams("values", values.join(","))} /> : module.category === "sorting"
+    {module.category === "compare" ? <CompareLab initialValues={initialValues} onValuesChange={(values) => updateParams("values", values.join(","))} initialFamily={parseFamily(new URLSearchParams(location.search).get("family"))} onFamilyChange={(family) => updateParams("family", family)} initialTarget={initialTarget} onTargetChange={(next) => updateParams("target", String(next))} initialGraph={initialGraph} onGraphChange={onGraphChange} /> : module.category === "sorting"
       ? <AlgoVizLab category="sorting" options={module.options} defaultAlgorithm={selectedAlgorithm} initialValues={initialValues} onValuesChange={(values) => updateParams("values", values.join(","))} onAlgorithmChange={(id) => updateParams("algorithm", id)} />
       : module.category === "array-search"
         ? <AlgoVizLab category="array-search" options={module.options} defaultAlgorithm={selectedAlgorithm} initialValues={initialValues} initialTarget={initialTarget} onValuesChange={(values) => updateParams("values", values.join(","))} onTargetChange={(target) => updateParams("target", String(target))} onAlgorithmChange={(id) => updateParams("algorithm", id)} />

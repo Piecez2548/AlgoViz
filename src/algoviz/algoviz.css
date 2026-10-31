@@ -918,14 +918,15 @@
 .algoviz-predict-options .is-wrong { border-color: #ff9aa8; background: #5a2531; color: #fff; }
 .algoviz-predict-result { margin: 0 0 0.8rem; }
 .algoviz-edge-label.is-negative { fill: #ffb4a2; font-weight: 700; }
+.algoviz-node.is-group + .algoviz-node-label { fill: #ffffff; }
 .algoviz-group-badge { fill: #e8ecff; font-size: 4px; font-weight: 700; text-anchor: middle; pointer-events: none; }
 .algoviz-node.is-group { stroke-width: 1.6; }
-.algoviz-node.is-group-0 { stroke: #7dffcb; fill: #1d4a3a; }
-.algoviz-node.is-group-1 { stroke: #ffb86b; fill: #4d3515; }
-.algoviz-node.is-group-2 { stroke: #c9b6ff; fill: #36295c; }
-.algoviz-node.is-group-3 { stroke: #f5d36b; fill: #4a4015; }
-.algoviz-node.is-group-4 { stroke: #ff8fb1; fill: #531f36; }
-.algoviz-node.is-group-5 { stroke: #8fc2ff; fill: #1d3a5c; }
+.algoviz-node.is-group.is-group-0 { stroke: #7dffcb; fill: #1d4a3a; }
+.algoviz-node.is-group.is-group-1 { stroke: #ffb86b; fill: #4d3515; }
+.algoviz-node.is-group.is-group-2 { stroke: #c9b6ff; fill: #36295c; }
+.algoviz-node.is-group.is-group-3 { stroke: #f5d36b; fill: #4a4015; }
+.algoviz-node.is-group.is-group-4 { stroke: #ff8fb1; fill: #531f36; }
+.algoviz-node.is-group.is-group-5 { stroke: #8fc2ff; fill: #1d3a5c; }
 .icon-strongly-connected {
   background: #ffb86b18;
   color: #ffb86b;

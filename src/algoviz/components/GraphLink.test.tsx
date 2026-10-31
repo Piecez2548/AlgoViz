@@ -37,3 +37,14 @@ describe("your own graph in the link", () => {
     expect(screen.getByLabelText("Choose map")).toHaveValue("sample");
   });
 });
+
+describe("link updates do not overwrite each other", () => {
+  it("keeps a freshly chosen algorithm in the link when your graph changes afterwards", async () => {
+    open("/pathfinding?algorithm=dijkstra");
+    fireEvent.change(screen.getByLabelText("Choose algorithm"), { target: { value: "a-star" } });
+    fireEvent.change(screen.getByLabelText("Choose map"), { target: { value: "custom" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add node" }));
+    await waitFor(() => expect(screen.getByTestId("search").textContent).toContain("graph="));
+    expect(screen.getByTestId("search").textContent).toContain("algorithm=a-star");
+  });
+});

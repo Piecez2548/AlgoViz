@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { ARRAY_SEARCH_ALGORITHMS, NEGATIVE_ALGORITHMS, ROUTE_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../../algorithms/registry";
 import { PRESET_LABELS } from "../../algorithms/shared/arrayInput";
 import { graphGrowth, LIST_SIZES, MAP_SIDES, measure, searchGrowth, SORT_SIZES, sortGrowth, TREE_SIZES, treeGrowth, type GraphMetric, type GridObstacles, type Measure, type SearchMetric, type SortMetric, type SortShape, type TargetPlace, type TreeMetric } from "../../algorithms/shared/benchmark";
@@ -9,9 +9,13 @@ import { SORT_SAMPLE } from "../../algorithms/sorting/sortingAlgorithms";
 import { GraphCanvas } from "./GraphCanvas";
 import { ArrayInput, GridBoard, TargetInput } from "./InputEditors";
 import { LineChart, formatNumber, type ChartScale } from "./LineChart";
-import { MapControls, MapSelect, useMapInput } from "./MapInput";
+import { graphFits, MapControls, MapSelect, useMapInput, type MapMode } from "./MapInput";
 
 type Family = "sorting" | "routes" | "trees" | "lists" | "negative";
+const FAMILY_IDS: readonly Family[] = ["sorting", "routes", "trees", "lists", "negative"];
+/** Reads ?family= from a link, ignoring anything unknown. */
+export const parseFamily = (value: string | null): Family | undefined => FAMILY_IDS.find((id) => id === value);
+const mapModeFor = (family: Family): MapMode => (family === "routes" ? "route" : family === "trees" ? "tree" : family === "negative" ? "directed" : "off");
 const NO_STEP: AlgorithmStep = { id: 0, type: "complete", explanation: "" };
 const MIN_SELECTED = 2;
 
@@ -35,14 +39,31 @@ const metricLabels = (family: Family): Record<string, string> => (family === "so
 interface CompareLabProps {
   initialValues?: readonly number[];
   onValuesChange?: (values: readonly number[]) => void;
+  initialFamily?: Family;
+  onFamilyChange?: (family: Family) => void;
+  initialTarget?: number;
+  onTargetChange?: (target: number) => void;
+  /** Your own graph from a link; used only when it suits the family. */
+  initialGraph?: GraphInput | null;
+  onGraphChange?: (graph: GraphInput | null) => void;
 }
 
-export function CompareLab({ initialValues, onValuesChange }: CompareLabProps) {
-  const [family, setFamily] = useState<Family>("sorting");
+export function CompareLab({ initialValues, onValuesChange, initialFamily, onFamilyChange, initialTarget, onTargetChange, initialGraph, onGraphChange }: CompareLabProps) {
+  const [family, setFamilyState] = useState<Family>(initialFamily ?? "sorting");
+  const setFamily = (next: Family) => { setFamilyState(next); onFamilyChange?.(next); };
   const [selected, setSelected] = useState<Record<Family, string[]>>({ sorting: ["bubble", "merge", "quick"], routes: ["bfs", "dijkstra", "a-star"], trees: ["kruskal", "prim"], lists: ["binary-search", "linear-search"], negative: ["bellman-ford", "floyd-warshall", "dijkstra"] });
   const [values, setValues] = useState<readonly number[]>(initialValues ?? SORT_SAMPLE);
-  const [target, setTarget] = useState(SEARCH_TARGET_SAMPLE);
-  const map = useMapInput(family === "routes" ? "route" : family === "trees" ? "tree" : family === "negative" ? "directed" : "off");
+  const [target, setTargetState] = useState(initialTarget ?? SEARCH_TARGET_SAMPLE);
+  const setTarget = (next: number) => { setTargetState(next); onTargetChange?.(next); };
+  const mode = mapModeFor(family);
+  const map = useMapInput(mode, graphFits(mode, initialGraph) ? initialGraph : null);
+  const shownCustom = mode !== "off" && map.mapKind === "custom" ? map.custom : null;
+  // Dragging changes the graph many times a second, so the link follows a moment later.
+  useEffect(() => {
+    if (!onGraphChange) return;
+    const timer = window.setTimeout(() => onGraphChange(shownCustom), 250);
+    return () => window.clearTimeout(timer);
+  }, [onGraphChange, shownCustom]);
   const [shape, setShape] = useState<SortShape>("random");
   const [obstacles, setObstacles] = useState<GridObstacles>("none");
   const [place, setPlace] = useState<TargetPlace>("absent");
