@@ -121,6 +121,10 @@ export const PSEUDOCODE: Readonly<Record<string, Pseudocode>> = {
     lines: ["split the nodes into a left side and a right side", "for each left node in turn:", "  look at each partner it could have", "  if the partner is free: take it", "  if the partner is taken: ask whoever has it to move to another partner", "  if that works, flip the chain of pairs: one more pair", "if no partner can be freed up, the node stays unmatched"],
     lineFor: { enqueue: 0, visit: 1, compare: 2, update: 4, accept: 5, reject: 6, complete: 6 },
   },
+  "hopcroft-karp": {
+    lines: ["split the nodes into a left side and a right side", "repeat in phases:", "  search outward from the free left nodes, layer by layer, until a free partner turns up", "  if none can be reached: stop, the matching is the biggest possible", "  for each free left node, follow the layers to a free partner", "  flip the chain of pairs: one more pair", "  if no path of that length is left, the node waits for the next phase"],
+    lineFor: { enqueue: 0, visit: 4, compare: 4, update: 4, accept: 5, reject: 6, complete: 3 },
+  },
   "greedy-matching": {
     lines: ["split the nodes into a left side and a right side", "for each left node in turn:", "  look at each partner it could have", "  take the first one that is still free", "  never change a pair once it is made", "if every partner is taken, the node stays unmatched"],
     lineFor: { enqueue: 0, visit: 1, compare: 2, accept: 3, reject: 5, complete: 4 },

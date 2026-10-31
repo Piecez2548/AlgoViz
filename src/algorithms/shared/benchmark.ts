@@ -1,4 +1,4 @@
-import { ARRAY_SEARCH_ALGORITHMS, COMPONENT_ALGORITHMS, ROUTE_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../registry";
+import { ARRAY_SEARCH_ALGORITHMS, COMPONENT_ALGORITHMS, MATCHING_ALGORITHMS, ROUTE_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../registry";
 import { cellIndex, edgeKey, gridToGraph, pathCost } from "./graph";
 import type { GraphInput, GridCell, GridState } from "./graphTypes";
 import type { AlgorithmExecution } from "./types";
@@ -158,6 +158,29 @@ export function randomDigraph(n: number): GraphInput {
 export function componentGrowth(ids: readonly string[], metric: TreeMetric, sizes: readonly number[] = TREE_SIZES): GrowthSeries[] {
   const graphs = sizes.map((n) => ({ n, graph: randomDigraph(n) }));
   return COMPONENT_ALGORITHMS.filter((algorithm) => ids.includes(algorithm.id)).map((algorithm) => ({
+    id: algorithm.id,
+    name: algorithm.name,
+    points: graphs.map(({ n, graph }) => ({ n, value: measure(algorithm.run(graph), graph)[metric] })),
+  }));
+}
+
+/**
+ * A bipartite graph of `n` nodes, half on each side, where person i can take any of the last four jobs up to
+ * job i, oldest first. Every person ends up with a job, but Kuhn's algorithm has to search back through earlier
+ * pairs before it reaches the job that is free, so its work grows faster than the number of edges.
+ */
+export function bipartiteGraph(n: number): GraphInput {
+  const half = Math.floor(n / 2);
+  const left = Array.from({ length: half }, (_, index) => ({ id: `L${index}`, x: 20, y: 6 + (88 * index) / Math.max(1, half - 1), heuristic: 0 }));
+  const right = Array.from({ length: half }, (_, index) => ({ id: `R${index}`, x: 80, y: 6 + (88 * index) / Math.max(1, half - 1), heuristic: 0 }));
+  const edges: { from: string; to: string; weight: number }[] = [];
+  for (let index = 0; index < half; index++) for (let job = Math.max(0, index - 3); job <= index; job++) edges.push({ from: left[index].id, to: right[job].id, weight: 1 });
+  return { label: "Bipartite graph", unweighted: true, nodes: [...left, ...right], edges, start: left[0].id, goal: right[half - 1].id };
+}
+
+export function matchingGrowth(ids: readonly string[], metric: TreeMetric, sizes: readonly number[] = TREE_SIZES): GrowthSeries[] {
+  const graphs = sizes.map((n) => ({ n, graph: bipartiteGraph(n) }));
+  return MATCHING_ALGORITHMS.filter((algorithm) => ids.includes(algorithm.id)).map((algorithm) => ({
     id: algorithm.id,
     name: algorithm.name,
     points: graphs.map(({ n, graph }) => ({ n, value: measure(algorithm.run(graph), graph)[metric] })),

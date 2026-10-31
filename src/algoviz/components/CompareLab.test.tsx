@@ -286,17 +286,30 @@ describe("compare: bipartite matching", () => {
   it("shows Kuhn matching more pairs than Greedy on the sample", () => {
     open();
     fireEvent.click(screen.getByLabelText("Bipartite matching"));
-    expect(screen.getByText(/Comparing Kuhn.s Algorithm and Greedy Matching\./)).toBeInTheDocument();
-    expect(verdictText()).toBe("Kuhn's Algorithm matched 4 pairs; Greedy Matching only 3. A matching that cannot be grown by adding a pair can still be smaller than the best one.");
+    expect(verdictText()).toBe("Kuhn's Algorithm and Hopcroft-Karp matched 4 pairs; Greedy Matching only 3. A matching that cannot be grown by adding a pair can still be smaller than the best one.");
     expect(cell("Kuhn's Algorithm", "Pairs matched")).toContain("4");
+    expect(cell("Hopcroft-Karp", "Pairs matched")).toContain("4");
     expect(cell("Greedy Matching", "Pairs matched")).toContain("3");
     expect(cell("Kuhn's Algorithm", "Pairs matched")).not.toContain("lowest");
-    expect(screen.getByText("Why there is no growth chart here")).toBeInTheDocument();
+    expect(screen.queryByText("Why there is no growth chart here")).not.toBeInTheDocument();
+  });
+
+  it("draws the growth chart from real runs, with Kuhn's checks ending far above Hopcroft-Karp's", async () => {
+    open("/compare?family=matching");
+    const chart = screen.getByRole("img", { name: /Edge checks against nodes in the graph/ });
+    await waitFor(() => expect(chart.querySelectorAll("[data-series]")).toHaveLength(3));
+    fireEvent.click(screen.getByText("Show the numbers behind the chart"));
+    const data = screen.getByRole("table", { name: /Edge checks by nodes in the graph/ });
+    const header = within(data).getAllByRole("columnheader").map((item) => item.textContent);
+    const last = within(within(data).getAllByRole("row").at(-1)!).getAllByRole("cell").map((item) => item.textContent);
+    expect(last[header.indexOf("Kuhn's Algorithm") - 1]).toBe("1,924");
+    expect(last[header.indexOf("Hopcroft-Karp") - 1]).toBe("244");
+    expect(screen.getByText(/The gap is a property of this graph/)).toBeInTheDocument();
   });
 
   it("says both matched the same when nothing blocks greedy", () => {
     open("/compare?family=matching&graph=" + encodeURIComponent("A:20:20,B:20:60,1:80:20,2:80:60~A:1:1,B:2:1~A~2~u"));
     expect(screen.getByLabelText("Choose map")).toHaveValue("custom");
-    expect(verdictText()).toBe("Both matched 2 pairs, the most that can be matched here.");
+    expect(verdictText()).toBe("All matched 2 pairs, the most that can be matched here.");
   });
 });

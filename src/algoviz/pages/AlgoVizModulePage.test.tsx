@@ -33,6 +33,7 @@ describe("AlgoViz module selection", () => {
     ["strongly-connected", "tarjan"],
     ["max-flow", "edmonds-karp"],
     ["matching", "kuhn"],
+    ["matching", "hopcroft-karp"],
     ["matching", "greedy-matching"],
     ["max-flow", "ford-fulkerson"],
     ["strongly-connected", "kosaraju"],

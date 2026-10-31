@@ -119,3 +119,60 @@ export function runGreedyMatching(graph: GraphInput = MATCH_SAMPLE): AlgorithmEx
   }
   return finish();
 }
+
+/**
+ * Hopcroft-Karp: work in phases. Each phase first searches outward from every free left node, layer by layer, to
+ * find how short the shortest augmenting path is. Then it looks for paths of exactly that length, from each free left
+ * node in turn, and flips all it finds. Fewer phases are needed than Kuhn needs single searches: O(E · √V).
+ */
+export function runHopcroftKarp(graph: GraphInput = MATCH_SAMPLE): AlgorithmExecution {
+  const sides = splitSides(graph);
+  if (sides.conflict) return notBipartite("hopcroft-karp", graph, sides.conflict);
+  const { match, add, finish, check } = runner("hopcroft-karp", graph, sides, () => "No free left node can reach a free partner any more, so no bigger matching exists.");
+  const mate = new Map<string, string>(); // left node → right node
+  add("enqueue", `Split the nodes into two sides: ${sides.left.join(", ")} on the left and ${sides.right.join(", ")} on the right. Work in phases: find the shortest augmenting paths, then flip as many of them as possible.`);
+  for (let phase = 1; ; phase++) {
+    // Layer the left nodes: free ones are layer 0, and each taken partner's owner is one layer further out.
+    const layer = new Map<string, number>();
+    const queue = sides.left.filter((id) => !mate.has(id));
+    for (const id of queue) layer.set(id, 0);
+    let shortest = Infinity;
+    for (let head = 0; head < queue.length; head++) {
+      const u = queue[head]; const depth = layer.get(u)!;
+      if (depth > shortest) break;
+      for (const v of neighbours(graph, u)) {
+        check();
+        const holder = match.get(v);
+        if (holder === undefined) shortest = depth;
+        else if (!layer.has(holder)) { layer.set(holder, depth + 1); queue.push(holder); }
+      }
+    }
+    if (shortest === Infinity) break;
+    const free = sides.left.filter((id) => !mate.has(id));
+    add("enqueue", `Phase ${phase}: search outward from ${free.join(", ")} layer by layer. The nearest free partner is ${shortest + 1} step${shortest === 0 ? "" : "s"} of pairing away, so this phase only uses paths that short.`, { line: 2, dataStructure: [{ label: "Matched pairs", value: pairText([...match.entries()].map(([r, l]) => [l, r] as [string, string])) }, { label: "Phase", value: String(phase) }, { label: "Free left nodes", value: free.join(", ") }, { label: "Shortest path", value: `${shortest + 1} pairing${shortest === 0 ? "" : "s"}` }] });
+    const find = (u: string): [string, string][] | null => {
+      for (const v of neighbours(graph, u)) {
+        check();
+        const holder = match.get(v);
+        // Only follow the layers: a free partner counts at the shortest depth, a taken one only if its owner is one layer further out.
+        if (holder === undefined ? layer.get(u) !== shortest : layer.get(holder) !== layer.get(u)! + 1) continue;
+        add("compare", `${u} – ${v}: is ${v} free?`, { activeEdge: edgeKey(u, v), currentNode: u, targetNode: v });
+        if (holder === undefined) return [[u, v]];
+        add("update", `${v} is already matched with ${holder}. Ask ${holder} to look for another partner.`, { activeEdge: edgeKey(u, v), currentNode: holder, targetNode: v });
+        const rest = find(holder);
+        if (rest) return [[u, v], ...rest];
+      }
+      layer.set(u, Infinity); // a dead end for the rest of this phase
+      return null;
+    };
+    for (const u of free) {
+      add("visit", `Look for a shortest path from ${u}.`, { currentNode: u });
+      const path = find(u);
+      if (!path) { add("reject", `No path of the right length starts at ${u} any more, so ${u} waits for a later phase.`, { currentNode: u }); continue; }
+      const moves = path.slice(1).map(([left, right], index) => `${left} moves from ${path[index][1]} to ${right}`);
+      for (const [left, right] of path) { match.set(right, left); mate.set(left, right); }
+      add("accept", `Pair ${u} with ${path[0][1]}${moves.length ? `; ${moves.join(", ")}` : ""}. The matching grows to ${match.size}.`, { currentNode: u });
+    }
+  }
+  return finish();
+}

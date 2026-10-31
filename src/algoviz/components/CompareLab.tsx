@@ -1,7 +1,7 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { ARRAY_SEARCH_ALGORITHMS, COMPONENT_ALGORITHMS, FLOW_ALGORITHMS, MATCHING_ALGORITHMS, NEGATIVE_ALGORITHMS, ROUTE_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../../algorithms/registry";
 import { PRESET_LABELS } from "../../algorithms/shared/arrayInput";
-import { componentGrowth, graphGrowth, LIST_SIZES, MAP_SIDES, measure, searchGrowth, SORT_SIZES, sortGrowth, TREE_SIZES, treeGrowth, type GraphMetric, type GridObstacles, type Measure, type SearchMetric, type SortMetric, type SortShape, type TargetPlace, type TreeMetric } from "../../algorithms/shared/benchmark";
+import { componentGrowth, graphGrowth, LIST_SIZES, MAP_SIDES, matchingGrowth, measure, searchGrowth, SORT_SIZES, sortGrowth, TREE_SIZES, treeGrowth, type GraphMetric, type GridObstacles, type Measure, type SearchMetric, type SortMetric, type SortShape, type TargetPlace, type TreeMetric } from "../../algorithms/shared/benchmark";
 import type { GraphInput } from "../../algorithms/shared/graphTypes";
 import { SEARCH_TARGET_SAMPLE } from "../../algorithms/searching/arraySearchAlgorithms";
 import type { AlgorithmStep } from "../../algorithms/shared/types";
@@ -33,8 +33,8 @@ const SHAPES: SortShape[] = ["random", "sorted", "reversed", "nearly", "few-uniq
 const SHAPE_LABELS: Record<SortShape, string> = { random: "Random (average of 3)", sorted: PRESET_LABELS.sorted, reversed: PRESET_LABELS.reversed, nearly: PRESET_LABELS.nearly, "few-unique": PRESET_LABELS["few-unique"] };
 
 type MetricKey = "sort" | "graph" | "tree" | "search";
-const metricKey = (family: Family): MetricKey => (family === "sorting" ? "sort" : family === "routes" || family === "negative" ? "graph" : family === "trees" || family === "components" ? "tree" : "search");
-const metricLabels = (family: Family): Record<string, string> => (family === "sorting" ? SORT_METRICS : family === "routes" ? GRAPH_METRICS : family === "trees" || family === "components" ? TREE_METRICS : SEARCH_METRICS);
+const metricKey = (family: Family): MetricKey => (family === "sorting" ? "sort" : family === "routes" || family === "negative" ? "graph" : family === "trees" || family === "components" || family === "matching" ? "tree" : "search");
+const metricLabels = (family: Family): Record<string, string> => (family === "sorting" ? SORT_METRICS : family === "routes" ? GRAPH_METRICS : family === "trees" || family === "components" || family === "matching" ? TREE_METRICS : SEARCH_METRICS);
 
 interface CompareLabProps {
   initialValues?: readonly number[];
@@ -51,7 +51,7 @@ interface CompareLabProps {
 export function CompareLab({ initialValues, onValuesChange, initialFamily, onFamilyChange, initialTarget, onTargetChange, initialGraph, onGraphChange }: CompareLabProps) {
   const [family, setFamilyState] = useState<Family>(initialFamily ?? "sorting");
   const setFamily = (next: Family) => { setFamilyState(next); onFamilyChange?.(next); };
-  const [selected, setSelected] = useState<Record<Family, string[]>>({ sorting: ["bubble", "merge", "quick"], routes: ["bfs", "dijkstra", "a-star"], trees: ["kruskal", "prim"], lists: ["binary-search", "linear-search"], negative: ["bellman-ford", "floyd-warshall", "dijkstra"], components: ["tarjan", "kosaraju"], flow: ["edmonds-karp", "ford-fulkerson"], matching: ["kuhn", "greedy-matching"] });
+  const [selected, setSelected] = useState<Record<Family, string[]>>({ sorting: ["bubble", "merge", "quick"], routes: ["bfs", "dijkstra", "a-star"], trees: ["kruskal", "prim"], lists: ["binary-search", "linear-search"], negative: ["bellman-ford", "floyd-warshall", "dijkstra"], components: ["tarjan", "kosaraju"], flow: ["edmonds-karp", "ford-fulkerson"], matching: ["kuhn", "hopcroft-karp", "greedy-matching"] });
   const [values, setValues] = useState<readonly number[]>(initialValues ?? SORT_SAMPLE);
   const [target, setTargetState] = useState(initialTarget ?? SEARCH_TARGET_SAMPLE);
   const setTarget = (next: number) => { setTargetState(next); onTargetChange?.(next); };
@@ -107,9 +107,9 @@ export function CompareLab({ initialValues, onValuesChange, initialFamily, onFam
     </>}
     <SameInputResults family={family} ids={ids} values={values} target={target} graph={map.graph} />
 
-    {family === "negative" || family === "flow" || family === "matching" ? <>
+    {family === "negative" || family === "flow" ? <>
       <h2 className="algoviz-compare-heading">Why there is no growth chart here</h2>
-      <p className="algoviz-compare-note">{family === "negative" ? "With negative edges the interesting difference is whether the answer is right, not how quickly it arrives. Try the sample with a negative edge, then the sample with a negative cycle, and see which algorithms notice." : family === "matching" ? "What matters here is how many pairs each one finds, which depends on the shape of the graph rather than its size. Edit the graph, or try the sample where one person must be left out." : "How many rounds each algorithm needs depends on the capacities and on which paths it happens to pick, so one growth chart would say little. Edit the graph and watch how the rounds change."}</p>
+      <p className="algoviz-compare-note">{family === "negative" ? "With negative edges the interesting difference is whether the answer is right, not how quickly it arrives. Try the sample with a negative edge, then the sample with a negative cycle, and see which algorithms notice." : "How many rounds each algorithm needs depends on the capacities and on which paths it happens to pick, so one growth chart would say little. Edit the graph and watch how the rounds change."}</p>
     </> : <>
     <h2 className="algoviz-compare-heading">How the cost grows with input size</h2>
     <div className="algoviz-input-panel">
@@ -194,7 +194,7 @@ const NOTES: Record<Family, string> = {
   sorting: "Counts come from the recorded runs. Merge, counting and radix sort write values into place, so their writes appear under swaps. Counting and radix sort never compare two values, so their comparisons are zero.",
   routes: "Steps are the moments each algorithm records for display, not time. Bellman-Ford only records improvements, so it looks short here even though it checks every edge in every pass. Floyd-Warshall records one step per stop-over node. Nodes visited counts the nodes an algorithm touched.",
   trees: "Edge checks are what each algorithm counted itself: Kruskal looks at each edge once; Prim looks at every edge that leaves the tree in every round. Steps are the moments recorded for display, not time.",
-  matching: "Pairs matched is the answer: the larger the better. Edge checks are what each algorithm counted itself. Greedy never changes a pair, so it can match fewer; Kuhn frees up partners along augmenting paths and always finds the most. Steps are the moments recorded for display, not time.",
+  matching: "Pairs matched is the answer: the larger the better. Edge checks are what each algorithm counted itself. Greedy never changes a pair, so it can match fewer; Kuhn and Hopcroft-Karp free up partners along augmenting paths and always find the most. Hopcroft-Karp works in phases and counts the layer search as edge checks too. Steps are the moments recorded for display, not time.",
   flow: "Both reach the same maximum flow. A round is one path that had room and was filled; arc checks are what each search counted itself. Edmonds-Karp always takes a path with the fewest edges, Ford-Fulkerson the first it finds, so the number of rounds can differ. Steps are the moments recorded for display, not time.",
   components: "Both find exactly the same groups. Edge checks are what each algorithm counted itself: Tarjan looks at each edge once in a single search; Kosaraju looks at each edge in both of its two searches. Steps are the moments recorded for display, not time.",
   negative: "Bellman-Ford and Floyd-Warshall handle negative edges and notice a negative cycle. Dijkstra assumes there are none, so it can report a route that is not the cheapest, and it never notices a cycle. Steps are the moments recorded for display, not time.",
@@ -222,7 +222,7 @@ function verdict(family: Family, results: Result[], values: readonly number[], t
     const sizes = results.map((item) => item.measure.matched);
     const best = Math.max(...sizes); const least = Math.min(...sizes);
     const named = (count: number) => results.filter((item) => item.measure.matched === count).map((item) => item.name).join(" and ");
-    return best === least ? `Both matched ${best} pair${best === 1 ? "" : "s"}, the most that can be matched here.` : `${named(best)} matched ${best} pair${best === 1 ? "" : "s"}; ${named(least)} only ${least}. A matching that cannot be grown by adding a pair can still be smaller than the best one.`;
+    return best === least ? `${results.length === 2 ? "Both" : "All"} matched ${best} pair${best === 1 ? "" : "s"}, the most that can be matched here.` : `${named(best)} matched ${best} pair${best === 1 ? "" : "s"}; ${named(least)} only ${least}. A matching that cannot be grown by adding a pair can still be smaller than the best one.`;
   }
   if (family === "flow") {
     const rounds = results.map((item) => item.measure.augmentations);
@@ -259,7 +259,8 @@ function negativeVerdict(results: Result[]): string {
 
 interface GrowthProps { family: Family; ids: string[]; shape: SortShape; obstacles: GridObstacles; place: TargetPlace; metrics: { sort: SortMetric; graph: GraphMetric; tree: TreeMetric; search: SearchMetric }; scale: ChartScale }
 
-const AXES: Record<Exclude<Family, "negative" | "flow" | "matching">, { x: string; unit: string }> = {
+const AXES: Record<Exclude<Family, "negative" | "flow">, { x: string; unit: string }> = {
+  matching: { x: "Nodes in the graph (half on each side, up to 4 edges per person)", unit: "Nodes" },
   components: { x: "Nodes in the graph (about 3 edges each)", unit: "Nodes" },
   sorting: { x: "Numbers to sort", unit: "Numbers" }, routes: { x: "Map cells (side × side)", unit: "Cells" }, trees: { x: "Nodes in the graph (about 3 edges each)", unit: "Nodes" }, lists: { x: "Items in the sorted list", unit: "Items" },
 };
@@ -269,15 +270,15 @@ function GrowthChart(props: GrowthProps) {
   const deferred = useDeferredValue(props);
   const stale = deferred !== props;
   const { ids, shape, obstacles, place, metrics, scale } = deferred;
-  const family = deferred.family === "negative" || deferred.family === "flow" || deferred.family === "matching" ? "routes" : deferred.family;
-  const series = useMemo(() => family === "sorting" ? sortGrowth(ids, shape, metrics.sort) : family === "routes" ? graphGrowth(ids, obstacles, metrics.graph) : family === "trees" ? treeGrowth(ids, metrics.tree) : family === "components" ? componentGrowth(ids, metrics.tree) : searchGrowth(ids, place, metrics.search), [family, ids, metrics, obstacles, place, shape]);
+  const family = deferred.family === "negative" || deferred.family === "flow" ? "routes" : deferred.family;
+  const series = useMemo(() => family === "sorting" ? sortGrowth(ids, shape, metrics.sort) : family === "routes" ? graphGrowth(ids, obstacles, metrics.graph) : family === "trees" ? treeGrowth(ids, metrics.tree) : family === "components" ? componentGrowth(ids, metrics.tree) : family === "matching" ? matchingGrowth(ids, metrics.tree) : searchGrowth(ids, place, metrics.search), [family, ids, metrics, obstacles, place, shape]);
   const shorts = new Map(Object.values(ALGORITHMS).flat().map((algorithm) => [algorithm.id, algorithm.short]));
   const metricLabel = metricLabels(family)[metrics[metricKey(family)]];
   const { x: xLabel, unit } = AXES[family];
-  const sizes = family === "sorting" ? SORT_SIZES : family === "routes" ? MAP_SIDES.map((side) => side * side) : family === "trees" || family === "components" ? TREE_SIZES : LIST_SIZES;
+  const sizes = family === "sorting" ? SORT_SIZES : family === "routes" ? MAP_SIDES.map((side) => side * side) : family === "trees" || family === "components" || family === "matching" ? TREE_SIZES : LIST_SIZES;
   const chartSeries = series.map((item) => ({ id: item.id, name: item.name, short: shorts.get(item.id), points: item.points.map((point) => ({ x: point.n, y: point.value })) }));
   const description = `${metricLabel} against ${xLabel.toLowerCase()}. ${series.map((item) => `${item.name} ends at ${formatNumber(item.points.at(-1)?.value ?? 0)}`).join("; ")}.`;
-  const tip = family === "sorting" ? sortTip(ids, shape, metrics.sort) : family === "routes" ? graphTip(ids, obstacles, metrics.graph) : family === "trees" ? treeTip(ids, metrics.tree) : family === "components" ? componentTip(ids, metrics.tree) : listTip(ids, place, metrics.search);
+  const tip = family === "sorting" ? sortTip(ids, shape, metrics.sort) : family === "routes" ? graphTip(ids, obstacles, metrics.graph) : family === "trees" ? treeTip(ids, metrics.tree) : family === "components" ? componentTip(ids, metrics.tree) : family === "matching" ? matchingTip(ids, metrics.tree) : listTip(ids, place, metrics.search);
   return <div className={stale ? "algoviz-chart-wrap is-stale" : "algoviz-chart-wrap"} aria-busy={stale}>
     <LineChart series={chartSeries} xLabel={xLabel} yLabel={metricLabel} scale={scale} description={description} />
     {tip && <p className="algoviz-compare-note">{tip}</p>}
@@ -314,6 +315,11 @@ function treeTip(ids: string[], metric: TreeMetric): string | null {
 
 function componentTip(ids: string[], metric: TreeMetric): string | null {
   if (metric === "operations" && ids.includes("tarjan") && ids.includes("kosaraju")) return "Kosaraju searches the graph twice, once forwards and once backwards, so it checks every edge exactly twice. Tarjan checks each edge once. Both lines are straight, and Kosaraju's is exactly twice as high.";
+  return null;
+}
+
+function matchingTip(ids: string[], metric: TreeMetric): string | null {
+  if (metric === "operations" && ids.includes("kuhn") && ids.includes("hopcroft-karp")) return "On this graph every algorithm matches everyone. Kuhn starts a fresh search for each person and has to walk back through earlier pairs, so its checks climb steeply. Hopcroft-Karp finds all the shortest paths in one phase, so its checks grow in a straight line. The gap is a property of this graph; on small or friendly graphs Kuhn can need fewer checks.";
   return null;
 }
 

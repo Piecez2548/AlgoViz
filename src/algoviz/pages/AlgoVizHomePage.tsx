@@ -95,6 +95,7 @@ const algorithmCatalog = [
   { id: "edmonds-karp", name: "Edmonds-Karp", shortName: "Edmonds-Karp", category: "max-flow", complexity: "O(V · E²)", summary: "Always augment along the path with the fewest edges." },
   { id: "ford-fulkerson", name: "Ford-Fulkerson", shortName: "Ford-Fulkerson", category: "max-flow", complexity: "O(E · flow)", summary: "Augment along the first path found, depth-first." },
   { id: "kuhn", name: "Kuhn's Algorithm", shortName: "Kuhn", category: "matching", complexity: "O(V · E)", summary: "Find augmenting paths that free up a partner and flip a chain of pairs." },
+  { id: "hopcroft-karp", name: "Hopcroft-Karp", shortName: "HK", category: "matching", complexity: "O(E · √V)", summary: "Flip many shortest augmenting paths in each phase instead of one search per node." },
   { id: "greedy-matching", name: "Greedy Matching", shortName: "Greedy", category: "matching", complexity: "O(E)", summary: "Take the first free partner and never change a pair." },
   { id: "bubble", name: "Bubble Sort", shortName: "Bubble", category: "sorting", complexity: "O(n²)", summary: "Bubble the largest values to the end." },
   { id: "selection", name: "Selection Sort", shortName: "Selection", category: "sorting", complexity: "O(n²)", summary: "Select the next smallest value." },

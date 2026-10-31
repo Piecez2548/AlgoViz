@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { runEdmondsKarp } from "../flow/maxFlow";
-import { NOT_BIPARTITE_LABEL, runGreedyMatching, runKuhn, splitSides } from "../matching/bipartiteMatching";
+import { NOT_BIPARTITE_LABEL, runGreedyMatching, runHopcroftKarp, runKuhn, splitSides } from "../matching/bipartiteMatching";
 import { MATCH_HALL_SAMPLE, MATCH_SAMPLE } from "./graph";
 import type { GraphInput } from "./graphTypes";
 import type { AlgorithmExecution } from "./types";
@@ -107,5 +107,49 @@ describe("greedy matching", () => {
       if (sizeOf(execution) < flowOracle(graph)) smaller++;
     }
     expect(smaller).toBeGreaterThan(0);
+  });
+});
+
+describe("Hopcroft-Karp", () => {
+  it("pairs all four people on the sample and leaves one out when three want two jobs", () => {
+    expect(sizeOf(runHopcroftKarp(MATCH_SAMPLE))).toBe(4);
+    const hall = runHopcroftKarp(MATCH_HALL_SAMPLE);
+    expect(sizeOf(hall)).toBe(3);
+    expect(finalStep(hall).dataStructure!.find((entry) => entry.label === "Unmatched")!.value).toMatch(/[ABC]/);
+  });
+
+  it("works in phases and says what the shortest path length is", () => {
+    const execution = runHopcroftKarp(MATCH_SAMPLE);
+    const phases = execution.steps.filter((step) => step.line === 2);
+    expect(phases.length).toBeGreaterThanOrEqual(1);
+    expect(phases[0].explanation).toMatch(/^Phase 1: search outward from A, B, C, D/);
+    expect(phases.map((step) => step.dataStructure!.find((entry) => entry.label === "Phase")!.value)).toEqual(phases.map((_, index) => String(index + 1)));
+  });
+
+  it("matches the maximum flow on random two-sided graphs, with a valid matching and no node in two pairs", () => {
+    const random = seeded(77);
+    let positive = 0;
+    for (let trial = 0; trial < 200; trial++) {
+      const graph = randomBipartite(random, 1 + Math.floor(random() * 7), 1 + Math.floor(random() * 7), 0.15 + random() * 0.5);
+      const execution = runHopcroftKarp(graph);
+      expect(sizeOf(execution), `trial ${trial}`).toBe(flowOracle(graph));
+      expect(sizeOf(execution)).toBe(sizeOf(runKuhn(graph)));
+      const pairs = pairsOf(execution);
+      expect(pairs.length).toBe(sizeOf(execution));
+      expect(new Set(pairs.map(([l]) => l)).size).toBe(pairs.length);
+      expect(new Set(pairs.map(([, r]) => r)).size).toBe(pairs.length);
+      for (const [l, r] of pairs) expect(graph.edges.some((edge) => (edge.from === l && edge.to === r) || (edge.from === r && edge.to === l)), `${l}–${r}`).toBe(true);
+      for (const step of execution.steps) expect(new Set(step.visited ?? []).size).toBe((step.visited ?? []).length);
+      // The matching only ever grows.
+      const sizes = execution.steps.map((step) => step.metrics?.matched ?? 0);
+      expect(sizes).toEqual([...sizes].sort((a, b) => a - b));
+      if (pairs.length > 0) positive++;
+    }
+    expect(positive).toBeGreaterThan(150);
+  });
+
+  it("says so when the graph cannot be split into two sides", () => {
+    const triangle: GraphInput = { unweighted: true, start: "A", goal: "C", nodes: ["A", "B", "C"].map((id, i) => ({ id, x: 10 + i * 30, y: 50, heuristic: 0 })), edges: [{ from: "A", to: "B", weight: 1 }, { from: "B", to: "C", weight: 1 }, { from: "A", to: "C", weight: 1 }] };
+    expect(finalStep(runHopcroftKarp(triangle)).explanation).toMatch(/^No bipartite matching here/);
   });
 });

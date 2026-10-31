@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { COMPONENT_ALGORITHMS, ROUTE_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../registry";
+import { COMPONENT_ALGORITHMS, MATCHING_ALGORITHMS, ROUTE_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../registry";
 import { runBubbleSort } from "../sorting/sortingAlgorithms";
-import { componentGrowth, graphGrowth, LIST_SIZES, measure, MAP_SIDES, randomDigraph, ringGraph, searchGrowth, SORT_SIZES, sortGrowth, sortInputs, squareMap, targetFor, TREE_SIZES, treeGrowth } from "./benchmark";
+import { componentGrowth, graphGrowth, LIST_SIZES, matchingGrowth, bipartiteGraph, measure, MAP_SIDES, randomDigraph, ringGraph, searchGrowth, SORT_SIZES, sortGrowth, sortInputs, squareMap, targetFor, TREE_SIZES, treeGrowth } from "./benchmark";
 import { gridToGraph } from "./graph";
 
 const ids = SORTING_ALGORITHMS.map((algorithm) => algorithm.id);
@@ -165,5 +165,32 @@ describe("component growth", () => {
     const series = componentGrowth(["tarjan", "kosaraju"], "operations");
     const last = (id: string) => series.find((item) => item.id === id)!.points.at(-1)!.value;
     expect(last("kosaraju")).toBe(2 * last("tarjan"));
+  });
+});
+
+describe("matching growth", () => {
+  it("builds two-sided graphs with half the nodes on each side and no edge inside a side", () => {
+    for (const n of TREE_SIZES) {
+      const graph = bipartiteGraph(n);
+      expect(graph.nodes).toHaveLength(n);
+      expect(graph.edges.every((edge) => edge.from.startsWith("L") && edge.to.startsWith("R"))).toBe(true);
+      expect(graph.edges.length).toBeLessThanOrEqual(4 * (n / 2));
+    }
+  });
+
+  it("gives every algorithm the same number of pairs, and Kuhn's checks climb faster than Hopcroft-Karp's", () => {
+    for (const n of TREE_SIZES) {
+      const graph = bipartiteGraph(n);
+      const matched = MATCHING_ALGORITHMS.map((algorithm) => measure(algorithm.run(graph), graph).matched);
+      expect(new Set(matched)).toEqual(new Set([n / 2]));
+    }
+    const series = matchingGrowth(["kuhn", "hopcroft-karp", "greedy-matching"], "operations");
+    const points = (id: string) => series.find((item) => item.id === id)!.points.map((point) => point.value);
+    const [kuhn, hk, greedy] = [points("kuhn"), points("hopcroft-karp"), points("greedy-matching")];
+    // Doubling the graph roughly doubles Hopcroft-Karp's checks but far more than doubles Kuhn's.
+    expect(hk.at(-1)! / hk[1]).toBeLessThan(6);
+    expect(kuhn.at(-1)! / kuhn[1]).toBeGreaterThan(12);
+    expect(kuhn.at(-1)!).toBeGreaterThan(5 * hk.at(-1)!);
+    expect(greedy.at(-1)!).toBeLessThan(hk.at(-1)!);
   });
 });
