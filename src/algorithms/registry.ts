@@ -3,6 +3,7 @@ import { runBfs, runBidirectionalBfs, runDfs, runGreedyBestFirst } from "./searc
 import { runBinarySearch, runLinearSearch } from "./searching/arraySearchAlgorithms";
 import type { GraphInput } from "./shared/graphTypes";
 import type { AlgorithmExecution } from "./shared/types";
+import { runKosaraju, runTarjan } from "./connectivity/stronglyConnected";
 import { runDfsTopological, runKahn } from "./ordering/orderingAlgorithms";
 import { runKruskal, runPrim } from "./spanning/spanningAlgorithms";
 import { runBubbleSort, runCountingSort, runHeapSort, runInsertionSort, runMergeSort, runQuickSort, runRadixSort, runSelectionSort, runShellSort } from "./sorting/sortingAlgorithms";
@@ -28,6 +29,12 @@ export const PATHFINDING_ALGORITHMS: readonly GraphAlgorithm[] = [
 export const SPANNING_ALGORITHMS: readonly GraphAlgorithm[] = [
   { id: "kruskal", name: "Kruskal's Algorithm", short: "Kruskal", run: (graph) => runKruskal(graph) },
   { id: "prim", name: "Prim's Algorithm", short: "Prim", run: (graph) => runPrim(graph) },
+];
+
+/** Ways to split a directed graph into groups of nodes that can all reach each other. */
+export const COMPONENT_ALGORITHMS: readonly GraphAlgorithm[] = [
+  { id: "tarjan", name: "Tarjan's Algorithm", short: "Tarjan", run: (graph) => runTarjan(graph) },
+  { id: "kosaraju", name: "Kosaraju's Algorithm", short: "Kosaraju", run: (graph) => runKosaraju(graph) },
 ];
 
 /** Ways to put tasks in an order so every task comes after the ones it depends on. */

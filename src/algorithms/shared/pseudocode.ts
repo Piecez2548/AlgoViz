@@ -101,6 +101,14 @@ export const PSEUDOCODE: Readonly<Record<string, Pseudocode>> = {
     lines: ["for each task not yet explored:", "  start exploring it", "  explore every task it points to first", "  if one of them is still being explored: that is a loop", "  when all of those are finished, put this task in front of the order"],
     lineFor: { enqueue: 0, visit: 1, reject: 3, dequeue: 4, complete: 4 },
   },
+  tarjan: {
+    lines: ["search depth-first; give each node a number and a lowlink", "push each node on a stack when it is reached", "after each edge v → w: lowlink(v) = the smaller of lowlink(v) and what w can get back to", "if lowlink(v) equals v's own number:", "  pop the stack down to v: that is one component"],
+    lineFor: { enqueue: 0, visit: 1, update: 2, compare: 2, reject: 2, accept: 4, complete: 4 },
+  },
+  kosaraju: {
+    lines: ["pass 1: search depth-first and note the order nodes finish", "pass 2: take the node that finished last", "  walk the edges backwards from it", "  everything reached that is not in a component yet joins this one", "repeat for the next node that is not in a component"],
+    lineFor: { enqueue: 0, visit: 2, dequeue: 0, accept: 4, complete: 4 },
+  },
   quick: {
     lines: ["pick the last value as the pivot", "for each value before the pivot:", "  compare it with the pivot", "  if smaller, move it to the left side", "put the pivot between the two sides, then sort each side"],
     lineFor: { compare: 2, swap: 3, complete: 4 },

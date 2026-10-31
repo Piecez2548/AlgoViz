@@ -65,6 +65,26 @@ export const DAG_SAMPLE: GraphInput = {
 /** The same tasks with one more rule, F before C, which closes the loop C → D → F → C. */
 export const DAG_CYCLE_SAMPLE: GraphInput = { ...DAG_SAMPLE, label: "Task graph with a loop", edges: [...DAG_SAMPLE.edges, { from: "F", to: "C", weight: 1 }] };
 
+/** Three loops joined by one-way edges: {A, B, C} → {D, E} → {F, G} → {H}. */
+export const SCC_SAMPLE: GraphInput = {
+  label: "Directed graph with loops",
+  directed: true,
+  unweighted: true,
+  nodes: [
+    { id: "A", x: 10, y: 30, heuristic: 0 }, { id: "B", x: 28, y: 12, heuristic: 0 }, { id: "C", x: 28, y: 50, heuristic: 0 },
+    { id: "D", x: 52, y: 30, heuristic: 0 }, { id: "E", x: 52, y: 70, heuristic: 0 },
+    { id: "F", x: 76, y: 30, heuristic: 0 }, { id: "G", x: 76, y: 70, heuristic: 0 }, { id: "H", x: 92, y: 50, heuristic: 0 },
+  ],
+  edges: [
+    { from: "A", to: "B", weight: 1 }, { from: "B", to: "C", weight: 1 }, { from: "C", to: "A", weight: 1 },
+    { from: "B", to: "D", weight: 1 }, { from: "D", to: "E", weight: 1 }, { from: "E", to: "D", weight: 1 },
+    { from: "E", to: "F", weight: 1 }, { from: "F", to: "G", weight: 1 }, { from: "G", to: "F", weight: 1 },
+    { from: "G", to: "H", weight: 1 },
+  ],
+  start: "A",
+  goal: "H",
+};
+
 export function getGraphNode(graph: GraphInput, id: string): GraphNode {
   return graph.nodes.find((node) => node.id === id) ?? graph.nodes[0];
 }

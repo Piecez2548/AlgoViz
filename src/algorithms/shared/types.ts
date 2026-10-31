@@ -17,7 +17,7 @@ export type AlgorithmStepType =
   | "reject"
   | "complete";
 
-export type AlgorithmCategory = "search" | "pathfinding" | "spanning" | "sorting" | "array-search" | "negative-weights" | "ordering" | "topological-sort";
+export type AlgorithmCategory = "search" | "pathfinding" | "spanning" | "sorting" | "array-search" | "negative-weights" | "ordering" | "topological-sort" | "components" | "strongly-connected";
 
 export interface AlgorithmMetrics {
   comparisons?: number;
@@ -42,6 +42,8 @@ export interface AlgorithmStep {
   values?: readonly number[];
   highlightIndices?: readonly number[];
   sortedIndices?: readonly number[];
+  /** Groups of nodes found so far, drawn in their own colour and numbered. */
+  groups?: readonly (readonly string[])[];
   /** First and last position still being searched; positions outside it are ruled out. */
   activeRange?: readonly [number, number];
   /** Edge being examined, written as edgeKey(a, b), e.g. "A-B". */

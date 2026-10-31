@@ -30,6 +30,8 @@ describe("AlgoViz module selection", () => {
     ["sorting", "radix"],
     ["array-search", "binary-search"],
     ["topological-sort", "kahn"],
+    ["strongly-connected", "tarjan"],
+    ["strongly-connected", "kosaraju"],
     ["topological-sort", "dfs-topological"],
     ["array-search", "linear-search"],
   ])("opens %s with the requested algorithm %s", (module, algorithm) => {

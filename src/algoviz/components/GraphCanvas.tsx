@@ -24,6 +24,9 @@ export function GraphCanvas({ graph, step, route, editing }: { graph: GraphInput
   const find = (id: string) => graph.nodes.find((item) => item.id === id) ?? graph.nodes[0];
   const accepted = new Set(step.acceptedEdges ?? []); const rejected = new Set(step.rejectedEdges ?? []);
   const svg = useRef<SVGSVGElement>(null);
+  // Nodes in the same group share a colour and a number, so groups never rely on colour alone.
+  const groupOf = new Map<string, number>();
+  (step.groups ?? []).forEach((group, index) => group.forEach((id) => groupOf.set(id, index)));
   const [dragging, setDragging] = useState<string | null>(null);
   const [pending, setPending] = useState<string | null>(null);
   // Only the steps of the route are lit, in the direction they were taken.
@@ -74,8 +77,9 @@ export function GraphCanvas({ graph, step, route, editing }: { graph: GraphInput
         </g>;
       })}
       {graph.nodes.map((item) => <g key={item.id} {...(editable ? { role: "button", tabIndex: 0, "aria-label": `Node ${item.id}${item.id === graph.start ? ", start" : ""}${item.id === graph.goal ? ", goal" : ""}${pending === item.id ? ", selected" : ""}`, onKeyDown: (event: KeyboardEvent) => keyDown(event, item.id), onClick: () => choose(item.id), onPointerDown: (event: PointerEvent) => { if (editing?.tool === "move") { (event.target as Element).setPointerCapture?.(event.pointerId); setDragging(item.id); } } } : {})}>
-        <circle className={`algoviz-node ${path.has(item.id) ? "is-path" : ""} ${visited.has(item.id) ? "is-visited" : ""} ${frontier.has(item.id) ? "is-frontier" : ""} ${step.currentNode === item.id ? "is-current" : ""} ${item.id === graph.start ? "is-start" : ""} ${item.id === graph.goal ? "is-goal" : ""} ${pending === item.id ? "is-pending" : ""}`} cx={item.x} cy={item.y} r="7" />
+        <circle className={`algoviz-node ${path.has(item.id) ? "is-path" : ""} ${visited.has(item.id) ? "is-visited" : ""} ${frontier.has(item.id) ? "is-frontier" : ""} ${step.currentNode === item.id ? "is-current" : ""} ${item.id === graph.start ? "is-start" : ""} ${item.id === graph.goal ? "is-goal" : ""} ${pending === item.id ? "is-pending" : ""} ${groupOf.has(item.id) ? `is-group is-group-${groupOf.get(item.id)! % 6}` : ""}`} cx={item.x} cy={item.y} r="7" />
         <text className="algoviz-node-label" x={item.x} y={item.y + 1}>{item.id}</text>
+        {groupOf.has(item.id) && <text className="algoviz-group-badge" x={item.x} y={item.y + 12.5}>#{groupOf.get(item.id)! + 1}</text>}
       </g>)}
     </svg>
   </div>;
