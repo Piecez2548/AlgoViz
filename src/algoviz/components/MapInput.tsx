@@ -89,7 +89,7 @@ function CustomGraphControls({ map }: { map: MapInputState }) {
     <div className="algoviz-input-panel">
       <button type="button" className="algoviz-button" disabled={custom.nodes.length >= MAX_NODES} onClick={() => { const spot = freeSpot(custom); setCustom((current) => addNode(current, spot.x, spot.y)); }}>Add node</button>
       <label className="algoviz-field">Edge from<select value={pickFrom} onChange={(event) => setFrom(event.target.value)}>{ids.map((id) => <option key={id} value={id}>{id}</option>)}</select></label>
-      <label className="algoviz-field">to<select value={pickTo} onChange={(event) => setTo(event.target.value)}>{ids.filter((id) => id !== pickFrom).map((id) => <option key={id} value={id}>{id}</option>)}</select></label>
+      <label className="algoviz-field">Edge to<select value={pickTo} onChange={(event) => setTo(event.target.value)}>{ids.filter((id) => id !== pickFrom).map((id) => <option key={id} value={id}>{id}</option>)}</select></label>
       <button type="button" className="algoviz-button" disabled={!weightOk} onClick={() => setCustom((current) => setEdge(current, pickFrom, pickTo, map.edgeWeight))}>Set edge</button>
       <button type="button" className="algoviz-button algoviz-button-quiet" onClick={() => setCustom({ ...SAMPLE_GRAPH, label: "Your graph" })}>Reset to sample graph</button>
       <p className="algoviz-field-help">{custom.nodes.length} of {MAX_NODES} nodes · {custom.edges.length} edges. Setting an edge that exists changes its weight.</p>

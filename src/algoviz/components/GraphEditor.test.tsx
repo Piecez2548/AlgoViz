@@ -27,10 +27,10 @@ describe("build your own graph", () => {
     expect(nodes()).toContain("Node G");
     fireEvent.change(screen.getByLabelText("Weight for new edges"), { target: { value: "1" } });
     fireEvent.change(screen.getByLabelText("Edge from"), { target: { value: "A" } });
-    fireEvent.change(screen.getByLabelText("to"), { target: { value: "G" } });
+    fireEvent.change(screen.getByLabelText("Edge to"), { target: { value: "G" } });
     fireEvent.click(screen.getByRole("button", { name: "Set edge" }));
     fireEvent.change(screen.getByLabelText("Edge from"), { target: { value: "G" } });
-    fireEvent.change(screen.getByLabelText("to"), { target: { value: "F" } });
+    fireEvent.change(screen.getByLabelText("Edge to"), { target: { value: "F" } });
     fireEvent.click(screen.getByRole("button", { name: "Set edge" }));
     jumpToEnd();
     expect(explanation()).toBe("Dijkstra completed.");
