@@ -85,6 +85,41 @@ export const SCC_SAMPLE: GraphInput = {
   goal: "H",
 };
 
+/** A flow network with a maximum flow of 23 (the classic textbook example). */
+export const FLOW_SAMPLE: GraphInput = {
+  label: "Flow network",
+  directed: true,
+  flow: true,
+  nodes: SAMPLE_GRAPH.nodes.map((node) => ({ ...node, heuristic: 0 })),
+  edges: [
+    { from: "A", to: "B", weight: 16 },
+    { from: "A", to: "C", weight: 13 },
+    { from: "C", to: "B", weight: 4 },
+    { from: "B", to: "D", weight: 12 },
+    { from: "D", to: "C", weight: 9 },
+    { from: "C", to: "E", weight: 14 },
+    { from: "E", to: "D", weight: 7 },
+    { from: "D", to: "F", weight: 20 },
+    { from: "E", to: "F", weight: 4 },
+  ],
+  start: "A",
+  goal: "F",
+};
+
+/** Wide pipes either side of one narrow edge, D → E (5): that edge alone limits the whole flow. */
+export const FLOW_BRIDGE_SAMPLE: GraphInput = {
+  ...FLOW_SAMPLE,
+  label: "Flow network with a narrow bridge",
+  edges: [
+    { from: "A", to: "B", weight: 10 },
+    { from: "A", to: "C", weight: 10 },
+    { from: "B", to: "D", weight: 10 },
+    { from: "C", to: "D", weight: 10 },
+    { from: "D", to: "E", weight: 5 },
+    { from: "E", to: "F", weight: 10 },
+  ],
+};
+
 export function getGraphNode(graph: GraphInput, id: string): GraphNode {
   return graph.nodes.find((node) => node.id === id) ?? graph.nodes[0];
 }

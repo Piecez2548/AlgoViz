@@ -1,5 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { ARRAY_SEARCH_ALGORITHMS, COMPONENT_ALGORITHMS, NEGATIVE_ALGORITHMS, ROUTE_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../../algorithms/registry";
+import { ARRAY_SEARCH_ALGORITHMS, COMPONENT_ALGORITHMS, FLOW_ALGORITHMS, NEGATIVE_ALGORITHMS, ROUTE_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../../algorithms/registry";
 import { PRESET_LABELS } from "../../algorithms/shared/arrayInput";
 import { componentGrowth, graphGrowth, LIST_SIZES, MAP_SIDES, measure, searchGrowth, SORT_SIZES, sortGrowth, TREE_SIZES, treeGrowth, type GraphMetric, type GridObstacles, type Measure, type SearchMetric, type SortMetric, type SortShape, type TargetPlace, type TreeMetric } from "../../algorithms/shared/benchmark";
 import type { GraphInput } from "../../algorithms/shared/graphTypes";
@@ -11,18 +11,18 @@ import { ArrayInput, GridBoard, TargetInput } from "./InputEditors";
 import { LineChart, formatNumber, type ChartScale } from "./LineChart";
 import { graphFits, MapControls, MapSelect, useMapInput, type MapMode } from "./MapInput";
 
-type Family = "sorting" | "routes" | "trees" | "lists" | "negative" | "components";
-const FAMILY_IDS: readonly Family[] = ["sorting", "routes", "trees", "lists", "negative", "components"];
+type Family = "sorting" | "routes" | "trees" | "lists" | "negative" | "components" | "flow";
+const FAMILY_IDS: readonly Family[] = ["sorting", "routes", "trees", "lists", "negative", "components", "flow"];
 /** Reads ?family= from a link, ignoring anything unknown. */
 export const parseFamily = (value: string | null): Family | undefined => FAMILY_IDS.find((id) => id === value);
-const mapModeFor = (family: Family): MapMode => (family === "routes" ? "route" : family === "trees" ? "tree" : family === "negative" ? "directed" : family === "components" ? "scc" : "off");
+const mapModeFor = (family: Family): MapMode => (family === "routes" ? "route" : family === "trees" ? "tree" : family === "negative" ? "directed" : family === "components" ? "scc" : family === "flow" ? "flow" : "off");
 const NO_STEP: AlgorithmStep = { id: 0, type: "complete", explanation: "" };
 const MIN_SELECTED = 2;
 
 const FAMILIES: { id: Family; label: string }[] = [
-  { id: "sorting", label: "Sorting algorithms" }, { id: "routes", label: "Search and shortest paths" }, { id: "trees", label: "Spanning trees" }, { id: "lists", label: "Searching a list" }, { id: "negative", label: "Negative edges" }, { id: "components", label: "Strongly connected components" },
+  { id: "sorting", label: "Sorting algorithms" }, { id: "routes", label: "Search and shortest paths" }, { id: "trees", label: "Spanning trees" }, { id: "lists", label: "Searching a list" }, { id: "negative", label: "Negative edges" }, { id: "components", label: "Strongly connected components" }, { id: "flow", label: "Maximum flow" },
 ];
-const ALGORITHMS: Record<Family, readonly { id: string; name: string; short: string }[]> = { sorting: SORTING_ALGORITHMS, routes: ROUTE_ALGORITHMS, trees: SPANNING_ALGORITHMS, lists: ARRAY_SEARCH_ALGORITHMS, negative: NEGATIVE_ALGORITHMS, components: COMPONENT_ALGORITHMS };
+const ALGORITHMS: Record<Family, readonly { id: string; name: string; short: string }[]> = { sorting: SORTING_ALGORITHMS, routes: ROUTE_ALGORITHMS, trees: SPANNING_ALGORITHMS, lists: ARRAY_SEARCH_ALGORITHMS, negative: NEGATIVE_ALGORITHMS, components: COMPONENT_ALGORITHMS, flow: FLOW_ALGORITHMS };
 
 const SORT_METRICS: Record<SortMetric, string> = { comparisons: "Comparisons", swaps: "Swaps or writes", steps: "Steps recorded" };
 const GRAPH_METRICS: Record<GraphMetric, string> = { visited: "Nodes visited", steps: "Steps recorded" };
@@ -51,7 +51,7 @@ interface CompareLabProps {
 export function CompareLab({ initialValues, onValuesChange, initialFamily, onFamilyChange, initialTarget, onTargetChange, initialGraph, onGraphChange }: CompareLabProps) {
   const [family, setFamilyState] = useState<Family>(initialFamily ?? "sorting");
   const setFamily = (next: Family) => { setFamilyState(next); onFamilyChange?.(next); };
-  const [selected, setSelected] = useState<Record<Family, string[]>>({ sorting: ["bubble", "merge", "quick"], routes: ["bfs", "dijkstra", "a-star"], trees: ["kruskal", "prim"], lists: ["binary-search", "linear-search"], negative: ["bellman-ford", "floyd-warshall", "dijkstra"], components: ["tarjan", "kosaraju"] });
+  const [selected, setSelected] = useState<Record<Family, string[]>>({ sorting: ["bubble", "merge", "quick"], routes: ["bfs", "dijkstra", "a-star"], trees: ["kruskal", "prim"], lists: ["binary-search", "linear-search"], negative: ["bellman-ford", "floyd-warshall", "dijkstra"], components: ["tarjan", "kosaraju"], flow: ["edmonds-karp", "ford-fulkerson"] });
   const [values, setValues] = useState<readonly number[]>(initialValues ?? SORT_SAMPLE);
   const [target, setTargetState] = useState(initialTarget ?? SEARCH_TARGET_SAMPLE);
   const setTarget = (next: number) => { setTargetState(next); onTargetChange?.(next); };
@@ -99,17 +99,17 @@ export function CompareLab({ initialValues, onValuesChange, initialFamily, onFam
     <h2 className="algoviz-compare-heading">Same input, side by side</h2>
     {family === "sorting" && <ArrayInput values={values} onApply={changeValues} />}
     {family === "lists" && <><ArrayInput values={values} onApply={changeValues} /><TargetInput target={target} onApply={setTarget} /></>}
-    {(family === "routes" || family === "trees" || family === "negative" || family === "components") && <>
+    {(family === "routes" || family === "trees" || family === "negative" || family === "components" || family === "flow") && <>
       <div className="algoviz-input-panel"><MapSelect map={map} /></div>
       <MapControls map={map} />
       {family === "routes" && map.mapKind === "grid" && <GridBoard grid={map.grid} tool={map.tool} step={NO_STEP} route={[]} onChange={map.setGrid} />}
-      {(map.mapKind === "custom" || family === "trees" || family === "negative" || family === "components") && <GraphCanvas graph={map.graph} step={NO_STEP} route={[]} editing={map.mapKind === "custom" ? map.editing : undefined} />}
+      {(map.mapKind === "custom" || family === "trees" || family === "negative" || family === "components" || family === "flow") && <GraphCanvas graph={map.graph} step={NO_STEP} route={[]} editing={map.mapKind === "custom" ? map.editing : undefined} />}
     </>}
     <SameInputResults family={family} ids={ids} values={values} target={target} graph={map.graph} />
 
-    {family === "negative" ? <>
+    {family === "negative" || family === "flow" ? <>
       <h2 className="algoviz-compare-heading">Why there is no growth chart here</h2>
-      <p className="algoviz-compare-note">With negative edges the interesting difference is whether the answer is right, not how quickly it arrives. Try the sample with a negative edge, then the sample with a negative cycle, and see which algorithms notice.</p>
+      <p className="algoviz-compare-note">{family === "negative" ? "With negative edges the interesting difference is whether the answer is right, not how quickly it arrives. Try the sample with a negative edge, then the sample with a negative cycle, and see which algorithms notice." : "How many rounds each algorithm needs depends on the capacities and on which paths it happens to pick, so one growth chart would say little. Edit the graph and watch how the rounds change."}</p>
     </> : <>
     <h2 className="algoviz-compare-heading">How the cost grows with input size</h2>
     <div className="algoviz-input-panel">
@@ -134,6 +134,7 @@ const COLUMNS: Record<Family, Column[]> = {
   routes: [{ key: "visited", label: "Nodes visited" }, { key: "steps", label: "Steps recorded" }, { key: "cost", label: "Route cost" }],
   trees: [{ key: "edges", label: "Edges kept" }, { key: "weight", label: "Total weight" }, { key: "operations", label: "Edge checks" }, { key: "steps", label: "Steps recorded" }],
   lists: [{ key: "comparisons", label: "Comparisons" }, { key: "steps", label: "Steps recorded" }],
+  flow: [{ key: "flow", label: "Max flow" }, { key: "augmentations", label: "Rounds" }, { key: "operations", label: "Arc checks" }, { key: "steps", label: "Steps recorded" }],
   components: [{ key: "components", label: "Components found" }, { key: "operations", label: "Edge checks" }, { key: "steps", label: "Steps recorded" }],
   negative: [{ key: "cost", label: "Route cost" }, { key: "visited", label: "Nodes visited" }, { key: "steps", label: "Steps recorded" }],
 };
@@ -143,6 +144,7 @@ function SameInputResults({ family, ids, values, target, graph }: { family: Fami
     const pick = <T extends { id: string }>(all: readonly T[]) => all.filter((algorithm) => ids.includes(algorithm.id));
     if (family === "sorting") return pick(SORTING_ALGORITHMS).map((algorithm) => ({ id: algorithm.id, name: algorithm.name, measure: measure(algorithm.run(values)) }));
     if (family === "lists") return pick(ARRAY_SEARCH_ALGORITHMS).map((algorithm) => ({ id: algorithm.id, name: algorithm.name, measure: measure(algorithm.run(values, target)) }));
+    if (family === "flow") return pick(FLOW_ALGORITHMS).map((algorithm) => ({ id: algorithm.id, name: algorithm.name, measure: measure(algorithm.run(graph), graph) }));
     if (family === "components") return pick(COMPONENT_ALGORITHMS).map((algorithm) => ({ id: algorithm.id, name: algorithm.name, measure: measure(algorithm.run(graph), graph) }));
     if (family === "negative") return pick(NEGATIVE_ALGORITHMS).map((algorithm) => ({ id: algorithm.id, name: algorithm.name, measure: measure(algorithm.run(graph), graph) }));
     if (family === "trees") return pick(SPANNING_ALGORITHMS).map((algorithm) => ({ id: algorithm.id, name: algorithm.name, measure: measure(algorithm.run(graph), graph) }));
@@ -151,6 +153,7 @@ function SameInputResults({ family, ids, values, target, graph }: { family: Fami
   const columns = COLUMNS[family];
   const input = family === "sorting" ? `${values.length} numbers: ${values.join(", ")}`
     : family === "lists" ? `find ${target} in ${values.length} numbers: ${values.join(", ")}`
+      : family === "flow" ? `${graph.label ?? "Flow network"}: ${graph.start} → ${graph.goal}`
       : family === "components" ? `${graph.label ?? "Directed graph"}: ${graph.nodes.length} nodes, ${graph.edges.length} edges`
       : family === "negative" ? `${graph.label ?? "Directed graph"}: ${graph.start} → ${graph.goal}`
       : family === "trees" ? `${graph.label ?? "Sample graph"}: ${graph.nodes.length} nodes, ${graph.edges.length} edges, from ${graph.start}`
@@ -161,7 +164,7 @@ function SameInputResults({ family, ids, values, target, graph }: { family: Fami
   };
   const worst = (key: keyof Measure) => Math.max(1, ...results.map((result) => Number(result.measure[key] ?? 0)));
   // Edges kept and total weight describe the answer, not the effort, so they are never marked "lowest".
-  const effort = (key: keyof Measure) => !(family === "trees" && (key === "edges" || key === "weight")) && !(family === "components" && key === "components");
+  const effort = (key: keyof Measure) => !(family === "trees" && (key === "edges" || key === "weight")) && !(family === "components" && key === "components") && !(family === "flow" && key === "flow");
   return <div className="algoviz-compare-results">
     <p className="algoviz-compare-verdict" role="status">{verdict(family, results, values, target, graph)}</p>
     <div className="algoviz-table-wrap" role="region" aria-label="Results table" tabIndex={0}>
@@ -188,6 +191,7 @@ const NOTES: Record<Family, string> = {
   sorting: "Counts come from the recorded runs. Merge, counting and radix sort write values into place, so their writes appear under swaps. Counting and radix sort never compare two values, so their comparisons are zero.",
   routes: "Steps are the moments each algorithm records for display, not time. Bellman-Ford only records improvements, so it looks short here even though it checks every edge in every pass. Floyd-Warshall records one step per stop-over node. Nodes visited counts the nodes an algorithm touched.",
   trees: "Edge checks are what each algorithm counted itself: Kruskal looks at each edge once; Prim looks at every edge that leaves the tree in every round. Steps are the moments recorded for display, not time.",
+  flow: "Both reach the same maximum flow. A round is one path that had room and was filled; arc checks are what each search counted itself. Edmonds-Karp always takes a path with the fewest edges, Ford-Fulkerson the first it finds, so the number of rounds can differ. Steps are the moments recorded for display, not time.",
   components: "Both find exactly the same groups. Edge checks are what each algorithm counted itself: Tarjan looks at each edge once in a single search; Kosaraju looks at each edge in both of its two searches. Steps are the moments recorded for display, not time.",
   negative: "Bellman-Ford and Floyd-Warshall handle negative edges and notice a negative cycle. Dijkstra assumes there are none, so it can report a route that is not the cheapest, and it never notices a cycle. Steps are the moments recorded for display, not time.",
   lists: "Both searches get your numbers in ascending order. Comparisons are what each search counted itself; steps are the moments recorded for display, not time.",
@@ -210,6 +214,12 @@ function verdict(family: Family, results: Result[], values: readonly number[], t
     return `${results.length === 2 ? "Both" : "All"} built a tree of weight ${results[0].measure.weight} from ${results[0].measure.edges} edges. ${fewestMost("operations", "edge checks")}${partial}`;
   }
   if (family === "negative") return negativeVerdict(results);
+  if (family === "flow") {
+    const rounds = results.map((item) => item.measure.augmentations);
+    const fewest = Math.min(...rounds); const most = Math.max(...rounds);
+    const named = (count: number) => results.filter((item) => item.measure.augmentations === count).map((item) => item.name).join(" and ");
+    return `Both reach a maximum flow of ${results[0].measure.flow}. ${fewest === most ? `Both needed ${fewest} round${fewest === 1 ? "" : "s"}.` : `${named(fewest)} needed the fewest rounds (${fewest}); ${named(most)} the most (${most}).`}`;
+  }
   if (family === "components") return `Both found ${results[0].measure.components} strongly connected component${results[0].measure.components === 1 ? "" : "s"}. ${fewestMost("operations", "edge checks")}`;
   const found = results.filter((result) => result.measure.cost !== null);
   if (!found.length) return "No route exists between the start and the goal on this map.";
@@ -239,7 +249,7 @@ function negativeVerdict(results: Result[]): string {
 
 interface GrowthProps { family: Family; ids: string[]; shape: SortShape; obstacles: GridObstacles; place: TargetPlace; metrics: { sort: SortMetric; graph: GraphMetric; tree: TreeMetric; search: SearchMetric }; scale: ChartScale }
 
-const AXES: Record<Exclude<Family, "negative">, { x: string; unit: string }> = {
+const AXES: Record<Exclude<Family, "negative" | "flow">, { x: string; unit: string }> = {
   components: { x: "Nodes in the graph (about 3 edges each)", unit: "Nodes" },
   sorting: { x: "Numbers to sort", unit: "Numbers" }, routes: { x: "Map cells (side × side)", unit: "Cells" }, trees: { x: "Nodes in the graph (about 3 edges each)", unit: "Nodes" }, lists: { x: "Items in the sorted list", unit: "Items" },
 };
@@ -249,7 +259,7 @@ function GrowthChart(props: GrowthProps) {
   const deferred = useDeferredValue(props);
   const stale = deferred !== props;
   const { ids, shape, obstacles, place, metrics, scale } = deferred;
-  const family = deferred.family === "negative" ? "routes" : deferred.family;
+  const family = deferred.family === "negative" || deferred.family === "flow" ? "routes" : deferred.family;
   const series = useMemo(() => family === "sorting" ? sortGrowth(ids, shape, metrics.sort) : family === "routes" ? graphGrowth(ids, obstacles, metrics.graph) : family === "trees" ? treeGrowth(ids, metrics.tree) : family === "components" ? componentGrowth(ids, metrics.tree) : searchGrowth(ids, place, metrics.search), [family, ids, metrics, obstacles, place, shape]);
   const shorts = new Map(Object.values(ALGORITHMS).flat().map((algorithm) => [algorithm.id, algorithm.short]));
   const metricLabel = metricLabels(family)[metrics[metricKey(family)]];

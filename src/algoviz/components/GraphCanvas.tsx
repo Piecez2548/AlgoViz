@@ -71,9 +71,12 @@ export function GraphCanvas({ graph, step, route, editing }: { graph: GraphInput
         const endX = graph.directed ? b.x - ux * 7.6 : b.x; const endY = graph.directed ? b.y - uy * 7.6 : b.y;
         const lift = graph.directed ? 3 : 0;
         const lit = onRoute(edge.from, edge.to);
+        // In a flow network a label reads "flow/capacity", and an edge that is full is drawn thicker.
+        const carried = graph.flow ? step.flows?.[`${edge.from}>${edge.to}`] : undefined;
+        const full = carried !== undefined && carried === edge.weight;
         return <g key={`${edge.from}-${edge.to}`}>
-          <line className={edgeClass(edge.from, edge.to)} x1={a.x} y1={a.y} x2={endX} y2={endY} markerEnd={graph.directed ? `url(#${lit ? "algoviz-arrow-path" : "algoviz-arrow"})` : undefined} />
-          {!graph.unweighted && <text className={`algoviz-edge-label${edge.weight < 0 ? " is-negative" : ""}`} x={(a.x + b.x) / 2 - uy * lift} y={(a.y + b.y) / 2 + ux * lift - (graph.directed ? 0 : 2)}>{edge.weight}</text>}
+          <line className={`${edgeClass(edge.from, edge.to)}${full ? " algoviz-edge-saturated" : ""}`} x1={a.x} y1={a.y} x2={endX} y2={endY} markerEnd={graph.directed ? `url(#${lit ? "algoviz-arrow-path" : "algoviz-arrow"})` : undefined} />
+          {!graph.unweighted && <text className={`algoviz-edge-label${edge.weight < 0 ? " is-negative" : ""}`} x={(a.x + b.x) / 2 - uy * lift} y={(a.y + b.y) / 2 + ux * lift - (graph.directed ? 0 : 2)}>{carried === undefined ? edge.weight : `${carried}/${edge.weight}`}</text>}
         </g>;
       })}
       {graph.nodes.map((item) => <g key={item.id} {...(editable ? { role: "button", tabIndex: 0, "aria-label": `Node ${item.id}${item.id === graph.start && !graph.unweighted ? ", start" : ""}${item.id === graph.goal && !graph.unweighted ? ", goal" : ""}${pending === item.id ? ", selected" : ""}`, onKeyDown: (event: KeyboardEvent) => keyDown(event, item.id), onClick: () => choose(item.id), onPointerDown: (event: PointerEvent) => { if (editing?.tool === "move") { (event.target as Element).setPointerCapture?.(event.pointerId); setDragging(item.id); } } } : {})}>

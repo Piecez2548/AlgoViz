@@ -16,8 +16,10 @@ export function nextNodeId(graph: GraphInput): string {
   return [...LETTERS].find((letter) => !used.has(letter)) ?? `N${graph.nodes.length + 1}`;
 }
 
-/** Directed graphs may have negative (and zero) weights; two-way graphs keep 1 to 99. */
-export const validWeight = (value: number, directed = false): boolean => Number.isInteger(value) && value >= (directed ? -MAX_WEIGHT : MIN_WEIGHT) && value <= MAX_WEIGHT;
+/** Weighted directed graphs may have negative (and zero) weights; two-way graphs, flow networks and task graphs keep 1 to 99. */
+export const validWeight = (value: number, negativeAllowed = false): boolean => Number.isInteger(value) && value >= (negativeAllowed ? -MAX_WEIGHT : MIN_WEIGHT) && value <= MAX_WEIGHT;
+
+export const allowsNegative = (graph: Pick<GraphInput, "directed" | "unweighted" | "flow">): boolean => Boolean(graph.directed && !graph.unweighted && !graph.flow);
 
 /** Adds a node at (x, y); returns the graph unchanged when it is full. */
 export function addNode(graph: GraphInput, x: number, y: number): GraphInput {
@@ -55,7 +57,7 @@ export const arcKey = (graph: Pick<GraphInput, "directed">, a: string, b: string
 
 /** Adds the edge between two nodes (from a to b when directed), or changes its weight if it already exists. Ignores loops and bad weights. */
 export function setEdge(graph: GraphInput, a: string, b: string, weight: number): GraphInput {
-  if (a === b || !validWeight(weight, graph.directed)) return graph;
+  if (a === b || !validWeight(weight, allowsNegative(graph))) return graph;
   if (!graph.nodes.some((node) => node.id === a) || !graph.nodes.some((node) => node.id === b)) return graph;
   const key = arcKey(graph, a, b);
   const exists = graph.edges.some((edge) => arcKey(graph, edge.from, edge.to) === key);

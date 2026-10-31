@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, BarChart3, BookOpen, GitCompareArrows, ListOrdered, Network, Pause, Play, Route, Search, Shapes, TrendingDown } from "lucide-react";
+import { ArrowRight, BarChart3, BookOpen, GitCompareArrows, ListOrdered, Network, Pause, Play, Route, Search, Shapes, TrendingDown, Waves } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import type { AlgorithmDefinition } from "@/algorithms/shared/types";
@@ -61,6 +61,13 @@ const categories: AlgorithmDefinition[] = [
     summary: "Find the groups of nodes in a directed graph that can all reach each other.",
     status: "available",
   },
+  {
+    id: "max-flow",
+    name: "Maximum flow",
+    category: "max-flow",
+    summary: "Push as much as a network of pipes can carry, and find the narrowest cut that limits it.",
+    status: "available",
+  },
 ];
 
 const algorithmCatalog = [
@@ -78,6 +85,8 @@ const algorithmCatalog = [
   { id: "dfs-topological", name: "Depth-First Ordering", shortName: "DFS order", category: "topological-sort", complexity: "O(V + E)", summary: "Explore dependencies depth-first and place each task as it finishes." },
   { id: "tarjan", name: "Tarjan's Algorithm", shortName: "Tarjan", category: "strongly-connected", complexity: "O(V + E)", summary: "One depth-first search with numbers and lowlinks finds every component." },
   { id: "kosaraju", name: "Kosaraju's Algorithm", shortName: "Kosaraju", category: "strongly-connected", complexity: "O(V + E)", summary: "Search forward for a finish order, then search backwards to split the groups." },
+  { id: "edmonds-karp", name: "Edmonds-Karp", shortName: "Edmonds-Karp", category: "max-flow", complexity: "O(V · E²)", summary: "Always augment along the path with the fewest edges." },
+  { id: "ford-fulkerson", name: "Ford-Fulkerson", shortName: "Ford-Fulkerson", category: "max-flow", complexity: "O(E · flow)", summary: "Augment along the first path found, depth-first." },
   { id: "bubble", name: "Bubble Sort", shortName: "Bubble", category: "sorting", complexity: "O(n²)", summary: "Bubble the largest values to the end." },
   { id: "selection", name: "Selection Sort", shortName: "Selection", category: "sorting", complexity: "O(n²)", summary: "Select the next smallest value." },
   { id: "insertion", name: "Insertion Sort", shortName: "Insertion", category: "sorting", complexity: "O(n²)", summary: "Insert each value into a sorted prefix." },
@@ -188,6 +197,7 @@ export default function AlgoVizHomePage() {
                 {index === 5 && <TrendingDown size={20} />}
                 {index === 6 && <ListOrdered size={20} />}
                 {index === 7 && <Shapes size={20} />}
+                {index === 8 && <Waves size={20} />}
               </span>
               <span className="algoviz-category-index">0{index + 1}</span>
               <span className="algoviz-category-copy"><strong>{category.name}</strong><span>{category.summary}</span></span>
@@ -203,7 +213,7 @@ export default function AlgoVizHomePage() {
             <p className="algoviz-eyebrow">Algorithm catalog</p>
             <h2 id="catalog-heading">The growing algorithm set.</h2>
           </div>
-          <p>Twenty-five algorithms for teaching graph search, shortest paths, spanning trees, sorting, and searching lists with the same step-by-step contract.</p>
+          <p>Twenty-seven algorithms for teaching graph search, shortest paths, spanning trees, sorting, and searching lists with the same step-by-step contract.</p>
         </div>
         <div className="algoviz-catalog-grid">
           {algorithmCatalog.map((algorithm, index) => (

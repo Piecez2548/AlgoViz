@@ -109,6 +109,14 @@ export const PSEUDOCODE: Readonly<Record<string, Pseudocode>> = {
     lines: ["pass 1: search depth-first and note the order nodes finish", "pass 2: take the node that finished last", "  walk the edges backwards from it", "  everything reached that is not in a component yet joins this one", "repeat for the next node that is not in a component"],
     lineFor: { enqueue: 0, visit: 2, dequeue: 0, accept: 4, complete: 4 },
   },
+  "edmonds-karp": {
+    lines: ["start with no flow on any edge", "while there is a path from the source to the sink with room left:", "  take the one with the fewest edges (breadth-first)", "  find its narrowest step: that is how much fits", "  send that much along it (take back flow on any edge used in reverse)", "no path left: the flow is the most possible"],
+    lineFor: { enqueue: 0, compare: 2, update: 4, complete: 5 },
+  },
+  "ford-fulkerson": {
+    lines: ["start with no flow on any edge", "while there is a path from the source to the sink with room left:", "  take the first one found (depth-first)", "  find its narrowest step: that is how much fits", "  send that much along it (take back flow on any edge used in reverse)", "no path left: the flow is the most possible"],
+    lineFor: { enqueue: 0, compare: 2, update: 4, complete: 5 },
+  },
   quick: {
     lines: ["pick the last value as the pivot", "for each value before the pivot:", "  compare it with the pivot", "  if smaller, move it to the left side", "put the pivot between the two sides, then sort each side"],
     lineFor: { compare: 2, swap: 3, complete: 4 },

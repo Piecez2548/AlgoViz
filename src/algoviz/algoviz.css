@@ -565,6 +565,10 @@
   background: #c9b6ff18;
   color: #c9b6ff;
 }
+.icon-max-flow {
+  background: #8fc2ff18;
+  color: #8fc2ff;
+}
 .icon-sorting {
   background: #f5d36b18;
   color: var(--algo-yellow);
@@ -917,6 +921,7 @@
 .algoviz-predict-options .is-right { border-color: var(--algo-accent); background: #266148; color: #fff; }
 .algoviz-predict-options .is-wrong { border-color: #ff9aa8; background: #5a2531; color: #fff; }
 .algoviz-predict-result { margin: 0 0 0.8rem; }
+.algoviz-edge.algoviz-edge-saturated { stroke: #ffb86b; stroke-width: 1.6; }
 .algoviz-edge-label.is-negative { fill: #ffb4a2; font-weight: 700; }
 .algoviz-node.is-group + .algoviz-node-label { fill: #ffffff; }
 .algoviz-group-badge { fill: #e8ecff; font-size: 4px; font-weight: 700; text-anchor: middle; pointer-events: none; }

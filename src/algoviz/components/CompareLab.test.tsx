@@ -251,3 +251,23 @@ describe("compare: strongly connected components", () => {
     expect(screen.getByText(/exactly twice as high/)).toBeInTheDocument();
   });
 });
+
+describe("compare: maximum flow", () => {
+  it("compares the rounds each algorithm needs while both reach the same flow", () => {
+    open();
+    fireEvent.click(screen.getByLabelText("Maximum flow"));
+    expect(screen.getByText(/Comparing Edmonds-Karp and Ford-Fulkerson \(depth-first\)\./)).toBeInTheDocument();
+    expect(verdictText()).toMatch(/^Both reach a maximum flow of 23\. /);
+    expect(cell("Edmonds-Karp", "Max flow")).toBe(cell("Ford-Fulkerson (depth-first)", "Max flow"));
+    expect(cell("Edmonds-Karp", "Max flow")).not.toContain("lowest");
+    expect(cell("Edmonds-Karp", "Rounds")).toMatch(/^\d+/);
+    expect(screen.getByText("Why there is no growth chart here")).toBeInTheDocument();
+  });
+
+  it("opens a flow network from the link", () => {
+    open("/compare?family=flow&graph=" + encodeURIComponent("S:10:50,M:50:20,T:90:50~S:M:4,M:T:3~S~T~df"));
+    expect(screen.getByLabelText("Maximum flow")).toBeChecked();
+    expect(screen.getByLabelText("Choose map")).toHaveValue("custom");
+    expect(verdictText()).toMatch(/^Both reach a maximum flow of 3\. Both needed 1 round\./);
+  });
+});

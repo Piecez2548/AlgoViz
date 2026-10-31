@@ -3,6 +3,7 @@ import { runBfs, runBidirectionalBfs, runDfs, runGreedyBestFirst } from "./searc
 import { runBinarySearch, runLinearSearch } from "./searching/arraySearchAlgorithms";
 import type { GraphInput } from "./shared/graphTypes";
 import type { AlgorithmExecution } from "./shared/types";
+import { runEdmondsKarp, runFordFulkerson } from "./flow/maxFlow";
 import { runKosaraju, runTarjan } from "./connectivity/stronglyConnected";
 import { runDfsTopological, runKahn } from "./ordering/orderingAlgorithms";
 import { runKruskal, runPrim } from "./spanning/spanningAlgorithms";
@@ -29,6 +30,12 @@ export const PATHFINDING_ALGORITHMS: readonly GraphAlgorithm[] = [
 export const SPANNING_ALGORITHMS: readonly GraphAlgorithm[] = [
   { id: "kruskal", name: "Kruskal's Algorithm", short: "Kruskal", run: (graph) => runKruskal(graph) },
   { id: "prim", name: "Prim's Algorithm", short: "Prim", run: (graph) => runPrim(graph) },
+];
+
+/** Ways to find the most flow a network of capacities can carry. */
+export const FLOW_ALGORITHMS: readonly GraphAlgorithm[] = [
+  { id: "edmonds-karp", name: "Edmonds-Karp", short: "Edmonds-Karp", run: (graph) => runEdmondsKarp(graph) },
+  { id: "ford-fulkerson", name: "Ford-Fulkerson (depth-first)", short: "Ford-Fulkerson", run: (graph) => runFordFulkerson(graph) },
 ];
 
 /** Ways to split a directed graph into groups of nodes that can all reach each other. */

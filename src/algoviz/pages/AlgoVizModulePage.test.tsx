@@ -31,6 +31,8 @@ describe("AlgoViz module selection", () => {
     ["array-search", "binary-search"],
     ["topological-sort", "kahn"],
     ["strongly-connected", "tarjan"],
+    ["max-flow", "edmonds-karp"],
+    ["max-flow", "ford-fulkerson"],
     ["strongly-connected", "kosaraju"],
     ["topological-sort", "dfs-topological"],
     ["array-search", "linear-search"],

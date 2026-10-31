@@ -18,6 +18,8 @@ export interface GraphInput {
   directed?: boolean;
   /** Edges only say "this comes before that"; their weights are not used or shown. */
   unweighted?: boolean;
+  /** A flow network: directed, weights are capacities (1 or more), the start is the source and the goal the sink. */
+  flow?: boolean;
   nodes: readonly GraphNode[];
   edges: readonly GraphEdge[];
   start: string;
