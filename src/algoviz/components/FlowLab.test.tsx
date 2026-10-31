@@ -73,3 +73,17 @@ describe("maximum flow lab", () => {
     expect(decodeGraph("A:1:1,B:2:2~A:B:-2~A~B~d")).not.toBeNull();
   });
 });
+
+describe("the depth-first sample", () => {
+  it("lets you watch Ford-Fulkerson take back flow, and compares the round counts", () => {
+    open("/max-flow?algorithm=ford-fulkerson");
+    fireEvent.change(screen.getByLabelText("Choose map"), { target: { value: "extra" } });
+    const first = [...document.querySelectorAll(".algoviz-edge-label")].length;
+    expect(first).toBe(8);
+    jumpToEnd();
+    expect(document.querySelector(".algoviz-metric-grid")!.textContent).toContain("Flow");
+    fireEvent.change(screen.getByLabelText("Choose algorithm"), { target: { value: "edmonds-karp" } });
+    jumpToEnd();
+    expect(document.querySelector(".algoviz-explanation")?.textContent).toMatch(/is the most that can flow/);
+  });
+});

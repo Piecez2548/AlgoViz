@@ -271,3 +271,13 @@ describe("compare: maximum flow", () => {
     expect(verdictText()).toMatch(/^Both reach a maximum flow of 3\. Both needed 1 round\./);
   });
 });
+
+describe("compare: maximum flow on the depth-first sample", () => {
+  it("shows Ford-Fulkerson needing three times the rounds", () => {
+    open();
+    fireEvent.click(screen.getByLabelText("Maximum flow"));
+    fireEvent.change(screen.getByLabelText("Choose map"), { target: { value: "extra" } });
+    expect(verdictText()).toMatch(/Edmonds-Karp needed the fewest rounds \(3\); Ford-Fulkerson \(depth-first\) the most \(9\)\.$/);
+    expect(cell("Ford-Fulkerson (depth-first)", "Rounds")).toContain("9");
+  });
+});

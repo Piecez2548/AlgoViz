@@ -120,6 +120,26 @@ export const FLOW_BRIDGE_SAMPLE: GraphInput = {
   ],
 };
 
+/**
+ * A network found by searching for one where the depth-first choice is poor: Ford-Fulkerson needs 9 rounds
+ * where Edmonds-Karp needs 3, because its first paths squeeze through the 1-wide edges D → E and E → D
+ * and have to be undone later.
+ */
+export const FLOW_ZIGZAG_SAMPLE: GraphInput = {
+  ...FLOW_SAMPLE,
+  label: "Flow network where depth-first needs many rounds",
+  edges: [
+    { from: "A", to: "B", weight: 11 },
+    { from: "A", to: "D", weight: 18 },
+    { from: "B", to: "D", weight: 8 },
+    { from: "B", to: "E", weight: 10 },
+    { from: "D", to: "E", weight: 1 },
+    { from: "D", to: "F", weight: 17 },
+    { from: "E", to: "D", weight: 1 },
+    { from: "E", to: "F", weight: 16 },
+  ],
+};
+
 export function getGraphNode(graph: GraphInput, id: string): GraphNode {
   return graph.nodes.find((node) => node.id === id) ?? graph.nodes[0];
 }

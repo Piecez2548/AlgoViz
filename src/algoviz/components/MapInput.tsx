@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { defaultGrid, DAG_CYCLE_SAMPLE, DAG_SAMPLE, DIRECTED_CYCLE_SAMPLE, DIRECTED_SAMPLE, FLOW_BRIDGE_SAMPLE, FLOW_SAMPLE, gridToGraph, SAMPLE_GRAPH, sampleGraphBetween, SCC_SAMPLE, withHeuristics } from "../../algorithms/shared/graph";
+import { defaultGrid, DAG_CYCLE_SAMPLE, DAG_SAMPLE, DIRECTED_CYCLE_SAMPLE, DIRECTED_SAMPLE, FLOW_BRIDGE_SAMPLE, FLOW_SAMPLE, FLOW_ZIGZAG_SAMPLE, gridToGraph, SAMPLE_GRAPH, sampleGraphBetween, SCC_SAMPLE, withHeuristics } from "../../algorithms/shared/graph";
 import { addNode, allowsNegative, DEFAULT_WEIGHT, freeSpot, MAX_NODES, MAX_WEIGHT, MIN_NODES, MIN_WEIGHT, moveNode, removeEdge, removeNode, setEdge, setEndpoint as setGraphEndpoint, validWeight } from "../../algorithms/shared/graphEdit";
 import type { GraphInput, GridState } from "../../algorithms/shared/graphTypes";
 import type { GraphEditing, GraphTool } from "./GraphCanvas";
 import { GridToolbar, type GridTool } from "./InputEditors";
 
-export type MapKind = "sample" | "cycle" | "grid" | "custom";
+export type MapKind = "sample" | "cycle" | "extra" | "grid" | "custom";
 /** "route" needs a start and goal (search, pathfinding); "tree" is a spanning tree on the whole graph; "directed" is a route on a directed graph that may have negative weights. */
 export type MapMode = "off" | "route" | "tree" | "directed" | "dag" | "scc" | "flow";
 
@@ -46,7 +46,7 @@ export function useMapInput(mode: MapMode = "route", initialCustom: GraphInput |
   const [edgeWeight, setEdgeWeight] = useState(DEFAULT_WEIGHT);
   const graph = useMemo<GraphInput>(() => {
     if (mode === "off") return SAMPLE_GRAPH;
-    if (mode === "flow") return mapKind === "custom" ? custom : mapKind === "cycle" ? FLOW_BRIDGE_SAMPLE : FLOW_SAMPLE;
+    if (mode === "flow") return mapKind === "custom" ? custom : mapKind === "cycle" ? FLOW_BRIDGE_SAMPLE : mapKind === "extra" ? FLOW_ZIGZAG_SAMPLE : FLOW_SAMPLE;
     if (mode === "scc") return mapKind === "custom" ? custom : mapKind === "cycle" ? DAG_SAMPLE : SCC_SAMPLE;
     if (mode === "dag") return mapKind === "custom" ? custom : mapKind === "cycle" ? DAG_CYCLE_SAMPLE : DAG_SAMPLE;
     if (mode === "directed") return mapKind === "custom" ? custom : mapKind === "cycle" ? DIRECTED_CYCLE_SAMPLE : DIRECTED_SAMPLE;
@@ -77,6 +77,7 @@ export function MapSelect({ map }: { map: MapInputState }) {
       {map.mode === "dag" && <option value="cycle">Sample with a loop</option>}
       {map.mode === "scc" && <option value="cycle">Sample with no loops</option>}
       {map.mode === "flow" && <option value="cycle">Sample with a narrow bridge</option>}
+      {map.mode === "flow" && <option value="extra">Sample where depth-first needs many rounds</option>}
       {map.mode === "route" && <option value="grid">Draw your own map</option>}
       <option value="custom">Build your own graph</option>
     </select>

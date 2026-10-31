@@ -104,3 +104,17 @@ describe("how the two differ", () => {
     expect(valueOf(runEdmondsKarp(graph))).toBe(2);
   });
 });
+
+describe("the sample where depth-first needs many rounds", () => {
+  it("reaches the same flow in 9 rounds with Ford-Fulkerson against 3 with Edmonds-Karp", async () => {
+    const { FLOW_ZIGZAG_SAMPLE } = await import("./graph");
+    const rounds = (execution: AlgorithmExecution) => execution.steps.filter((step) => step.type === "update").length;
+    const ek = runEdmondsKarp(FLOW_ZIGZAG_SAMPLE); const ff = runFordFulkerson(FLOW_ZIGZAG_SAMPLE);
+    expect(valueOf(ek)).toBe(valueOf(ff));
+    expect(valueOf(ek)).toBe(minCut(FLOW_ZIGZAG_SAMPLE));
+    expect(rounds(ek)).toBe(3);
+    expect(rounds(ff)).toBe(9);
+    // Some of those rounds are spent undoing flow that an earlier round put on a thin edge.
+    expect(ff.steps.some((step) => step.type === "compare" && /takes back flow on/.test(step.explanation))).toBe(true);
+  });
+});
