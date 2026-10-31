@@ -1,6 +1,6 @@
 # AlgoViz: สรุประบบ งานที่ทำแล้ว และแผนต่อไป (handoff สำหรับแชทใหม่)
 
-อัปเดตล่าสุด: 2026-10-31 · commit ล่าสุดบน `main`: `0270828` · เทสต์ 356 ข้อ ผ่านทั้งหมด
+อัปเดตล่าสุด: 2026-10-31 · เทสต์ 375 ข้อ ผ่านทั้งหมด · สถานะ: ปิดงานโปรเจค (README, ภาพหน้าจอ, เมนูจัดกลุ่มเสร็จแล้ว)
 
 ## ข้อความเริ่มแชทใหม่ (คัดลอกไปวางได้เลย)
 
@@ -54,7 +54,7 @@ AlgoViz คือเว็บสอนอัลกอริทึมแบบโ
 
 ## 3. สิ่งที่ทำเสร็จแล้ว (ทั้งหมดอยู่บน production)
 
-### อัลกอริทึม 29 ตัว
+### อัลกอริทึม 30 ตัว
 - **Search (4):** BFS, DFS, Bidirectional BFS, Greedy Best-First
 - **Pathfinding (4):** Dijkstra, A*, Bellman-Ford (มีตรวจ negative cycle), Floyd-Warshall
 - **Spanning (2):** Kruskal, Prim
@@ -63,7 +63,7 @@ AlgoViz คือเว็บสอนอัลกอริทึมแบบโ
 - **Topological (2):** Kahn, DFS ordering (ตรวจ dependency loop)
 - **SCC (2):** Tarjan, Kosaraju
 - **Max flow (2):** Edmonds-Karp, Ford-Fulkerson (แสดง min cut เป็นสองกลุ่มสี)
-- **Matching (2):** Kuhn, Greedy matching
+- **Matching (3):** Kuhn, Hopcroft-Karp, Greedy matching
 - หน้า Negative edges ยังรวม Dijkstra ไว้โชว์ว่าพลาดตรงไหน (มีข้อความเทียบกับ Bellman-Ford)
 
 ### ฟีเจอร์ของแพลตฟอร์ม
@@ -73,7 +73,7 @@ AlgoViz คือเว็บสอนอัลกอริทึมแบบโ
 - **โหมดทายขั้นถัดไป** (`predict.ts`): คำถามคำนวณจาก step ที่บันทึกไว้จริง ไม่เฉลยในคำถาม มีคะแนน รองรับ: BFS DFS Bi-BFS Greedy Dijkstra A* Kahn Tarjan Kosaraju (โหนดไหนต่อ), Bubble/Insertion/Shell (สลับหรือไม่), Selection/Quick/Heap/Merge, Counting, Radix, Kruskal, Prim, Binary/Linear search, Bellman-Ford, Floyd-Warshall, Edmonds-Karp, Ford-Fulkerson
 - การเข้าถึง: label/aria ครบ, ตาราง/กราฟมีข้อมูลสำรอง, สีไม่ใช่ช่องทางเดียว (รูป marker, ลายเส้น, เลขกลุ่ม), axe-core ไม่เหลือปัญหาทั้งจอกว้างและมือถือ (ตรวจที่ 1280 และ 375 px)
 
-### การทดสอบ (356 ข้อ)
+### การทดสอบ (375 ข้อ)
 - **Engine:** property test เทียบ oracle อิสระทุกอัลกอริทึมสำคัญ (A* = Dijkstra, Bellman-Ford เทียบ Floyd, Kruskal เทียบ Prim, SCC เทียบ reachability, max flow เทียบ min cut ที่ไล่ทุกการตัด, matching เทียบ flow, ลำดับ topological ตรวจทุก dependency, negative cycle เทียบ oracle)
 - **UI:** `*.test.tsx` ทุกหน้า รวม Compare, ลิงก์, โหมดทาย, ตัวแก้กราฟ และเทสต์ route ที่ตรวจว่าทุกลิงก์ในเมนูมีหน้า
 - **ตรวจจริง:** สคริปต์ Playwright + axe ที่รันบน `vite preview` (ไม่ได้อยู่ใน repo เพราะ production บล็อก axe ด้วย CSP) ใช้ Playwright จาก `Nexus\node_modules`
@@ -98,20 +98,22 @@ AlgoViz คือเว็บสอนอัลกอริทึมแบบโ
 ## 5. ข้อจำกัดที่ยังมีอยู่
 
 - กราฟสูงสุด 12 โหนดในตัวแก้กราฟ (ตัวเลขที่พิมพ์เองสูงสุด 24 ตัว)
-- Compare: กราฟที่สร้างเองเก็บใน URL ได้ แต่กลุ่ม negative/flow/matching ไม่มีกราฟการเติบโต
-- โหมดทายยังไม่มีสำหรับ Matching และ DFS ordering
+- Compare: กราฟที่สร้างเองเก็บใน URL ได้ แต่กลุ่ม negative/flow ไม่มีกราฟการเติบโต (matching มีแล้ว บนกราฟสองฝั่งที่ `bipartiteGraph(n)` สร้างให้; ช่องว่าง Kuhn กับ Hopcroft-Karp เป็นสมบัติของกราฟนี้ ไม่ใช่กรณีทั่วไป)
+- โหมดทายยังไม่มีสำหรับ Hopcroft-Karp (Kuhn, Greedy และ DFS ordering มีแล้ว)
 - Bellman-Ford ในกราฟสองทางบันทึกเฉพาะขั้นที่ระยะดีขึ้น (จำนวน step สั้นกว่าความจริง มีหมายเหตุบนหน้า Compare)
 - A*, BFS, DFS, Greedy ไม่รองรับกราฟติดลบ (ไม่มี heuristic ที่ปลอดภัย) จึงไม่อยู่ในหน้า Negative edges
 - ยังไม่มีการวัดเวลาจริง ("steps" คือจำนวนขั้นที่บันทึกไว้เพื่อแสดงผล ไม่ใช่เวลา)
-- เมนูบนมี 12 รายการ บนมือถือใช้เมนูพับ ถ้าเพิ่มอีกควรจัดกลุ่ม
+- เมนูจัดกลุ่มเป็น Graphs / Sorting & searching / Flow & matching พร้อม Learn และ Compare (ตั้งใจให้เพิ่มหน้าใหม่ในกลุ่มที่มีอยู่)
 
-## 6. แผนต่อไป (เรียงตามที่แนะนำ)
+## 6. สถานะแผน
 
-1. **โหมดทายให้ Matching และ DFS ordering** (แนะนำเริ่มข้อนี้): คำถามเช่น "คนนี้จะได้งานไหน/ต้องขยับใครไหม" และ "โหนดไหนเสร็จก่อน" ปิดช่องว่างสุดท้ายของโหมดทาย งานเล็ก ความเสี่ยงต่ำ ต้องเพิ่มใน `predict.ts` + เทสต์ + ปรับ `PredictPanel` ถ้าจำเป็น
-2. **Hopcroft-Karp** ต่อจาก Kuhn: เทียบกับ Kuhn บนกราฟสองฝั่งใหญ่ (ต้องเพิ่ม generator กราฟสองฝั่งใน `benchmark.ts` และกราฟการเติบโตให้กลุ่ม matching) แล้วยกเลิกข้อจำกัด "matching ไม่มีกราฟ"
-3. **จัดกลุ่มเมนู/หน้า Home**: แบ่งเป็นหมวด (Graphs, Sorting & Searching, Flow & Matching, Compare) เมื่อหน้าเกิน 12 รายการ ปรับ `AlgoVizLayout` และการ์ดหน้า Home
-4. **ขยายตัวแก้กราฟเกิน 12 โหนด** พร้อม layout อัตโนมัติ (วงกลม/ชั้น) และปุ่ม "สุ่มกราฟ" ให้ทุกโหมด
-5. **ตัววัดเวลาจริง** (ms จาก `performance.now()` บนอินพุตขนาดใหญ่) เป็นแท็บเสริมใน Compare แยกจากจำนวนขั้น พร้อมคำเตือนว่าผลขึ้นกับเครื่อง
+เสร็จแล้ว: โหมดทาย Matching + DFS ordering, Hopcroft-Karp + กราฟการเติบโตของ matching, จัดกลุ่มเมนู/Home, README พร้อมภาพหน้าจอ (`docs/screenshots`), ตรวจ production ด้วย axe ที่ 1280 และ 375 px (ไม่พบปัญหา)
+
+ยังไม่ได้ทำ (ตัดสินใจหยุดเพราะผลตอบแทนน้อย):
+
+1. ตัวแก้กราฟเกิน 12 โหนด พร้อม layout อัตโนมัติและปุ่มสุ่มกราฟ
+2. ตัววัดเวลาจริง (ms) เป็นแท็บเสริมใน Compare พร้อมคำเตือนว่าผลขึ้นกับเครื่อง
+3. โหมดทายสำหรับ Hopcroft-Karp
 
 ## 7. งานค้างฝั่งอื่น (นอก AlgoViz แต่อยู่ในแผนรวม)
 
