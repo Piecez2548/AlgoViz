@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ROUTE_ALGORITHMS, SPANNING_ALGORITHMS, SORTING_ALGORITHMS } from "../registry";
-import { runBinarySearch } from "../searching/arraySearchAlgorithms";
+import { runBinarySearch, runLinearSearch } from "../searching/arraySearchAlgorithms";
 import { gridToGraph, SAMPLE_GRAPH } from "./graph";
 import { defaultGrid } from "./graph";
 import { canPredict, questionAt } from "./predict";
@@ -11,12 +11,9 @@ const all = (id: string, execution: Parameters<typeof questionAt>[1], graph?: Pa
 describe("predict questions", () => {
   it("only offers questions for algorithms where they describe the run exactly", () => {
     expect(canPredict("dijkstra")).toBe(true);
-    expect(canPredict("heap")).toBe(false);
-    expect(canPredict("bellman-ford")).toBe(false);
-    const heap = SORTING_ALGORITHMS.find((algorithm) => algorithm.id === "heap")!.run([5, 3, 9, 1]);
-    expect(all("heap", heap)).toEqual([]);
-    const bellman = ROUTE_ALGORITHMS.find((algorithm) => algorithm.id === "bellman-ford")!.run(SAMPLE_GRAPH);
-    expect(all("bellman-ford", bellman, SAMPLE_GRAPH)).toEqual([]);
+    expect(canPredict("mystery")).toBe(false);
+    for (const id of ["selection", "quick", "merge", "heap", "counting", "radix", "linear-search", "bellman-ford", "floyd-warshall"]) expect(canPredict(id)).toBe(true);
+    expect(all("mystery", SORTING_ALGORITHMS[0].run([5, 3, 9, 1]))).toEqual([]);
   });
 
   it.each(["bfs", "dfs", "bidirectional-bfs", "greedy-best-first", "dijkstra", "a-star"])("%s: the correct option is the node taken next and the prompt does not reveal it", (id) => {
@@ -83,5 +80,86 @@ describe("predict questions", () => {
         expect(question.prompt).toContain(`The target is ${target}`);
       }
     }
+  });
+});
+
+describe("predict questions for the other sorts and searches", () => {
+  const sortRun = (id: string, input: number[]) => SORTING_ALGORITHMS.find((algorithm) => algorithm.id === id)!.run(input);
+  const input = [42, 18, 64, 9, 31, 56, 23, 7, 50];
+
+  it("selection, quick and heap ask a yes/no about the comparison on screen, and both answers occur", () => {
+    for (const id of ["selection", "quick", "heap"]) {
+      const execution = sortRun(id, input);
+      const questions = all(id, execution);
+      expect(questions.length).toBeGreaterThan(8);
+      expect(new Set(questions.map(({ question }) => question.answer)).size).toBe(2);
+      for (const { index, question } of questions) {
+        const [a, b] = execution.steps[index].highlightIndices!; const v = execution.steps[index].values!;
+        const expected = id === "selection" ? v[b] < v[a] : id === "quick" ? v[a] < v[b] : v[b] > v[a];
+        expect(question.answer).toBe(expected ? 0 : 1);
+        expect(question.options).toEqual(["Yes", "No"]);
+      }
+    }
+  });
+
+  it("quick sort: 'smaller than the pivot' agrees with the swap that follows", () => {
+    const execution = sortRun("quick", input);
+    for (const { index, question } of all("quick", execution)) {
+      const next = execution.steps[index + 1];
+      // A smaller value is moved to the left side; otherwise the next step is not that move.
+      expect(/left of the pivot/.test(next.explanation)).toBe(question.answer === 0);
+    }
+  });
+
+  it("merge: names the run that is written first, which matches the write that follows", () => {
+    const execution = sortRun("merge", input);
+    const questions = all("merge", execution);
+    expect(questions.length).toBeGreaterThan(8);
+    for (const { index, question } of questions) {
+      const [a, b] = execution.steps[index].highlightIndices!; const v = execution.steps[index].values!;
+      expect(question.answer).toBe(v[a] <= v[b] ? 0 : 1);
+      expect(question.options[question.answer]).toContain(String(v[a] <= v[b] ? v[a] : v[b]));
+    }
+  });
+
+  it("counting: the count after the next value is exactly what the next step records", () => {
+    const execution = sortRun("counting", [3, 1, 3, 2, 1, 3]);
+    const questions = all("counting", execution);
+    // The very first count has no step before it, so five of the six counts can be asked about.
+    expect(questions).toHaveLength(5);
+    expect(questions.map(({ question }) => question.options[question.answer])).toEqual(["1", "2", "1", "2", "3"]);
+    for (const { question } of questions) expect(new Set(question.options).size).toBe(question.options.length);
+  });
+
+  it("radix: the bucket is the digit the next step reports", () => {
+    const execution = sortRun("radix", [170, 45, 75, 90, 802, 24, 2, 66]);
+    const questions = all("radix", execution);
+    expect(questions.length).toBe(8 * 3 - 1);
+    for (const { index, question } of questions) {
+      const digit = /it is (\d)/.exec(execution.steps[index + 1].explanation)![1];
+      expect(question.options[question.answer]).toBe(digit);
+      expect(question.options).toHaveLength(4);
+    }
+  });
+
+  it("linear search: 'is it a match?' is yes only at the target", () => {
+    const execution = runLinearSearch([10, 20, 30, 40, 50], 30);
+    const questions = all("linear-search", execution);
+    expect(questions.map(({ question }) => question.options[question.answer])).toEqual(["No", "Yes"]);
+  });
+
+  it("floyd-warshall: says whether routes through the next node shorten any distance from the start", () => {
+    const execution = ROUTE_ALGORITHMS.find((algorithm) => algorithm.id === "floyd-warshall")!.run(SAMPLE_GRAPH);
+    const questions = all("floyd-warshall", execution, SAMPLE_GRAPH);
+    expect(questions).toHaveLength(SAMPLE_GRAPH.nodes.length);
+    for (const { index, question } of questions) expect(question.options[question.answer] === "Yes").toBe(execution.steps[index + 1].type === "update");
+    expect(new Set(questions.map(({ question }) => question.answer)).size).toBe(2);
+  });
+
+  it("bellman-ford: the node that improves next is among the nodes next to ones already reached", () => {
+    const execution = ROUTE_ALGORITHMS.find((algorithm) => algorithm.id === "bellman-ford")!.run(SAMPLE_GRAPH);
+    const questions = all("bellman-ford", execution, SAMPLE_GRAPH);
+    expect(questions.length).toBeGreaterThan(3);
+    for (const { index, question } of questions) expect(question.options[question.answer]).toBe(execution.steps[index + 1].targetNode);
   });
 });

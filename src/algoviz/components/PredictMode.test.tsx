@@ -64,7 +64,8 @@ describe("predict mode", () => {
     expect(score()).toBe("1 of 1 right");
     fireEvent.change(screen.getByLabelText("Choose algorithm"), { target: { value: "heap" } });
     expect(score()).toBe("0 of 0 right");
-    expect(within(panel()).getByText(/no prediction questions yet/)).toBeInTheDocument();
+    // Heap sort now has questions too: the first comparison asks whether the child is larger than its parent.
+    expect(within(panel()).getByText(/Is the child .* larger than it?|Is .* larger than it?/)).toBeInTheDocument();
   });
 
   it("asks about the kept half in binary search and keep-or-skip for Kruskal", () => {

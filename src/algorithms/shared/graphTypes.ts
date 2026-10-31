@@ -14,6 +14,8 @@ export interface GraphEdge {
 export interface GraphInput {
   /** Short name shown next to the input, e.g. "Grid map". */
   label?: string;
+  /** Edges can only be followed from `from` to `to`, and weights may be negative. */
+  directed?: boolean;
   nodes: readonly GraphNode[];
   edges: readonly GraphEdge[];
   start: string;

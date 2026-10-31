@@ -15,9 +15,13 @@ const MAX_OPTIONS = 4;
 const NODE_PICKERS = new Set(["bfs", "dfs", "bidirectional-bfs", "greedy-best-first", "dijkstra", "a-star"]);
 const PAIR_SWAPPERS = new Set(["bubble", "insertion", "shell"]);
 
+const OTHERS = ["kruskal", "prim", "binary-search", "linear-search", "selection", "quick", "merge", "heap", "counting", "radix", "bellman-ford", "floyd-warshall"];
+
 export function canPredict(algorithmId: string): boolean {
-  return NODE_PICKERS.has(algorithmId) || PAIR_SWAPPERS.has(algorithmId) || ["kruskal", "prim", "binary-search"].includes(algorithmId);
+  return NODE_PICKERS.has(algorithmId) || PAIR_SWAPPERS.has(algorithmId) || OTHERS.includes(algorithmId);
 }
+
+const YES_NO = ["Yes", "No"] as const;
 
 const unique = (items: readonly string[]) => [...new Set(items)];
 const sortedOptions = (correct: string, candidates: readonly string[]) => {
@@ -72,6 +76,51 @@ export function questionAt(algorithmId: string, execution: AlgorithmExecution, i
     const options = ["Keep the left half", "Keep the right half", "Found it", "Nothing is left"];
     const answer = after.type === "complete" ? (after.highlightIndices?.length ? 2 : 3) : after.activeRange![0] > next.activeRange[0] ? 1 : 0;
     return { prompt: `Next it checks position ${middle}, which holds ${next.values[middle]}. The target is ${target}. What happens after that?`, options, answer, explanation: `${next.explanation}` };
+  }
+
+  if (algorithmId === "linear-search") {
+    if (next.type !== "compare" || !next.highlightIndices || !next.values) return null;
+    const position = next.highlightIndices[0]; const target = Number(next.dataStructure?.find((entry) => entry.label === "Target")?.value);
+    return { prompt: `Next it looks at position ${position}, which holds ${next.values[position]}. The target is ${target}. Is it a match?`, options: [...YES_NO], answer: next.values[position] === target ? 0 : 1, explanation: next.explanation };
+  }
+
+  // The questions below are about the comparison on screen; the numbers on its bars decide the answer,
+  // and the step's explanation only says which values are being compared.
+  if (step.type === "compare" && step.highlightIndices && step.values && step.highlightIndices.length === 2) {
+    const [a, b] = step.highlightIndices; const x = step.values[a]; const y = step.values[b];
+    if (algorithmId === "selection") return { prompt: `The smallest value so far is ${x}. Is ${y} smaller than it?`, options: [...YES_NO], answer: y < x ? 0 : 1, explanation: `${y} is ${y < x ? "smaller" : "not smaller"} than ${x}, so the smallest value so far ${y < x ? `becomes ${y}` : "stays " + x}.` };
+    if (algorithmId === "quick") return { prompt: `The pivot is ${y}. Is ${x} smaller than the pivot?`, options: [...YES_NO], answer: x < y ? 0 : 1, explanation: `${x} is ${x < y ? "smaller" : "not smaller"} than the pivot ${y}, so it ${x < y ? "moves to the left side" : "stays where it is"}.` };
+    if (algorithmId === "heap") return { prompt: `The parent is ${x}. Is the child ${y} larger than it?`, options: [...YES_NO], answer: y > x ? 0 : 1, explanation: `${y} is ${y > x ? "larger" : "not larger"} than ${x}, so ${y > x ? "the child is the bigger one" : "the parent stays on top"}.` };
+    if (algorithmId === "merge") return { prompt: `Merging two runs: the left one offers ${x} and the right one offers ${y}. Which is written first?`, options: [`The left one (${x})`, `The right one (${y})`], answer: x <= y ? 0 : 1, explanation: `${x <= y ? x : y} is the smaller, so it is written first (ties go to the left run).` };
+  }
+
+  if (algorithmId === "counting") {
+    const match = /^Count (\d+): it has now been seen (\d+) time/.exec(next.explanation);
+    if (next.type !== "visit" || !match) return null;
+    const answer = Number(match[2]);
+    const options = [answer, answer + 1, answer + 2, answer - 1].filter((count) => count >= 1).slice(0, MAX_OPTIONS).sort((p, q) => p - q).map(String);
+    return { prompt: `Next it counts the value ${match[1]}. How many times will it have been seen after that?`, options, answer: options.indexOf(String(answer)), explanation: next.explanation };
+  }
+
+  if (algorithmId === "radix") {
+    const match = /the (\w+) digit of (\d+): it is (\d)/.exec(next.explanation);
+    if (next.type !== "visit" || !match) return null;
+    const digit = Number(match[3]);
+    const options = [digit, (digit + 1) % 10, (digit + 4) % 10, (digit + 7) % 10].sort((p, q) => p - q).map(String);
+    return { prompt: `Next it looks at the ${match[1]} digit of ${match[2]}. Which bucket does it go into?`, options, answer: options.indexOf(String(digit)), explanation: next.explanation };
+  }
+
+  if (algorithmId === "bellman-ford") {
+    if (next.type !== "update" || !next.targetNode || !graph) return null;
+    const reached = new Set(step.visited ?? []);
+    const reachable = graph.edges.flatMap((edge) => (reached.has(edge.from) ? [edge.to] : []).concat(!graph.directed && reached.has(edge.to) ? [edge.from] : []));
+    const options = sortedOptions(next.targetNode, reachable);
+    return options.length < 2 ? null : { prompt: "Which node's distance gets shorter next?", options, answer: options.indexOf(next.targetNode), explanation: next.explanation };
+  }
+
+  if (algorithmId === "floyd-warshall") {
+    if ((next.type !== "visit" && next.type !== "update") || !next.currentNode) return null;
+    return { prompt: `Next it allows routes through ${next.currentNode}. Will any distance from the start get shorter?`, options: [...YES_NO], answer: next.type === "update" ? 0 : 1, explanation: next.explanation };
   }
   return null;
 }

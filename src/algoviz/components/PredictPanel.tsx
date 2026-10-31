@@ -21,7 +21,7 @@ export function PredictPanel({ question, supported, stepIndex, resetKey, onConti
   const choose = (chosen: number) => { if (question && !result) setResults((current) => ({ ...current, [stepIndex]: { chosen, right: chosen === question.answer } })); };
   return <section className="algoviz-predict" aria-label="Predict the next step">
     <div className="algoviz-predict-head"><strong>Predict the next step</strong><span>{entries.filter((entry) => entry.right).length} of {entries.length} right</span></div>
-    {!supported && <p className="algoviz-field-help">This algorithm has no prediction questions yet. Try BFS, DFS, Dijkstra, A*, Bubble, Insertion or Shell sort, Kruskal, Prim or Binary search.</p>}
+    {!supported && <p className="algoviz-field-help">This algorithm has no prediction questions yet.</p>}
     {supported && !question && <p className="algoviz-field-help">No question at this step. Move to the next step to continue.</p>}
     {question && <>
       <p id={promptId} className="algoviz-predict-prompt">{question.prompt}</p>
