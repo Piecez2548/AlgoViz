@@ -17,7 +17,7 @@ export type AlgorithmStepType =
   | "reject"
   | "complete";
 
-export type AlgorithmCategory = "search" | "pathfinding" | "spanning" | "sorting" | "array-search" | "negative-weights" | "ordering" | "topological-sort" | "components" | "strongly-connected" | "flow" | "max-flow";
+export type AlgorithmCategory = "search" | "pathfinding" | "spanning" | "sorting" | "array-search" | "negative-weights" | "ordering" | "topological-sort" | "components" | "strongly-connected" | "flow" | "max-flow" | "matching";
 
 export interface AlgorithmMetrics {
   comparisons?: number;
@@ -25,6 +25,8 @@ export interface AlgorithmMetrics {
   visitedNodes?: number;
   /** Total flow sent so far, in a flow network. */
   flow?: number;
+  /** Pairs matched so far, in a matching. */
+  matched?: number;
   operations?: number;
 }
 

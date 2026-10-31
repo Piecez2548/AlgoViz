@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useRef } from "react";
 import type { GraphInput } from "../../algorithms/shared/graphTypes";
-import { ArrowLeft, GitCompareArrows, ListFilter, Network, Route, Search, ListOrdered, Shapes, Sigma, TrendingDown, Waves } from "lucide-react";
+import { ArrowLeft, GitCompareArrows, Link2, ListFilter, Network, Route, Search, ListOrdered, Shapes, Sigma, TrendingDown, Waves } from "lucide-react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
-import { ARRAY_SEARCH_ALGORITHMS, COMPONENT_ALGORITHMS, FLOW_ALGORITHMS, NEGATIVE_ALGORITHMS, ORDERING_ALGORITHMS, PATHFINDING_ALGORITHMS, SEARCH_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../../algorithms/registry";
+import { ARRAY_SEARCH_ALGORITHMS, COMPONENT_ALGORITHMS, FLOW_ALGORITHMS, MATCHING_ALGORITHMS, NEGATIVE_ALGORITHMS, ORDERING_ALGORITHMS, PATHFINDING_ALGORITHMS, SEARCH_ALGORITHMS, SORTING_ALGORITHMS, SPANNING_ALGORITHMS } from "../../algorithms/registry";
 import { parseNumberList } from "../../algorithms/shared/arrayInput";
 import { decodeGraph, encodeGraph } from "../../algorithms/shared/graphCodec";
 import { AlgoVizLab } from "../components/AlgoVizLab";
@@ -18,6 +18,7 @@ const moduleContent = {
   "topological-sort": { icon: ListOrdered, name: "Topological sort", description: "Put tasks in an order where every task comes after the ones it depends on, and see what happens when the dependencies loop.", category: "ordering" as const, eyebrow: "Dependency ordering lab", defaultAlgorithm: "kahn", options: ORDERING_ALGORITHMS },
   "strongly-connected": { icon: Shapes, name: "Strongly connected components", description: "Split a directed graph into groups of nodes that can all reach each other, with the edges between groups only going one way.", category: "components" as const, eyebrow: "Directed graph lab", defaultAlgorithm: "tarjan", options: COMPONENT_ALGORITHMS },
   "max-flow": { icon: Waves, name: "Maximum flow", description: "How much can a network of one-way pipes carry from a source to a sink? Find paths with room left, send flow, and see the narrowest cut that limits it all.", category: "flow" as const, eyebrow: "Flow network lab", defaultAlgorithm: "edmonds-karp", options: FLOW_ALGORITHMS },
+  matching: { icon: Link2, name: "Bipartite matching", description: "Pair up the nodes on one side with nodes on the other, with each node used at most once, and see why handing out first choices is not always enough.", category: "matching" as const, eyebrow: "Matching lab", defaultAlgorithm: "kuhn", options: MATCHING_ALGORITHMS },
   compare: { icon: GitCompareArrows, name: "Compare algorithms", description: "Run several algorithms on the same input, then see how each one's cost grows as the input gets bigger.", category: "compare" as const, eyebrow: "Comparison lab" },
 } as const;
 

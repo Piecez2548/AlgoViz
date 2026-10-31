@@ -24,6 +24,8 @@ export interface Measure {
   flow: number;
   /** Rounds that sent flow along a path. */
   augmentations: number;
+  /** Pairs in the final matching. */
+  matched: number;
   /** The run stopped because it found a negative cycle between the start and the goal. */
   negativeCycle: boolean;
   /** Total weight of that tree. */
@@ -38,7 +40,7 @@ export function measure(execution: AlgorithmExecution, graph?: GraphInput): Meas
   const cost = route !== undefined && graph ? pathCost(graph, String(route).split(" → ")) : null;
   const tail = steps.at(-1);
   const weight = Number(tail?.dataStructure?.find((entry) => entry.label === "Total weight")?.value ?? 0);
-  return { steps: steps.length, comparisons: last?.comparisons ?? 0, swaps: last?.swaps ?? 0, visited, cost: cost !== null && Number.isFinite(cost) ? cost : null, operations: Math.max(0, ...steps.map((step) => step.metrics?.operations ?? 0)), edges: tail?.acceptedEdges?.length ?? 0, weight, components: tail?.groups?.length ?? 0, flow: Math.max(0, ...steps.map((step) => step.metrics?.flow ?? 0)), augmentations: steps.filter((step) => step.type === "update").length, negativeCycle: Boolean(tail?.dataStructure?.some((entry) => entry.label === "Negative cycle")) };
+  return { steps: steps.length, comparisons: last?.comparisons ?? 0, swaps: last?.swaps ?? 0, visited, cost: cost !== null && Number.isFinite(cost) ? cost : null, operations: Math.max(0, ...steps.map((step) => step.metrics?.operations ?? 0)), edges: tail?.acceptedEdges?.length ?? 0, weight, components: tail?.groups?.length ?? 0, flow: Math.max(0, ...steps.map((step) => step.metrics?.flow ?? 0)), augmentations: steps.filter((step) => step.type === "update").length, matched: Math.max(0, ...steps.map((step) => step.metrics?.matched ?? 0)), negativeCycle: Boolean(tail?.dataStructure?.some((entry) => entry.label === "Negative cycle")) };
 }
 
 export type SortMetric = "comparisons" | "swaps" | "steps";

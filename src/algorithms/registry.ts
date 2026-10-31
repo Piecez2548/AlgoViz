@@ -4,6 +4,7 @@ import { runBinarySearch, runLinearSearch } from "./searching/arraySearchAlgorit
 import type { GraphInput } from "./shared/graphTypes";
 import type { AlgorithmExecution } from "./shared/types";
 import { runEdmondsKarp, runFordFulkerson } from "./flow/maxFlow";
+import { runGreedyMatching, runKuhn } from "./matching/bipartiteMatching";
 import { runKosaraju, runTarjan } from "./connectivity/stronglyConnected";
 import { runDfsTopological, runKahn } from "./ordering/orderingAlgorithms";
 import { runKruskal, runPrim } from "./spanning/spanningAlgorithms";
@@ -30,6 +31,12 @@ export const PATHFINDING_ALGORITHMS: readonly GraphAlgorithm[] = [
 export const SPANNING_ALGORITHMS: readonly GraphAlgorithm[] = [
   { id: "kruskal", name: "Kruskal's Algorithm", short: "Kruskal", run: (graph) => runKruskal(graph) },
   { id: "prim", name: "Prim's Algorithm", short: "Prim", run: (graph) => runPrim(graph) },
+];
+
+/** Ways to pair up the nodes of a two-sided graph. */
+export const MATCHING_ALGORITHMS: readonly GraphAlgorithm[] = [
+  { id: "kuhn", name: "Kuhn's Algorithm", short: "Kuhn", run: (graph) => runKuhn(graph) },
+  { id: "greedy-matching", name: "Greedy Matching", short: "Greedy", run: (graph) => runGreedyMatching(graph) },
 ];
 
 /** Ways to find the most flow a network of capacities can carry. */

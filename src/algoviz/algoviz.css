@@ -569,6 +569,10 @@
   background: #8fc2ff18;
   color: #8fc2ff;
 }
+.icon-matching {
+  background: #ff8fb118;
+  color: #ff8fb1;
+}
 .icon-sorting {
   background: #f5d36b18;
   color: var(--algo-yellow);

@@ -140,6 +140,34 @@ export const FLOW_ZIGZAG_SAMPLE: GraphInput = {
   ],
 };
 
+const MATCH_NODES = [
+  { id: "A", x: 20, y: 15 }, { id: "B", x: 20, y: 38 }, { id: "C", x: 20, y: 62 }, { id: "D", x: 20, y: 85 },
+  { id: "1", x: 80, y: 15 }, { id: "2", x: 80, y: 38 }, { id: "3", x: 80, y: 62 }, { id: "4", x: 80, y: 85 },
+].map((node) => ({ ...node, heuristic: 0 }));
+
+/** Four people on the left, four jobs on the right. Giving each person their first choice leaves B without a job; a smarter matching pairs all four. */
+export const MATCH_SAMPLE: GraphInput = {
+  label: "People and jobs",
+  unweighted: true,
+  nodes: MATCH_NODES,
+  edges: [
+    { from: "A", to: "1", weight: 1 }, { from: "A", to: "2", weight: 1 }, { from: "B", to: "1", weight: 1 },
+    { from: "C", to: "2", weight: 1 }, { from: "C", to: "3", weight: 1 }, { from: "C", to: "4", weight: 1 }, { from: "D", to: "3", weight: 1 },
+  ],
+  start: "A",
+  goal: "4",
+};
+
+/** A, B and C all want only jobs 1 and 2: three people for two jobs, so one of them must be left out whatever happens. */
+export const MATCH_HALL_SAMPLE: GraphInput = {
+  ...MATCH_SAMPLE,
+  label: "Three people, two jobs they can do",
+  edges: [
+    { from: "A", to: "1", weight: 1 }, { from: "A", to: "2", weight: 1 }, { from: "B", to: "1", weight: 1 }, { from: "B", to: "2", weight: 1 },
+    { from: "C", to: "1", weight: 1 }, { from: "C", to: "2", weight: 1 }, { from: "D", to: "3", weight: 1 },
+  ],
+};
+
 export function getGraphNode(graph: GraphInput, id: string): GraphNode {
   return graph.nodes.find((node) => node.id === id) ?? graph.nodes[0];
 }

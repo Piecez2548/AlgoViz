@@ -11,17 +11,18 @@ const round = (value: number) => Math.round(value * 10) / 10;
 export function encodeGraph(graph: GraphInput): string {
   const nodes = graph.nodes.map((node) => `${node.id}:${round(node.x)}:${round(node.y)}`).join(",");
   const edges = graph.edges.map((edge) => `${edge.from}:${edge.to}:${edge.weight}`).join(",");
-  return [nodes, edges, graph.start, graph.goal, ...(graph.directed ? [graph.unweighted ? "du" : graph.flow ? "df" : "d"] : [])].join("~");
+  const flag = graph.directed ? (graph.unweighted ? "du" : graph.flow ? "df" : "d") : graph.unweighted ? "u" : null;
+  return [nodes, edges, graph.start, graph.goal, ...(flag ? [flag] : [])].join("~");
 }
 
 /** Reads a graph back, or returns null when anything is missing or out of range, so a bad link falls back to the sample. */
 export function decodeGraph(text: string | null | undefined): GraphInput | null {
   if (!text) return null;
   const parts = text.split("~");
-  if (parts.length !== 4 && !(parts.length === 5 && (parts[4] === "d" || parts[4] === "du" || parts[4] === "df"))) return null;
+  if (parts.length !== 4 && !(parts.length === 5 && (parts[4] === "d" || parts[4] === "du" || parts[4] === "df" || parts[4] === "u"))) return null;
   const [nodeText, edgeText, start, goal] = parts;
-  const directed = parts.length === 5;
-  const unweighted = parts[4] === "du";
+  const directed = parts.length === 5 && parts[4] !== "u";
+  const unweighted = parts[4] === "du" || parts[4] === "u";
   const flow = parts[4] === "df";
   const nodes: GraphNode[] = [];
   for (const item of nodeText.split(",")) {

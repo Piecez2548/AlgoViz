@@ -117,6 +117,14 @@ export const PSEUDOCODE: Readonly<Record<string, Pseudocode>> = {
     lines: ["start with no flow on any edge", "while there is a path from the source to the sink with room left:", "  take the first one found (depth-first)", "  find its narrowest step: that is how much fits", "  send that much along it (take back flow on any edge used in reverse)", "no path left: the flow is the most possible"],
     lineFor: { enqueue: 0, compare: 2, update: 4, complete: 5 },
   },
+  kuhn: {
+    lines: ["split the nodes into a left side and a right side", "for each left node in turn:", "  look at each partner it could have", "  if the partner is free: take it", "  if the partner is taken: ask whoever has it to move to another partner", "  if that works, flip the chain of pairs: one more pair", "if no partner can be freed up, the node stays unmatched"],
+    lineFor: { enqueue: 0, visit: 1, compare: 2, update: 4, accept: 5, reject: 6, complete: 6 },
+  },
+  "greedy-matching": {
+    lines: ["split the nodes into a left side and a right side", "for each left node in turn:", "  look at each partner it could have", "  take the first one that is still free", "  never change a pair once it is made", "if every partner is taken, the node stays unmatched"],
+    lineFor: { enqueue: 0, visit: 1, compare: 2, accept: 3, reject: 5, complete: 4 },
+  },
   quick: {
     lines: ["pick the last value as the pivot", "for each value before the pivot:", "  compare it with the pivot", "  if smaller, move it to the left side", "put the pivot between the two sides, then sort each side"],
     lineFor: { compare: 2, swap: 3, complete: 4 },

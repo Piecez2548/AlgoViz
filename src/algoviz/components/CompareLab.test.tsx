@@ -281,3 +281,22 @@ describe("compare: maximum flow on the depth-first sample", () => {
     expect(cell("Ford-Fulkerson (depth-first)", "Rounds")).toContain("9");
   });
 });
+
+describe("compare: bipartite matching", () => {
+  it("shows Kuhn matching more pairs than Greedy on the sample", () => {
+    open();
+    fireEvent.click(screen.getByLabelText("Bipartite matching"));
+    expect(screen.getByText(/Comparing Kuhn.s Algorithm and Greedy Matching\./)).toBeInTheDocument();
+    expect(verdictText()).toBe("Kuhn's Algorithm matched 4 pairs; Greedy Matching only 3. A matching that cannot be grown by adding a pair can still be smaller than the best one.");
+    expect(cell("Kuhn's Algorithm", "Pairs matched")).toContain("4");
+    expect(cell("Greedy Matching", "Pairs matched")).toContain("3");
+    expect(cell("Kuhn's Algorithm", "Pairs matched")).not.toContain("lowest");
+    expect(screen.getByText("Why there is no growth chart here")).toBeInTheDocument();
+  });
+
+  it("says both matched the same when nothing blocks greedy", () => {
+    open("/compare?family=matching&graph=" + encodeURIComponent("A:20:20,B:20:60,1:80:20,2:80:60~A:1:1,B:2:1~A~2~u"));
+    expect(screen.getByLabelText("Choose map")).toHaveValue("custom");
+    expect(verdictText()).toBe("Both matched 2 pairs, the most that can be matched here.");
+  });
+});

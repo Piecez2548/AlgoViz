@@ -15,6 +15,7 @@ const navItems = [
   { to: "/topological-sort", label: "Topological sort" },
   { to: "/strongly-connected", label: "Components" },
   { to: "/max-flow", label: "Max flow" },
+  { to: "/matching", label: "Matching" },
   { to: "/compare", label: "Compare" },
 ];
 
