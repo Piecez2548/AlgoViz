@@ -48,8 +48,8 @@ export const TH: Record<string, string> = {
 
   // Home
   "Interactive algorithm lab": "ห้องทดลองอัลกอริทึมแบบโต้ตอบ",
-  "See algorithms": "ดูอัลกอริทึม",
-  "think.": "คิด",
+  "See algorithms": "เห็นอัลกอริทึม",
+  "think.": "คิดทีละขั้น",
   "Explore algorithms step by step and understand not only what they do, but why they do it.": "สำรวจอัลกอริทึมทีละขั้น เข้าใจทั้งว่ามันทำอะไร และทำไมถึงทำแบบนั้น",
   "Start visualizing": "เริ่มดูภาพ",
   "Compare algorithms": "เปรียบเทียบอัลกอริทึม",

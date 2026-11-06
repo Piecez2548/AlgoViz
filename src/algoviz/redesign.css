@@ -205,10 +205,10 @@ html { scroll-behavior: smooth; }
   animation: flow 1.6s linear infinite;
 }
 @keyframes flow { to { stroke-dashoffset: -26; } }
-.algoviz-node { transition: background-color 400ms ease, border-color 400ms ease, color 400ms ease, box-shadow 400ms ease, transform 400ms var(--ease-out); animation: node-pop 600ms var(--ease-out) both; }
+.algoviz-graph .algoviz-node { transition: background-color 400ms ease, border-color 400ms ease, color 400ms ease, box-shadow 400ms ease, transform 400ms var(--ease-out); animation: node-pop 600ms var(--ease-out) both; }
 .node-a { animation-delay: 300ms; } .node-b { animation-delay: 400ms; } .node-c { animation-delay: 500ms; } .node-d { animation-delay: 600ms; } .node-e { animation-delay: 700ms; }
 @keyframes node-pop { from { opacity: 0; transform: scale(0.3); } }
-.algoviz-node.is-current { transform: scale(1.18); animation: node-pop 600ms var(--ease-out) both, ping 1.6s ease-out infinite; }
+.algoviz-graph .algoviz-node.is-current { transform: scale(1.18); animation: node-pop 600ms var(--ease-out) both, ping 1.6s ease-out infinite; }
 @keyframes ping {
   0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--algo-accent) 55%, transparent); }
   100% { box-shadow: 0 0 0 20px transparent; }
@@ -369,3 +369,13 @@ html { scroll-behavior: smooth; }
 }
 
 .algoviz-catalog-tools, #explore, .algoviz-section { scroll-margin-top: 84px; }
+
+/* Thai headings need taller lines (tone marks and vowels above and below) and a wider measure. */
+:root[lang="th"] .algoviz-hero h1,
+:root[lang="th"] .algoviz-module-page h1 {
+  max-width: 14ch;
+  font-size: clamp(2.6rem, 5.2vw, 4.5rem);
+  letter-spacing: 0;
+  line-height: 1.3;
+}
+:root[lang="th"] .algoviz-hero h1 em { padding-bottom: 0.15em; }

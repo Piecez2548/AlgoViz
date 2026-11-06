@@ -17,7 +17,7 @@ describe("language button", () => {
     const { unmount } = openAt("/");
     expect(heading()).toMatch(/See algorithms/);
     fireEvent.click(screen.getByRole("button", { name: "Switch to Thai" }));
-    expect(heading()).toBe("ดูอัลกอริทึม คิด");
+    expect(heading()).toBe("เห็นอัลกอริทึม คิดทีละขั้น");
     expect(document.documentElement.lang).toBe("th");
     expect(within(screen.getByRole("navigation", { name: "เมนูหลัก" })).getByRole("link", { name: "เปรียบเทียบ" })).toBeInTheDocument();
     expect(window.localStorage.getItem("algoviz-lang")).toBe("th");
