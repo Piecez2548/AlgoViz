@@ -5,6 +5,15 @@
  */
 export const TH: Record<string, string> = {
   // Navigation and page frame
+  // Redesign: stats, catalog search
+  "Algorithms": "อัลกอริทึม",
+  "Live labs": "แล็บที่ใช้งานได้",
+  "Languages": "ภาษา",
+  "Search the catalog": "ค้นหาในรายการ",
+  "Filter by topic": "กรองตามหัวข้อ",
+  "All": "ทั้งหมด",
+  "No algorithm matches your search.": "ไม่พบอัลกอริทึมที่ตรงกับคำค้นหา",
+  "Clear filters": "ล้างตัวกรอง",
   "Learn": "เรียนรู้",
   "Compare": "เปรียบเทียบ",
   "Graphs": "กราฟ",

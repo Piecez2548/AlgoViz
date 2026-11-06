@@ -5,6 +5,7 @@ import { ChevronDown, GitCompareArrows, Menu, Moon, Network, Sun, X } from "luci
 import { PreferencesProvider, usePreferences } from "../../preferences";
 
 import "../../algoviz.css";
+import "../../redesign.css";
 
 interface NavLeaf { to: string; label: string; end?: boolean }
 interface NavGroup { label: string; items: NavLeaf[] }
@@ -55,6 +56,36 @@ function AlgoVizShell() {
     return () => { document.removeEventListener("pointerdown", close); document.removeEventListener("focusin", close); document.removeEventListener("keydown", escape); };
   }, [openGroup]);
 
+  const { pathname } = useLocation();
+  const [scrolled, setScrolled] = useState(false);
+
+  // Sections and cards fade in as they scroll into view (everything is shown at once where IntersectionObserver is missing).
+  useEffect(() => {
+    const targets = Array.from(document.querySelectorAll<HTMLElement>(".algoviz-home-page :is(.algoviz-section-heading, .algoviz-category-row, .algoviz-catalog-group, .algoviz-workflow-intro, .algoviz-workflow-list li)"));
+    if (typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) if (entry.isIntersecting) { entry.target.classList.add("rv-in"); observer.unobserve(entry.target); }
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
+    targets.forEach((el, i) => { el.classList.add("rv"); el.style.setProperty("--rv-delay", `${(i % 4) * 70}ms`); observer.observe(el); });
+    return () => observer.disconnect();
+  }, [pathname]);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Cards glow where the pointer is.
+  const spotlight = (event: React.PointerEvent<HTMLDivElement>) => {
+    const card = (event.target as HTMLElement).closest<HTMLElement>(".algoviz-category-row, .algoviz-catalog-card");
+    if (!card) return;
+    const box = card.getBoundingClientRect();
+    card.style.setProperty("--mx", `${event.clientX - box.left}px`);
+    card.style.setProperty("--my", `${event.clientY - box.top}px`);
+  };
+
   useEffect(() => {
     const previousTitle = document.title;
     document.title = "AlgoViz · Interactive Algorithm Lab";
@@ -62,9 +93,10 @@ function AlgoVizShell() {
   }, []);
 
   return (
-    <div className="algoviz-app">
+    <div className="algoviz-app" onPointerMove={spotlight}>
+      <div className="algoviz-progress" aria-hidden="true" />
       <a className="algoviz-skip-link" href="#algoviz-main">{t("Skip to content")}</a>
-      <header className="algoviz-header">
+      <header className={scrolled ? "algoviz-header is-scrolled" : "algoviz-header"}>
         <div className="algoviz-header-inner">
           <Link className="algoviz-brand" to="" aria-label={t("AlgoViz home")}>
             <span className="algoviz-brand-mark" aria-hidden="true"><Network size={18} strokeWidth={2.5} /></span>
@@ -113,7 +145,7 @@ function AlgoVizShell() {
       </header>
 
       <main id="algoviz-main" tabIndex={-1}>
-        <Outlet />
+        <div className="algoviz-route" key={pathname}><Outlet /></div>
       </main>
 
       <footer className="algoviz-footer">

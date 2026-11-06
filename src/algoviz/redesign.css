@@ -1,0 +1,371 @@
+/* Redesign layer: aurora background, glass header, animated hero, spotlight cards, scroll reveals.
+   It only builds on the tokens in algoviz.css, so the light and dark themes both keep working. */
+
+.algoviz-app {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --glow-a: color-mix(in srgb, var(--algo-accent) 18%, transparent);
+  --glow-b: color-mix(in srgb, var(--algo-blue) 16%, transparent);
+  --radius: 16px;
+  position: relative;
+  isolation: isolate;
+  overflow-x: clip;
+}
+html { scroll-behavior: smooth; }
+
+/* Aurora background: two slow-drifting colour blooms behind everything. */
+.algoviz-app::before,
+.algoviz-app::after {
+  position: fixed;
+  z-index: -1;
+  width: 60vmax;
+  height: 60vmax;
+  border-radius: 50%;
+  content: "";
+  filter: blur(90px);
+  pointer-events: none;
+}
+.algoviz-app::before {
+  top: -30vmax;
+  left: -15vmax;
+  background: radial-gradient(circle, var(--glow-a), transparent 65%);
+  animation: aurora-a 22s ease-in-out infinite alternate;
+}
+.algoviz-app::after {
+  right: -20vmax;
+  bottom: -35vmax;
+  background: radial-gradient(circle, var(--glow-b), transparent 65%);
+  animation: aurora-b 28s ease-in-out infinite alternate;
+}
+@keyframes aurora-a { to { transform: translate(14vmax, 10vmax) scale(1.15); } }
+@keyframes aurora-b { to { transform: translate(-12vmax, -9vmax) scale(1.2); } }
+
+/* Scroll progress bar */
+.algoviz-progress {
+  position: fixed;
+  z-index: 30;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--algo-accent), var(--algo-blue));
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+@supports (animation-timeline: scroll()) {
+  .algoviz-progress { animation: progress linear both; animation-timeline: scroll(root); }
+  @keyframes progress { to { transform: scaleX(1); } }
+}
+
+/* Sticky glass header */
+.algoviz-header {
+  position: sticky;
+  z-index: 20;
+  top: 0;
+  background: color-mix(in srgb, var(--algo-bg) 62%, transparent);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  transition: box-shadow 250ms ease, background-color 250ms ease;
+}
+.algoviz-header.is-scrolled {
+  background: color-mix(in srgb, var(--algo-bg) 82%, transparent);
+  box-shadow: 0 10px 30px -18px rgb(0 0 0 / 0.55);
+}
+.algoviz-header-inner { min-height: 68px; }
+.algoviz-brand-mark {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--algo-accent) 22%, transparent), transparent);
+  transition: transform 400ms var(--ease-out), box-shadow 300ms ease;
+}
+.algoviz-brand:hover .algoviz-brand-mark {
+  box-shadow: 0 0 22px var(--glow-a);
+  transform: rotate(-12deg) scale(1.08);
+}
+.algoviz-nav-link { transition: color 160ms ease; }
+.algoviz-nav-link::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--algo-accent);
+  content: "";
+  transform: scaleX(0);
+  transition: transform 280ms var(--ease-out);
+}
+.algoviz-nav-link:hover::after,
+.algoviz-nav-link.is-active::after { transform: scaleX(1); }
+.algoviz-nav-popover {
+  animation: pop-in 220ms var(--ease-out) both;
+  transform-origin: top center;
+  box-shadow: 0 24px 60px -20px rgb(0 0 0 / 0.55);
+}
+.algoviz-nav-group .algoviz-nav-trigger svg { transition: transform 240ms var(--ease-out); }
+.algoviz-nav-group .algoviz-nav-trigger[aria-expanded="true"] svg { transform: rotate(180deg); }
+.algoviz-mobile-nav { animation: slide-down 260ms var(--ease-out) both; }
+@keyframes pop-in { from { opacity: 0; transform: translateY(-8px) scale(0.97); } }
+@keyframes slide-down { from { opacity: 0; transform: translateY(-10px); } }
+.algoviz-status-pill span { animation: pulse-dot 2.4s ease-in-out infinite; }
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--algo-accent) 14%, transparent); }
+  50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--algo-accent) 0%, transparent); }
+}
+.algoviz-icon-button { transition: border-color 160ms ease, transform 160ms ease, background-color 160ms ease; }
+.algoviz-icon-button:hover { background: var(--algo-surface); transform: translateY(-1px); }
+.algoviz-icon-button:active { transform: scale(0.94); }
+
+/* Page transition between routes */
+.algoviz-route { animation: route-in 480ms var(--ease-out) both; }
+@keyframes route-in { from { opacity: 0; transform: translateY(14px); } }
+
+/* ---------- Hero ---------- */
+.algoviz-hero-copy > * { animation: rise 700ms var(--ease-out) both; }
+.algoviz-hero-copy > :nth-child(2) { animation-delay: 80ms; }
+.algoviz-hero-copy > :nth-child(3) { animation-delay: 160ms; }
+.algoviz-hero-copy > :nth-child(4) { animation-delay: 240ms; }
+.algoviz-hero-copy > :nth-child(5) { animation-delay: 320ms; }
+.algoviz-hero-copy > :nth-child(6) { animation-delay: 400ms; }
+@keyframes rise { from { opacity: 0; transform: translateY(22px); } }
+
+.algoviz-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.38rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--algo-accent) 35%, var(--algo-line));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--algo-accent) 8%, transparent);
+}
+.algoviz-hero h1 em {
+  display: inline-block;
+  background: linear-gradient(100deg, var(--algo-accent), var(--algo-blue), var(--algo-accent));
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 6s linear infinite;
+}
+@keyframes shimmer { to { background-position: -220% 0; } }
+
+.algoviz-button { border-radius: 10px; position: relative; overflow: hidden; }
+.algoviz-button-primary {
+  background: linear-gradient(135deg, var(--algo-accent), color-mix(in srgb, var(--algo-accent) 70%, var(--algo-blue)));
+  box-shadow: 0 10px 30px -10px var(--algo-accent);
+}
+.algoviz-button-primary:hover { box-shadow: 0 14px 36px -8px var(--algo-accent); }
+.algoviz-button-primary svg { transition: transform 240ms var(--ease-out); }
+.algoviz-button-primary:hover svg { transform: translateX(4px); }
+.algoviz-button:active { transform: translateY(0) scale(0.97); }
+
+.algoviz-stats {
+  display: flex;
+  gap: clamp(1.2rem, 3vw, 2.4rem);
+  margin: 2.2rem 0 0;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--algo-line);
+}
+.algoviz-stats div { display: flex; flex-direction: column-reverse; gap: 0.15rem; }
+.algoviz-stats dt { color: var(--algo-faint); font-size: 0.7rem; font-weight: 700; }
+.algoviz-stats dd { margin: 0; color: var(--algo-ink); font-size: 1.7rem; font-weight: 800; letter-spacing: -0.04em; }
+
+/* Execution preview: a glowing, gently floating card with a live graph */
+.algoviz-preview {
+  position: relative;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--algo-surface) 80%, transparent);
+  backdrop-filter: blur(8px);
+  animation: rise 800ms 200ms var(--ease-out) both, float 7s 1s ease-in-out infinite;
+  box-shadow: 0 30px 90px -30px color-mix(in srgb, var(--algo-accent) 35%, transparent), 0 0 0 1px color-mix(in srgb, var(--algo-accent) 6%, transparent);
+}
+.algoviz-preview::before {
+  position: absolute;
+  inset: -1px;
+  z-index: 1;
+  border-radius: inherit;
+  background: conic-gradient(from var(--spin, 0deg), transparent 0 70%, var(--algo-accent) 85%, transparent 100%);
+  content: "";
+  padding: 1px;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.7;
+  pointer-events: none;
+  animation: spin-border 8s linear infinite;
+}
+@property --spin { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes spin-border { to { --spin: 360deg; } }
+@keyframes float { 50% { transform: translateY(-8px); } }
+
+.algoviz-graph {
+  background:
+    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--algo-line) 70%, transparent) 1px, transparent 0) 0 0 / 22px 22px,
+    var(--c-101426);
+}
+.algoviz-graph-lines path {
+  stroke: color-mix(in srgb, var(--algo-accent) 45%, var(--c-526083));
+  stroke-dasharray: 6 7;
+  animation: flow 1.6s linear infinite;
+}
+@keyframes flow { to { stroke-dashoffset: -26; } }
+.algoviz-node { transition: background-color 400ms ease, border-color 400ms ease, color 400ms ease, box-shadow 400ms ease, transform 400ms var(--ease-out); animation: node-pop 600ms var(--ease-out) both; }
+.node-a { animation-delay: 300ms; } .node-b { animation-delay: 400ms; } .node-c { animation-delay: 500ms; } .node-d { animation-delay: 600ms; } .node-e { animation-delay: 700ms; }
+@keyframes node-pop { from { opacity: 0; transform: scale(0.3); } }
+.algoviz-node.is-current { transform: scale(1.18); animation: node-pop 600ms var(--ease-out) both, ping 1.6s ease-out infinite; }
+@keyframes ping {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--algo-accent) 55%, transparent); }
+  100% { box-shadow: 0 0 0 20px transparent; }
+}
+.algoviz-live-dot { animation: pulse-dot 1.8s ease-in-out infinite; }
+.algoviz-step-note strong, .algoviz-step-note p, .algoviz-note-meta code { animation: fade-swap 450ms var(--ease-out) both; }
+@keyframes fade-swap { from { opacity: 0; transform: translateX(8px); } }
+.algoviz-preview-controls button { transition: transform 160ms ease, border-color 160ms ease, color 160ms ease; }
+.algoviz-preview-controls button:hover { border-color: var(--algo-accent); color: var(--algo-accent); transform: translateY(-1px); }
+.algoviz-preview-controls button.is-play:hover { color: var(--algo-accent-ink); }
+.algoviz-preview-controls button:active { transform: scale(0.9); }
+
+/* ---------- Scroll reveal ---------- */
+.rv { opacity: 0; transform: translateY(28px); transition: opacity 700ms var(--ease-out), transform 700ms var(--ease-out); transition-delay: var(--rv-delay, 0ms); }
+.rv.rv-in { opacity: 1; transform: none; }
+
+/* ---------- Sections ---------- */
+.algoviz-section { border-top: 0; position: relative; }
+.algoviz-section::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--algo-line) 20%, var(--algo-line) 80%, transparent);
+  content: "";
+}
+.algoviz-section-heading h2,
+.algoviz-workflow-section h2 { letter-spacing: -0.045em; }
+
+/* Spotlight cards: a soft glow follows the pointer */
+.algoviz-category-row,
+.algoviz-catalog-card {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 300ms var(--ease-out), border-color 250ms ease, background-color 250ms ease, box-shadow 300ms ease;
+}
+.algoviz-category-row::before,
+.algoviz-catalog-card::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--algo-accent) 15%, transparent), transparent 65%);
+  content: "";
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+.algoviz-category-row:hover::before,
+.algoviz-catalog-card:hover::before { opacity: 1; }
+.algoviz-catalog-card {
+  border-radius: var(--radius);
+  animation: card-in 500ms var(--ease-out) both;
+}
+@keyframes card-in { from { opacity: 0; transform: translateY(14px) scale(0.98); } }
+.algoviz-catalog-card:hover {
+  transform: translateY(-5px);
+  border-color: color-mix(in srgb, var(--algo-accent) 55%, var(--algo-line));
+  box-shadow: 0 22px 44px -22px color-mix(in srgb, var(--algo-accent) 45%, transparent);
+}
+.algoviz-category-row:hover { transform: translateX(6px); }
+.algoviz-category-icon { transition: transform 400ms var(--ease-out); }
+.algoviz-category-row:hover .algoviz-category-icon { transform: scale(1.12) rotate(-6deg); }
+.algoviz-category-status svg { transition: transform 260ms var(--ease-out); }
+.algoviz-category-row:hover .algoviz-category-status svg { transform: translateX(5px); }
+.algoviz-catalog-card:active, .algoviz-category-row:active { transform: scale(0.985); }
+
+/* Catalog search and topic chips */
+.algoviz-catalog-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.8rem 1rem;
+  margin: 2rem 0 0.5rem;
+}
+.algoviz-search {
+  display: flex;
+  flex: 1 1 260px;
+  max-width: 380px;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 46px;
+  padding: 0 0.9rem;
+  border: 1px solid var(--algo-line);
+  border-radius: 12px;
+  background: var(--algo-surface);
+  color: var(--algo-muted);
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+.algoviz-search:focus-within {
+  border-color: var(--algo-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--algo-accent) 16%, transparent);
+}
+.algoviz-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--algo-ink);
+  font: inherit;
+  font-size: 0.9rem;
+}
+.algoviz-search input:focus-visible { outline: none; }
+.algoviz-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.algoviz-chip {
+  min-height: 40px;
+  padding: 0.4rem 0.95rem;
+  border: 1px solid var(--algo-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--algo-muted);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease, transform 160ms ease;
+}
+.algoviz-chip:hover { border-color: var(--algo-accent); color: var(--algo-ink); }
+.algoviz-chip:active { transform: scale(0.95); }
+.algoviz-chip.is-active { border-color: var(--algo-accent); background: var(--algo-accent); color: var(--algo-accent-ink); }
+.algoviz-result-count { margin: 0 0 0 auto; color: var(--algo-faint); font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+.algoviz-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 3rem 1rem;
+  color: var(--algo-muted);
+  text-align: center;
+  animation: card-in 400ms var(--ease-out) both;
+}
+
+/* Learning loop: numbers light up in sequence */
+.algoviz-workflow-list li > span { transition: color 250ms ease, transform 300ms var(--ease-out); }
+.algoviz-workflow-list li:hover > span { color: var(--algo-accent); transform: translateY(-3px); }
+.algoviz-workflow-list li > svg { animation: nudge 2s ease-in-out infinite; }
+@keyframes nudge { 50% { transform: translateX(5px); } }
+
+/* Controls inside the labs get the same tactile feel */
+.algoviz-app button { transition: transform 160ms ease, background-color 200ms ease, border-color 200ms ease, color 200ms ease, box-shadow 200ms ease; }
+.algoviz-app button:not(:disabled):active { transform: scale(0.96); }
+.algoviz-footer { border-top: 1px solid var(--algo-line); }
+
+@media (max-width: 900px) {
+  .algoviz-preview { animation: rise 800ms 200ms var(--ease-out) both; }
+  .algoviz-result-count { margin-left: 0; }
+  .algoviz-search { max-width: none; }
+}
+@media (max-width: 560px) {
+  .algoviz-stats { justify-content: space-between; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .algoviz-app::before, .algoviz-app::after, .algoviz-preview, .algoviz-preview::before,
+  .algoviz-graph-lines path, .algoviz-hero h1 em, .algoviz-status-pill span, .algoviz-workflow-list li > svg { animation: none !important; }
+  .rv { opacity: 1; transform: none; transition: none; }
+  html { scroll-behavior: auto; }
+}
+
+.algoviz-catalog-tools, #explore, .algoviz-section { scroll-margin-top: 84px; }

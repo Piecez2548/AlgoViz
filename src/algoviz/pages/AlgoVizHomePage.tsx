@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { ArrowRight, BarChart3, BookOpen, GitCompareArrows, Link2, ListOrdered, Network, Pause, Play, Route, Search, Shapes, TrendingDown, Waves } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowRight, BarChart3, BookOpen, GitCompareArrows, Link2, ListOrdered, Network, Pause, Play, Route, Search, SearchX, Shapes, TrendingDown, Waves } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import type { AlgorithmDefinition } from "@/algorithms/shared/types";
@@ -180,6 +180,13 @@ function ExecutionPreview() {
 
 export default function AlgoVizHomePage() {
   const t = useT();
+  const [query, setQuery] = useState("");
+  const [activeGroup, setActiveGroup] = useState("all");
+  const needle = query.trim().toLowerCase();
+  const visibleCount = useMemo(() => algorithmCatalog.filter((a) => {
+    const inGroup = activeGroup === "all" || catalogGroups.find((g) => g.label === activeGroup)?.categories.includes(a.category);
+    return inGroup && (!needle || `${a.name} ${a.shortName} ${a.summary} ${t(a.summary)} ${a.complexity}`.toLowerCase().includes(needle));
+  }).length, [activeGroup, needle, t]);
   return (
     <div className="algoviz-page algoviz-home-page">
       <section className="algoviz-hero">
@@ -192,6 +199,11 @@ export default function AlgoVizHomePage() {
             <Link className="algoviz-button algoviz-button-secondary" to="/compare"><GitCompareArrows size={17} /> {t("Compare algorithms")}</Link>
           </div>
           <p className="algoviz-hero-footnote"><span aria-hidden="true">↳</span> {t("No sign-up. No backend. Just the next step.")}</p>
+          <dl className="algoviz-stats">
+            <div><dt>{t("Algorithms")}</dt><dd>{algorithmCatalog.length}</dd></div>
+            <div><dt>{t("Live labs")}</dt><dd>{categories.length}</dd></div>
+            <div><dt>{t("Languages")}</dt><dd>2</dd></div>
+          </dl>
         </div>
         <ExecutionPreview />
       </section>
@@ -235,8 +247,26 @@ export default function AlgoVizHomePage() {
           </div>
           <p>{t("Thirty algorithms for teaching graph search, shortest paths, spanning trees, sorting, flow, matching, and searching lists with the same step-by-step contract.")}</p>
         </div>
+        <div className="algoviz-catalog-tools">
+          <label className="algoviz-search">
+            <Search size={17} aria-hidden="true" />
+            <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("Search the catalog")} aria-label={t("Search the catalog")} />
+          </label>
+          <div className="algoviz-chips" role="group" aria-label={t("Filter by topic")}>
+            {[{ label: "all" }, ...catalogGroups].map((group) => (
+              <button type="button" key={group.label} className={activeGroup === group.label ? "algoviz-chip is-active" : "algoviz-chip"} aria-pressed={activeGroup === group.label} onClick={() => setActiveGroup(group.label)}>
+                {group.label === "all" ? t("All") : t(group.label)}
+              </button>
+            ))}
+          </div>
+          <p className="algoviz-result-count" role="status">{visibleCount} / {algorithmCatalog.length}</p>
+        </div>
+        {visibleCount === 0 && (
+          <div className="algoviz-empty"><SearchX size={28} aria-hidden="true" /><strong>{t("No algorithm matches your search.")}</strong><button type="button" className="algoviz-chip" onClick={() => { setQuery(""); setActiveGroup("all"); }}>{t("Clear filters")}</button></div>
+        )}
         {catalogGroups.map((group) => {
-          const cards = algorithmCatalog.filter((algorithm) => group.categories.includes(algorithm.category));
+          const cards = algorithmCatalog.filter((algorithm) => (activeGroup === "all" || activeGroup === group.label) && group.categories.includes(algorithm.category) && (!needle || `${algorithm.name} ${algorithm.shortName} ${algorithm.summary} ${t(algorithm.summary)} ${algorithm.complexity}`.toLowerCase().includes(needle)));
+          if (!cards.length) return null;
           return (
             <div className="algoviz-catalog-group" key={group.label}>
               <h3 className="algoviz-catalog-group-title">{t(group.label)} <span>{cards.length}</span></h3>
